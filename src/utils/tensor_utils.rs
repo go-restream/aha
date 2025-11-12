@@ -1,5 +1,6 @@
 use anyhow::{Ok, Result, anyhow};
 use candle_core::{D, DType, Device, IndexOp, Tensor, shape::Dim};
+use rocket::figment::value;
 
 pub fn prepare_causal_attention_mask(
     b_size: usize,
@@ -8,10 +9,14 @@ pub fn prepare_causal_attention_mask(
     device: &Device,
 ) -> Result<Tensor> {
     // Sliding window mask?
-    let mask: Vec<_> = (0..tgt_len)
-        .flat_map(|i| (0..tgt_len).map(move |j| if i < j { f32::NEG_INFINITY } else { 0. }))
-        .collect();
-    let mask = Tensor::from_slice(&mask, (tgt_len, tgt_len), device)?;
+    // let mask: Vec<_> = (0..tgt_len)
+    //     .flat_map(|i| (0..tgt_len).map(move |j| if i < j { f32::NEG_INFINITY } else { 0. }))
+    //     .collect();
+    // let mask = Tensor::from_vec(mask, (tgt_len, tgt_len), device)?;
+    let arange = Tensor::arange(0u32, tgt_len as u32, device)?;
+    let arange = arange.unsqueeze(1)?.broadcast_as((tgt_len, tgt_len))?;
+    let upper_triangle = arange.t()?.lt(&arange)?.to_dtype(DType::F32)?;
+    let mask = upper_triangle.where_cond(&Tensor::new(f32::NEG_INFINITY, device)?, &Tensor::new(0f32, device)?)?;
     let mask = if seqlen_offset > 0 {
         let mask0 = Tensor::zeros((tgt_len, seqlen_offset), DType::F32, device)?;
         Tensor::cat(&[&mask0, &mask], D::Minus1)?
@@ -345,4 +350,90 @@ pub fn mask_index_add(original: &Tensor, mask: &Tensor, add: &Tensor) -> Result<
     let visual_nonzero_index = nonzero_index(mask)?;
     let xs = original.index_add(&visual_nonzero_index, add, 0)?;
     Ok(xs)
+}
+
+pub fn interpolate_linear(
+    t: &Tensor,
+    target_size: usize,
+    align_corner: Option<bool>,
+) -> Result<Tensor> {
+    // t: [b, channels, features]
+    let shape = t.dims();
+    let orig_size = shape[shape.len() - 1];
+    if orig_size == target_size {
+        return Ok(t.clone());
+    }
+    let mut reshaped = t.clone();
+    if shape.len() != 3 {
+        let bs = shape[0];
+        let channels = shape[1..shape.len() - 1].iter().product::<usize>();
+        reshaped = reshaped.reshape((bs, channels, orig_size))?;
+    }
+    let (bs, channels, _) = reshaped.dims3()?;
+    let mut output = Tensor::zeros((bs, channels, target_size), t.dtype(), &t.device())?;
+    let coords = if orig_size == 1 {
+        vec![0f32; target_size]
+    } else {
+        let coords_vec = if let Some(align_) = align_corner
+            && align_
+        {
+            (0..target_size)
+                .map(|i| i as f32 * (orig_size - 1) as f32 / (target_size - 1) as f32)
+                .collect()
+        } else {            
+            (0..target_size)
+                .map(|i| {
+                    let coord = (i as f32 + 0.5) * (orig_size as f32 / target_size as f32) - 0.5;
+                    coord.max(0.0).min((orig_size-1) as f32)
+                })
+                .collect()
+        };
+        coords_vec
+    };
+
+    for b in 0..bs {
+        for c in 0..channels {
+            let input_slice = reshaped.i((b, c))?;
+            let mut out_i = Vec::new();
+            for x_out in 0..target_size {
+                let coord = coords[x_out];
+                let x0 = coord.floor() as usize;
+                let x1 = std::cmp::min(x0 + 1, orig_size - 1);
+                let weight = (coord - x0 as f32) as f64;
+                let value0 = input_slice.get(x0)?;
+                let value1 = input_slice.get(x1)?;
+                let interpolated =
+                    (value0.affine(1.0 - weight, 0.0)? + value1.affine(weight, 0.0)?)?;
+                out_i.push(interpolated);
+            }
+            let out_i = Tensor::stack(&out_i, 0)?.unsqueeze(0)?.unsqueeze(0)?;
+            output = output.slice_assign(&[(b..b+1), (c..c+1), (0..target_size)], &out_i)?;
+        }
+    }
+    if shape.len() != 3 {
+        let mut new_shape = shape.to_vec();
+        let last_dim = new_shape.len()-1;
+        new_shape[last_dim] = target_size;
+        output = output.reshape(new_shape)?
+
+    }
+    output = output.contiguous()?;
+    Ok(output)
+}
+
+pub fn index_select_2d(t: &Tensor, index: &Tensor) -> Result<Tensor> {
+    if t.rank() != 2 && index.rank() != 2 {
+        return Err(anyhow::anyhow!(
+                    "t and index rank must be equal to 2"
+                ));
+    }
+    let mut res_vec = Vec::new();
+    let index_dim0 = index.dim(0)?;
+    for i in 0..index_dim0 {
+        let index_i = index.i(i)?;
+        let rel_i = t.index_select(&index_i, 0)?;
+        res_vec.push(rel_i);
+    } 
+    let res = Tensor::stack(&res_vec, 0)?;
+    Ok(res)
 }

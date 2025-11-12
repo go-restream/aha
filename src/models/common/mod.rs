@@ -316,6 +316,7 @@ pub fn eager_attention_forward(
             attn_output
         }
     };
+    //(b, n_head, seq_len, dim) -> (b, seq_len, n_head, dim)
     let attn_output = attn_output.transpose(1, 2)?.contiguous()?;
 
     Ok(attn_output)
