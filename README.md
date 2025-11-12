@@ -112,9 +112,13 @@ cargo run -F cuda -- [参数]
     -m, --model <MODEL>
 * 指定要加载的模型类型
 * 可选值：
-    * minicpm4-0.5b：MiniCPM4-0.5B 模型
-    * qwen2.5vl-3b：Qwen2.5-VL-3B 模型
-    * qwen3vl-2b：Qwen3-VL-2B 模型
+    * minicpm4-0.5b：OpenBMB/MiniCPM4-0.5B 模型
+    * qwen2.5vl-3b：Qwen/Qwen2.5-VL-3B-Instruct 模型
+    * qwen2.5vl-7b：Qwen/Qwen2.5-VL-7B-Instruct 模型
+    * qwen3vl-2b：Qwen/Qwen3-VL-2B-Instruct 模型
+    * qwen3vl-4b：Qwen/Qwen3-VL-4B-Instruct 模型
+    * qwen3vl-8b：Qwen/Qwen3-VL-8B-Instruct 模型
+    * qwen3vl-32b：Qwen/Qwen3-VL-32B-Instruct 模型
 * 示例：--model minicpm4-0.5b 或 -m qwen3vl-2b
 
 3. 权重路径

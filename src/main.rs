@@ -77,12 +77,12 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let model_id = match args.model {
         WhichModel::MiniCPM4_0_5B => "OpenBMB/MiniCPM4-0.5B",
-        WhichModel::Qwen2_5vl3B => "Qwen/Qwen2.5-VL-3B-Instruct", 
+        WhichModel::Qwen2_5vl3B => "Qwen/Qwen2.5-VL-3B-Instruct",
         WhichModel::Qwen2_5vl7B => "Qwen/Qwen2.5-VL-7B-Instruct",
-        WhichModel::Qwen3vl2B => "Qwen/Qwen3-VL-2B-Instruct", 
-        WhichModel::Qwen3vl4B => "Qwen/Qwen3-VL-4B-Instruct", 
-        WhichModel::Qwen3vl8B => "Qwen/Qwen3-VL-8B-Instruct", 
-        WhichModel::Qwen3vl32B => "Qwen/Qwen3-VL-32B-Instruct"
+        WhichModel::Qwen3vl2B => "Qwen/Qwen3-VL-2B-Instruct",
+        WhichModel::Qwen3vl4B => "Qwen/Qwen3-VL-4B-Instruct",
+        WhichModel::Qwen3vl8B => "Qwen/Qwen3-VL-8B-Instruct",
+        WhichModel::Qwen3vl32B => "Qwen/Qwen3-VL-32B-Instruct",
     };
     let model_path = match args.weight_path {
         Some(path) => path,

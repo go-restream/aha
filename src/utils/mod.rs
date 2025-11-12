@@ -21,7 +21,7 @@ pub fn get_device(device: Option<&Device>) -> Device {
         None => {
             #[cfg(feature = "cuda")]
             {
-                Device::new_cuda(6).unwrap_or(Device::Cpu)
+                Device::new_cuda(0).unwrap_or(Device::Cpu)
             }
             #[cfg(not(feature = "cuda"))]
             {

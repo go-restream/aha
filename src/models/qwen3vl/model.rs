@@ -559,7 +559,6 @@ pub struct Qwen3VLTextAttention {
     num_key_value_heads: usize,
     num_kv_groups: usize,
     head_dim: usize,
-    hidden_size: usize,
     scaling: f64,
     kv_cache: Option<(Tensor, Tensor)>,
 }
@@ -585,7 +584,8 @@ impl Qwen3VLTextAttention {
                 linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("k_proj"))?;
             let v_proj =
                 linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("v_proj"))?;
-            let o_proj = linear_no_bias(num_attention_heads * head_dim, hidden_size, vb.pp("o_proj"))?;
+            let o_proj =
+                linear_no_bias(num_attention_heads * head_dim, hidden_size, vb.pp("o_proj"))?;
             (q_proj, k_proj, v_proj, o_proj)
         };
         let q_norm = rms_norm(head_dim, config.rms_norm_eps, vb.pp("q_norm"))?;
@@ -601,7 +601,6 @@ impl Qwen3VLTextAttention {
             num_key_value_heads,
             num_kv_groups,
             head_dim,
-            hidden_size,
             scaling,
             kv_cache: None,
         })
@@ -652,7 +651,8 @@ impl Qwen3VLTextAttention {
             attention_mask,
             self.scaling,
         )?;
-        let attn_output = attn_output.reshape((b_sz, q_len, self.num_attention_heads*self.head_dim))?;
+        let attn_output =
+            attn_output.reshape((b_sz, q_len, self.num_attention_heads * self.head_dim))?;
         let attn_output = attn_output.apply(&self.o_proj)?;
         Ok(attn_output)
     }

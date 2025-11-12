@@ -99,15 +99,15 @@ pub fn load_model(model_type: WhichModel, path: &str) -> Result<ModelInstance<'_
         WhichModel::Qwen3vl2B => {
             let model = Qwen3VLGenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3VL(model)
-        } 
+        }
         WhichModel::Qwen3vl4B => {
             let model = Qwen3VLGenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3VL(model)
-        } 
+        }
         WhichModel::Qwen3vl8B => {
             let model = Qwen3VLGenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3VL(model)
-        } 
+        }
         WhichModel::Qwen3vl32B => {
             let model = Qwen3VLGenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3VL(model)
