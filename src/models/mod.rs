@@ -6,6 +6,7 @@ pub mod paddleocr_vl;
 pub mod qwen2_5vl;
 pub mod qwen3vl;
 pub mod voxcpm;
+pub mod rmbg2_0;
 
 use aha_openai_dive::v1::resources::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
