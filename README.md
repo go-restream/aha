@@ -12,15 +12,28 @@
 
 ## 支持的模型
 ### 当前已实现
-* Qwen2.5VL - 阿里通义千问 2.5 多模态大语言模型
-* MiniCPM4 - 面壁智能 MiniCPM 系列语言模型
-* VoxCPM - 面壁智能语音生成模型
-* Qwen3VL - 阿里通义千问 3 多模态大语言模型
+* [Qwen2.5VL](https://huggingface.co/collections/Qwen/qwen25-vl) - 阿里通义千问 2.5 多模态大语言模型
+    - 模型：[Qwen2.5-VL-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct) 开源协议：[Qwen RESEARCH LICENSE AGREEMENT](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE)
+    - 模型：[Qwen/Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [MiniCPM4](https://huggingface.co/collections/openbmb/minicpm4) - 面壁智能 MiniCPM 系列语言模型
+    - 模型：[MiniCPM4-0.5B](https://huggingface.co/openbmb/MiniCPM4-0.5B) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [VoxCPM](https://huggingface.co/collections/openbmb/voxcpm) - 面壁智能语音生成模型
+    - 模型：[VoxCPM-0.5B](https://huggingface.co/openbmb/VoxCPM-0.5B) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [Qwen3VL](https://huggingface.co/collections/Qwen/qwen3-vl) - 阿里通义千问 3 多模态大语言模型
+    - 模型：[Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+    - 模型：[Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+    - 模型：[Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+    - 模型：[Qwen3-VL-32B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 * DeepSeek-OCR - 深度求索光学文字识别模型
+    - 模型：[DeepSeek-OCR](https://huggingface.co/deepseek-ai/DeepSeek-OCR) 开源协议：[MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
 * Hunyuan-OCR - 腾讯混元光学文字识别模型
-* PaddleOCR-VL - 百度飞桨光学文字识别模型
-* VoxCPM1.5 - 面壁智能语音生成模型1.5版本
-* RMBG2.0 - RMBGv2.0由BRIA AI开发，供非商业用途使用。
+    - 模型：[HunyuanOCR](https://huggingface.co/tencent/HunyuanOCR) 开源协议：[TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT](https://huggingface.co/tencent/HunyuanOCR/blob/main/LICENSE)
+* [PaddleOCR-VL](https://huggingface.co/collections/PaddlePaddle/paddleocr-vl) - 百度飞桨光学文字识别模型
+    - 模型：[PaddleOCR-VL](https://huggingface.co/PaddlePaddle/PaddleOCR-VL) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [VoxCPM1.5](https://huggingface.co/collections/openbmb/voxcpm) - 面壁智能语音生成模型1.5版本
+    - 模型：[VoxCPM1.5](https://huggingface.co/openbmb/VoxCPM1.5) 开源协议：[Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
+* [RMBG2.0](https://huggingface.co/collections/briaai/rmbg) - RMBGv2.0由BRIA AI开发，供非商业用途使用。
+    - 模型：[RMBG2.0](https://huggingface.co/briaai/RMBG-2.0) 开源协议：[Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
 
 ## 计划支持
 我们持续扩展支持的模型列表，欢迎贡献！
