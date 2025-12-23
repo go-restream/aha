@@ -51,12 +51,37 @@ pub fn repeat_kv(xs: Tensor, n_rep: usize) -> Result<Tensor> {
 }
 
 pub fn split_tensor<D: Dim>(t: &Tensor, splits: &[usize], dim: D) -> Result<Vec<Tensor>> {
+    // 按给定长度切分tensor
+    // 例： t:(25), splits: [5, 10, 5, 5] dim: 0,
+    // 返回vec len=4, 其中tensor维度分别是:(5), (10), (5), (5)
     let dim = dim.to_index(t.shape(), "split")?;
     let mut split_res = Vec::new();
     let mut index = 0;
     for split in splits {
         split_res.push(t.narrow(dim, index, *split)?);
         index += *split;
+    }
+    Ok(split_res)
+}
+
+pub fn split_tensor_with_size<D: Dim>(
+    t: &Tensor,
+    splits_size: usize,
+    dim: D,
+) -> Result<Vec<Tensor>> {
+    // 按给定size切分tensor
+    // 例： t:(25), splits: 5 dim: 0,
+    // 返回vec len=5, 其中tensor维度分别是:(5), (5), (5), (5), (5)
+    let dim = dim.to_index(t.shape(), "split")?;
+    let mut split_res = Vec::new();
+    let dim_size = t.dim(dim)?;
+    assert_eq!(
+        dim_size % splits_size,
+        0,
+        "input tensor dim size % splits_size must be equal to 0"
+    );
+    for split in (0..dim_size).step_by(splits_size) {
+        split_res.push(t.narrow(dim, split, splits_size)?);
     }
     Ok(split_res)
 }
@@ -230,7 +255,8 @@ pub fn get_not_equal_mask(input_ids: &Tensor, token_ids: u32) -> Result<Tensor> 
 }
 
 pub fn get_equal_mask(input_ids: &Tensor, token_ids: u32) -> Result<Tensor> {
-    let image_token_id_tensor = Tensor::new(vec![token_ids], input_ids.device())?;
+    let image_token_id_tensor =
+        Tensor::new(vec![token_ids], input_ids.device())?.to_dtype(input_ids.dtype())?;
     let mask = input_ids
         .broadcast_eq(&image_token_id_tensor)?
         .to_dtype(candle_core::DType::U32)?;

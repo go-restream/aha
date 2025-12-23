@@ -1,8 +1,9 @@
 use anyhow::Result;
 use candle_core::{D, Tensor};
 use candle_nn::{
-    Activation, Conv2d, Conv2dConfig, LayerNorm, LayerNormConfig, Linear, Module, RmsNorm,
-    VarBuilder, conv2d, conv2d_no_bias, layer_norm, linear, linear_no_bias, rms_norm,
+    Activation, BatchNorm, BatchNormConfig, Conv2d, Conv2dConfig, LayerNorm, LayerNormConfig,
+    Linear, Module, RmsNorm, VarBuilder, batch_norm, conv2d, conv2d_no_bias, layer_norm, linear,
+    linear_no_bias, rms_norm,
 };
 
 use crate::{position_embed::rope::apply_rotary_pos_emb, utils::tensor_utils::repeat_kv};
@@ -510,4 +511,112 @@ pub fn get_layer_norm(vb: VarBuilder, eps: f64, dim: usize) -> Result<LayerNorm>
     };
     let norm = layer_norm(dim, ln_config, vb)?;
     Ok(norm)
+}
+
+pub fn get_batch_norm(vb: VarBuilder, eps: f64, dim: usize) -> Result<BatchNorm> {
+    let bn_config = BatchNormConfig {
+        eps,
+        remove_mean: true,
+        affine: true,
+        momentum: 0.1,
+    };
+    let norm = batch_norm(dim, bn_config, vb)?;
+    Ok(norm)
+}
+
+pub fn deform_conv2d_kernel(
+    input: &Tensor,
+    weight: &Tensor,
+    bias: Option<&Tensor>,
+    offset: &Tensor,
+    mask: Option<&Tensor>,
+    stride: usize,
+    padding: usize,
+) -> Result<Tensor> {
+    // 不考虑空洞卷积, bs = 1
+    let (_, in_c, in_h, in_w) = input.dims4()?;
+    let (out_channel, _, ker_h, ker_w) = weight.dims4()?;
+    let out_h = ((in_h + 2 * padding - ker_h) / stride) + 1;
+    let out_w = ((in_w + 2 * padding - ker_w) / stride) + 1;
+
+    let num_kernels = in_c * out_h * out_w;
+    let mask_vec = if let Some(mask) = mask {
+        Some(mask.squeeze(0)?.to_vec3::<f32>()?)
+    } else {
+        None
+    };
+    let offset_vec = offset.squeeze(0)?.to_vec3::<f32>()?;
+    let input_vec = input.squeeze(0)?.to_vec3::<f32>()?;
+    let mut columns_vec = vec![vec![0.0f32; out_h * out_w]; in_c * ker_h * ker_w];
+    for index in 0..num_kernels {
+        let out_x = index % out_w;
+        let out_y = (index / out_w) % out_h;
+        let in_c = index / (out_w * out_h);
+        let out_c = in_c * ker_h * ker_w;
+
+        for i in 0..ker_h {
+            for j in 0..ker_w {
+                let mask_idx = i * ker_w + j;
+                let offset_idx = 2 * mask_idx;
+                let mask_value = if mask.is_some() {
+                    mask_vec.as_ref().unwrap()[mask_idx][out_y][out_x]
+                } else {
+                    1.0
+                };
+                let offset_h = offset_vec[offset_idx][out_y][out_x];
+                let offset_w = offset_vec[offset_idx + 1][out_y][out_x];
+                let y = ((out_y * stride - padding) + i) as f32 + offset_h;
+                let x = ((out_x * stride - padding) + j) as f32 + offset_w;
+                let val = if y <= -1.0 || in_h as f32 <= y || x <= -1.0 || in_w as f32 <= x {
+                    0.0
+                } else {
+                    let h_low = y.floor();
+                    let w_low = x.floor();
+                    let h_high = h_low + 1.0;
+                    let w_high = w_low + 1.0;
+                    let lh = y - h_low;
+                    let lw = x - w_low;
+                    let hh = 1.0 - lh;
+                    let hw = 1.0 - lw;
+                    let w1 = hh * hw;
+                    let w2 = hh * lw;
+                    let w3 = lh * hw;
+                    let w4 = lh * lw;
+                    let v1 = if h_low >= 0.0 && w_low >= 0.0 {
+                        input_vec[in_c][h_low as usize][w_low as usize]
+                    } else {
+                        0.0
+                    };
+                    let v2 = if h_low >= 0.0 && w_high <= (in_w - 1) as f32 {
+                        input_vec[in_c][h_low as usize][w_high as usize]
+                    } else {
+                        0.0
+                    };
+                    let v3 = if h_high <= (in_h - 1) as f32 && w_low >= 0.0 {
+                        input_vec[in_c][h_high as usize][w_low as usize]
+                    } else {
+                        0.0
+                    };
+                    let v4 = if h_high <= (in_h - 1) as f32 && w_high <= (in_w - 1) as f32 {
+                        input_vec[in_c][h_high as usize][w_high as usize]
+                    } else {
+                        0.0
+                    };
+                    w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4
+                };
+                columns_vec[out_c + i * ker_w + j][out_y * out_w + out_x] = mask_value * val;
+            }
+        }
+    }
+
+    let columns = Tensor::new(columns_vec, weight.device())?;
+    let mut out =
+        weight
+            .flatten_from(1)?
+            .matmul(&columns)?
+            .reshape((1, out_channel, out_h, out_w))?;
+    if let Some(bias) = bias {
+        out = out.broadcast_add(bias)?;
+    }
+    Ok(out)
 }

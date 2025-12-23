@@ -285,3 +285,40 @@ pub fn img_smart_resize(
     }
     Ok((h_bar, w_bar))
 }
+
+pub fn img_transform_with_resize(
+    img: &DynamicImage,
+    h: u32,
+    w: u32,
+    mean: &Tensor,
+    std: &Tensor,
+    device: &Device,
+    dtype: DType,
+) -> Result<Tensor> {
+    let img_resize = img.resize_exact(w, h, imageops::FilterType::CatmullRom);
+    let img_tensor = img_transform(&img_resize, mean, std, device, dtype)?;
+    Ok(img_tensor)
+}
+
+pub fn float_tensor_to_dynamic_image(tensor: &Tensor) -> Result<DynamicImage> {
+    let tensor = tensor.affine(255.0, 0.0)?.clamp(0.0, 255.0)?;
+    let tensor_u8 = tensor.to_dtype(DType::U8)?.to_device(&Device::Cpu)?;
+    let (c, h, w) = tensor_u8.dims3()?;
+    match c {
+        1 => {
+            let tensor_u8 = tensor_u8.reshape((h, w))?;
+            let data: Vec<u8> = tensor_u8.flatten_all()?.to_vec1()?;
+            let img = ImageBuffer::from_raw(w as u32, h as u32, data)
+                .ok_or_else(|| anyhow!("Failed to create image buffer"))?;
+            Ok(DynamicImage::ImageLuma8(img))
+        }
+        3 => {
+            let tensor_u8 = tensor_u8.permute((1, 2, 0))?;
+            let data: Vec<u8> = tensor_u8.flatten_all()?.to_vec1()?;
+            let img = ImageBuffer::from_raw(w as u32, h as u32, data)
+                .ok_or_else(|| anyhow!("Failed to create image buffer"))?;
+            Ok(DynamicImage::ImageRgb8(img))
+        }
+        _ => Err(anyhow!(format!("Unsupported number of channels: {}", c))),
+    }
+}

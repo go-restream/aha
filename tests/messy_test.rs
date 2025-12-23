@@ -1,22 +1,62 @@
-use std::{path::PathBuf, str::FromStr};
-
 use anyhow::Result;
+use candle_core::Tensor;
 
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda messy_test -r -- --nocapture
-    let path_str = "file://./assets/img/ocr_test1.png";
-    let path = url::Url::from_str(path_str)?;
-    let path = path.to_file_path();
-    let path = match path {
-        Ok(path) => path,
-        Err(_) => {
-            let mut path = path_str.to_owned();
-            path = path.split_off(7);
-            PathBuf::from(path)
-        }
-    };
-    println!("to file path: {:?}", path);
+    let device = &candle_core::Device::Cpu;
+    let x = Tensor::arange(0.0, 9.0, device)?;
+    println!("x: {}", x);
+    let x = x
+        .unsqueeze(0)?
+        .unsqueeze(0)?
+        .broadcast_as((5, 5, 9))?
+        .reshape((5, 5, 3, 3))?;
+    println!("x: {}", x);
+    let x = x.permute((0, 2, 1, 3))?;
+    println!("x: {}", x);
+    let x = x.reshape((15, 15))?;
+    println!("x: {}", x);
+    // let xs = Tensor::rand(0.0, 5.0, (1, 1, 3, 3), device)?;
+    // println!("xs: {}", xs);
+    // let xs = xs.pad_with_zeros(3, 2, 2)?
+    //             .pad_with_zeros(2, 2, 2)?;
+    // println!("xs: {}", xs);
+    // let xs = Tensor::arange(0.0, 25.0, device)?;
+    // println!("xs: {}", xs);
+    // let splits = split_tensor_with_size(&xs, 5, 0)?;
+    // for v in splits {
+    //     println!("v: {}", v);
+    // }
+    // let xs = Tensor::arange(0.0, 25.0, device)?.broadcast_as((1, 1, 5, 5))?;
+    // println!("xs: {}", xs);
+    // let xs = xs.avg_pool2d(5)?;
+    // println!("xs: {}", xs);
+    // let xs = Tensor::rand(0.0, 1.0, (1, 4, 4, 2), device)?;
+    // println!("xs: {}", xs);
+    // let shape = Shape::from_dims(&[1, 2, 2, 2, 2, 2]);
+    // let xs = xs.reshape(shape)?;
+    // println!("xs: {}", xs);
+    // let x0 = xs.i((.., .., 0, .., 0, ..))?;
+    // let x1 = xs.i((.., .., 1, .., 0, ..))?;
+    // let x2 = xs.i((.., .., 0, .., 1, ..))?;
+    // let x3 = xs.i((.., .., 1, .., 1, ..))?;
+    // let xs = Tensor::cat(&[x0, x1, x2, x3], D::Minus1)?;
+    // println!("xs: {}", xs);
+    // let xs = xs.reshape((1, (), 4 * 2))?;
+    // println!("xs: {}", xs);
+    // let path_str = "file://./assets/img/ocr_test1.png";
+    // let path = url::Url::from_str(path_str)?;
+    // let path = path.to_file_path();
+    // let path = match path {
+    //     Ok(path) => path,
+    //     Err(_) => {
+    //         let mut path = path_str.to_owned();
+    //         path = path.split_off(7);
+    //         PathBuf::from(path)
+    //     }
+    // };
+    // println!("to file path: {:?}", path);
 
     // let device = &candle_core::Device::Cpu;
     // let t = Tensor::arange(0.0f32, 40.0, device)?.broadcast_as((1, 1, 40, 40))?;
