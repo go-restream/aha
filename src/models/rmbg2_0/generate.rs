@@ -7,7 +7,8 @@ use anyhow::Result;
 use base64::{Engine, prelude::BASE64_STANDARD};
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
-use image::{Rgba, RgbaImage};
+use image::RgbaImage;
+use rayon::prelude::*;
 use rocket::futures::{Stream, stream};
 
 use crate::{
@@ -52,38 +53,119 @@ impl RMBG2_0Model {
         })
     }
 
+    #[cfg(test)]
+    pub fn h(&self) -> u32 {
+        self.h
+    }
+
+    #[cfg(test)]
+    pub fn w(&self) -> u32 {
+        self.w
+    }
+
+    #[cfg(test)]
+    pub fn img_mean(&self) -> &Tensor {
+        &self.img_mean
+    }
+
+    #[cfg(test)]
+    pub fn img_std(&self) -> &Tensor {
+        &self.img_std
+    }
+
+    #[cfg(test)]
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+    #[cfg(test)]
+    pub fn dtype(&self) -> DType {
+        self.dtype
+    }
+
+    #[cfg(test)]
+    pub fn model(&self) -> &BiRefNet {
+        &self.model
+    }
     pub fn inference(&self, mes: ChatCompletionParameters) -> Result<Vec<RgbaImage>> {
         let imgs = extract_images(&mes)?;
-        let mut rmbg_png = vec![];
-        for img in imgs {
-            let height = img.height();
-            let width = img.width();
-            let img_tensor = img_transform_with_resize(
-                &img,
-                self.h,
-                self.w,
-                &self.img_mean,
-                &self.img_std,
-                &self.device,
-                self.dtype,
-            )?
-            .unsqueeze(0)?;
-            let rmbg_img = self.model.forward(&img_tensor)?.squeeze(0)?;
-            let alpha_img = float_tensor_to_dynamic_image(&rmbg_img)?;
-            let alpha_img =
-                alpha_img.resize_exact(width, height, image::imageops::FilterType::CatmullRom);
-            let alpha_gray = alpha_img.to_luma8();
-            let mut rgba_img = RgbaImage::new(width, height);
-
-            // 遍历像素并组合
-            for (x, y, pixel) in img.to_rgb8().enumerate_pixels() {
-                let alpha_value = alpha_gray.get_pixel(x, y).0[0];
-                let rgba_pixel = Rgba([pixel.0[0], pixel.0[1], pixel.0[2], alpha_value]);
-                rgba_img.put_pixel(x, y, rgba_pixel);
-            }
-            rmbg_png.push(rgba_img);
+        if imgs.is_empty() {
+            return Ok(vec![]);
         }
-        Ok(rmbg_png)
+
+        // 并行预处理：提取原始尺寸和转换为 tensor
+        let preprocessed: Vec<_> = imgs
+            .par_iter()
+            .map(|img| {
+                let height = img.height();
+                let width = img.width();
+                let tensor = img_transform_with_resize(
+                    img,
+                    self.h,
+                    self.w,
+                    &self.img_mean,
+                    &self.img_std,
+                    &self.device,
+                    self.dtype,
+                );
+                (img.clone(), height, width, tensor)
+            })
+            .collect();
+
+        // 检查预处理是否有错误
+        let mut tensors = Vec::with_capacity(preprocessed.len());
+        let mut meta: Vec<_> = Vec::with_capacity(preprocessed.len());
+        for (img, height, width, tensor_result) in preprocessed {
+            let tensor = tensor_result?;
+            tensors.push(tensor);
+            meta.push((img, height, width));
+        }
+
+        // 批量推理：将所有图片合并为一个 batch
+        // to guobin211: 感谢你贡献的代码，不过现在模型中可变形卷积的实现只支持batch_size=1，所以推理还是用的循环QaQ
+        // let batch_tensor = Tensor::stack(&tensors, 0)?;
+        // let batch_output = self.model.forward(&batch_tensor)?;
+        let mut batch_output = vec![];
+        for img_tensor in tensors {
+            let output = self.model.forward(&img_tensor.unsqueeze(0)?)?.squeeze(0)?;
+            batch_output.push(output);
+        }
+
+        // 并行后处理：生成 RGBA 图像
+        let results: Vec<Result<RgbaImage>> = meta
+            .into_par_iter()
+            .enumerate()
+            .map(|(i, (img, height, width))| {
+                // let rmbg_tensor = batch_output.i(i)?;
+                let rmbg_tensor = &batch_output[i];
+                let alpha_img = float_tensor_to_dynamic_image(rmbg_tensor)?;
+                let alpha_img =
+                    alpha_img.resize_exact(width, height, image::imageops::FilterType::CatmullRom);
+                let alpha_gray = alpha_img.to_luma8();
+
+                let rgb_img = img.to_rgb8();
+                let rgb_raw = rgb_img.as_raw();
+                let alpha_raw = alpha_gray.as_raw();
+                let pixel_count = (width * height) as usize;
+                let mut rgba_raw = vec![0u8; pixel_count * 4];
+
+                // 并行分块写入
+                rgba_raw
+                    .par_chunks_mut(4)
+                    .enumerate()
+                    .for_each(|(idx, chunk)| {
+                        let src = idx * 3;
+                        chunk[0] = rgb_raw[src];
+                        chunk[1] = rgb_raw[src + 1];
+                        chunk[2] = rgb_raw[src + 2];
+                        chunk[3] = alpha_raw[idx];
+                    });
+
+                RgbaImage::from_raw(width, height, rgba_raw)
+                    .ok_or_else(|| anyhow::anyhow!("Failed to create RGBA image"))
+            })
+            .collect();
+
+        results.into_iter().collect()
     }
 }
 

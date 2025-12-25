@@ -8,6 +8,7 @@ use anyhow::{Result, anyhow};
 use base64::{Engine, engine::general_purpose};
 use candle_core::{DType, Device, Tensor};
 use image::{DynamicImage, ImageBuffer, ImageReader, Rgb, RgbImage, imageops};
+use rayon::prelude::*;
 
 use crate::utils::{ceil_by_factor, floor_by_factor, round_by_factor};
 
@@ -78,31 +79,26 @@ pub fn get_image(file: &str) -> Result<DynamicImage> {
     Err(anyhow!("get image from message failed".to_string()))
 }
 
-pub fn extract_image_url(mes: &ChatCompletionParameters) -> Result<Vec<String>> {
+pub fn extract_image_url(mes: &ChatCompletionParameters) -> Vec<&String> {
     let mut img_vec = Vec::new();
-    for chat_mes in mes.messages.clone() {
+    for chat_mes in &mes.messages {
         if let ChatMessage::User { content, .. } = chat_mes
             && let ChatMessageContent::ContentPart(part_vec) = content
         {
             for part in part_vec {
                 if let ChatMessageContentPart::Image(img_part) = part {
-                    let img_url = img_part.image_url;
-                    img_vec.push(img_url.url);
+                    img_vec.push(&img_part.image_url.url);
                 }
             }
         }
     }
-    Ok(img_vec)
+    img_vec
 }
 
 pub fn extract_images(mes: &ChatCompletionParameters) -> Result<Vec<DynamicImage>> {
-    let img_url_vec = extract_image_url(mes)?;
-    let mut img_vec = Vec::new();
-    for url in img_url_vec {
-        let img = get_image(&url)?;
-        img_vec.push(img);
-    }
-    Ok(img_vec)
+    let img_url_vec = extract_image_url(mes);
+    // 并行下载图片
+    img_url_vec.par_iter().map(|url| get_image(url)).collect()
 }
 
 pub fn generate_target_ratios_sorted(min_num: u32, max_num: u32) -> Vec<(u32, u32)> {

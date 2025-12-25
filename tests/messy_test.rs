@@ -1,4 +1,3 @@
-use aha::utils::get_default_save_dir;
 use anyhow::Result;
 use candle_core::Tensor;
 

@@ -37,6 +37,7 @@ dependencies = [
  "minijinja",
  "modelscope",
  "num",
+ "rayon",
  "reqwest",
  "rocket",
  "serde",
