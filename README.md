@@ -143,10 +143,10 @@ cargo run -F cuda -r -- [参数]
 * 如果未指定 --weight-path，程序会自动下载指定模型
 * 下载的模型默认保存在 ~/.aha/ 目录下（除非指定了 --save-dir）
 
-#### API接口介绍
+### API接口介绍
 项目提供基于 OpenAI API 兼容的 RESTful 接口，支持多种模型推理任务。
 
-##### 接口列表
+#### 接口列表
 1. 对话接口
 - **端点**: `POST /chat/completions`
 - **功能**: 多模态对话和文本生成
