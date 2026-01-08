@@ -1,11 +1,20 @@
+// use std::io::Cursor;
+
 use aha::utils::audio_utils::create_hann_window;
 use anyhow::Result;
 use candle_core::DType;
+// use symphonia::core::io::MediaSourceStream;
 
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda,ffmpeg messy_test -r -- --nocapture
     let device = &candle_core::Device::Cpu;
+    // let url = "https://sis-sample-audio.obs.cn-north-1.myhuaweicloud.com/16k16bit.mp3";
+    // let client = reqwest::blocking::Client::new();
+    // let response = client.get(url).send()?;
+    // let vec_u8 = response.bytes()?.to_vec();
+    // let mut content = Cursor::new(vec_u8);
+    // let mss = MediaSourceStream::new(Box::new(content), Default::default());
     let window = create_hann_window(400, DType::F32, device)?;
     println!("window: {}", window);
     // let audio_path = "file:///home/jhq/Videos/voice_01.wav";
