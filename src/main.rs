@@ -74,6 +74,7 @@ async fn main() -> anyhow::Result<()> {
         WhichModel::MiniCPM4_0_5B => "OpenBMB/MiniCPM4-0.5B",
         WhichModel::Qwen2_5vl3B => "Qwen/Qwen2.5-VL-3B-Instruct",
         WhichModel::Qwen2_5vl7B => "Qwen/Qwen2.5-VL-7B-Instruct",
+        WhichModel::Qwen3_0_6B => "Qwen/Qwen3-0.6B",
         WhichModel::Qwen3vl2B => "Qwen/Qwen3-VL-2B-Instruct",
         WhichModel::Qwen3vl4B => "Qwen/Qwen3-VL-4B-Instruct",
         WhichModel::Qwen3vl8B => "Qwen/Qwen3-VL-8B-Instruct",
@@ -85,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
         WhichModel::VoxCPM => "OpenBMB/VoxCPM-0.5B",
         WhichModel::VoxCPM1_5 => "OpenBMB/VoxCPM1.5",
         WhichModel::GlmASRNano2512 => "ZhipuAI/GLM-ASR-Nano-2512",
+        WhichModel::FunASRNano2512 => "FunAudioLLM/Fun-ASR-Nano-2512",
     };
     let model_path = match &args.weight_path {
         Some(path) => path.clone(),

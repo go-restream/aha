@@ -111,6 +111,9 @@ impl MiniCPMDecoderLayer {
             None,
             false,
             None,
+            None,
+            None,
+            None,
         )?;
         let mlp = GateUpDownMLP::new(
             vb.pp("mlp"),

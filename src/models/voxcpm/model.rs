@@ -716,9 +716,15 @@ impl VoxCPMModel {
             .permute((0, 3, 1, 2))?
             .reshape((b, d, ()))?
             .contiguous()?;
+        // self.base_lm.clear_kv_cache();
+        // self.residual_lm.clear_kv_cache();
+        self.clear_kv_cache();
+        Ok(feat_pred)
+    }
+
+    pub fn clear_kv_cache(&mut self) {
         self.base_lm.clear_kv_cache();
         self.residual_lm.clear_kv_cache();
-        Ok(feat_pred)
     }
 
     pub fn build_prompt_cache(

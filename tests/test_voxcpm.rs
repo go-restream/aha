@@ -27,7 +27,7 @@ fn voxcpm_use_message_generate() -> Result<()> {
                         "type": "audio",
                         "audio_url": 
                         {
-                            "url": "https://sis-sample-audio.obs.cn-north-1.myhuaweicloud.com/16k16bit.wav"
+                            "url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"
                         }
                     },              
                     {
@@ -37,7 +37,7 @@ fn voxcpm_use_message_generate() -> Result<()> {
                 ]
             }
         ],
-        "metadata": {"prompt_text": "华为致力于把数字世界带给每个人，每个家庭，每个组织，构建万物互联的智能世界。"}
+        "metadata": {"prompt_text": "天雷滚滚我好怕怕，劈得我浑身掉渣渣。突破天劫我笑哈哈，逆天改命我吹喇叭，滴答滴答滴滴答"}
     }
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;

@@ -3,12 +3,13 @@ use std::f32;
 use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use anyhow::Result;
 use candle_core::{D, DType, Device, IndexOp, Tensor};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     models::glm_asr_nano::config::GlmAsrNanoProcessorConfig,
     utils::{
-        audio_utils::{create_hann_window, extract_audios, mel_filter_bank, stft_audio},
+        audio_utils::{
+            apply_stft, create_hann_window, extract_audios, extract_frames, mel_filter_bank,
+        },
         tensor_utils::{pad_reflect_last_dim, split_tensor},
     },
 };
@@ -81,48 +82,19 @@ impl GlmAsrNanoProcessor {
         })
     }
 
-    /// 提取音频帧
-    pub fn extract_frames(&self, waveform: &Tensor, n_frames: usize) -> Result<Tensor> {
-        let mut frames = Vec::with_capacity(n_frames);
-
-        for i in 0..n_frames {
-            let start = i * self.hop_length;
-            let frame = waveform.narrow(D::Minus1, start, self.n_fft)?;
-            frames.push(frame);
-        }
-
-        let result = Tensor::cat(&frames, D::Minus1)?;
-        let bs = result.dim(0)?;
-        let reshaped = result.reshape((bs, n_frames, self.n_fft))?;
-        Ok(reshaped)
-    }
-
     pub fn extract_fbank_features(&self, waveform: &Tensor) -> Result<Tensor> {
         let pad = self.n_fft / 2;
         let waveform = pad_reflect_last_dim(waveform, (pad, pad))?;
-        let (batch_size, samples) = waveform.dims2()?;
+        let (_, samples) = waveform.dims2()?;
 
         // 计算输出维度
         let n_frames = (samples - self.n_fft) / self.hop_length + 1;
         // (bs, n_frames, n_fft)
-        let frames = self.extract_frames(&waveform, n_frames)?;
+        let frames = extract_frames(&waveform, self.n_fft, self.hop_length)?;
         // 应用汉明窗口
         let result = frames.broadcast_mul(&self.window)?;
         // 傅立叶变换
-        let mut wave_fft = vec![];
-        for bs in 0..batch_size {
-            let wave_i = result.i(bs)?;
-            let wave_i_vec = wave_i.to_vec2::<f32>()?;
-            let wave_i_fft_vec: Result<Vec<Vec<f32>>> = wave_i_vec
-                .par_iter()
-                .map(|frame_wave| stft_audio(self.n_fft, frame_wave))
-                .collect();
-            let wave_i_fft_vec = wave_i_fft_vec?;
-
-            let wave_i_fft = Tensor::new(wave_i_fft_vec, &self.device)?.unsqueeze(0)?;
-            wave_fft.push(wave_i_fft);
-        }
-        let magnitudes = Tensor::cat(&wave_fft, 0)?.transpose(D::Minus1, D::Minus2)?;
+        let magnitudes = apply_stft(&result)?.transpose(D::Minus1, D::Minus2)?;
         let magnitudes = magnitudes.narrow(D::Minus1, 0, n_frames - 1)?;
         let mel_spec = self.mel_filters.broadcast_matmul(&magnitudes)?;
         let mel_spec = mel_spec.clamp(1e-10f32, f32::INFINITY)?;
@@ -141,12 +113,18 @@ impl GlmAsrNanoProcessor {
             let audio_len = audio.dim(0)?;
             let pad_num = self.n_samples - audio_len;
 
-            let audio_pad = audio.pad_with_zeros(0, 0, pad_num)?;
+            let audio_pad = if pad_num > 0 {
+                audio.pad_with_zeros(0, 0, pad_num)?
+            } else {
+                audio
+            };
             // (n_samples) -> (1, n_samples)
             let audio_pad = audio_pad.unsqueeze(0)?;
             pad_audio.push(audio_pad);
             let mut mask = vec![1u32; audio_len];
-            mask.extend_from_slice(&vec![0u32; pad_num]);
+            if pad_num > 0 {
+                mask.extend_from_slice(&vec![0u32; pad_num]);
+            }
             input_features_mask.push(mask);
         }
         let input_features = Tensor::cat(&pad_audio, 0)?;

@@ -1,5 +1,7 @@
 use candle_nn::Activation;
 
+use crate::models::qwen3::config::Qwen3Config;
+
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Size {
     pub longest_edge: usize,
@@ -46,6 +48,32 @@ pub struct Qwen3VLTextConfig {
     pub vocab_size: usize,
 }
 
+pub fn qwen3vl_text_config2qwen3_config(cfg: &Qwen3VLTextConfig) -> Qwen3Config {
+    Qwen3Config {
+        attention_bias: cfg.attention_bias,
+        attention_dropout: cfg.attention_dropout as f64,
+        bos_token_id: cfg.bos_token_id as u32,
+        eos_token_id: cfg.eos_token_id as u32,
+        head_dim: cfg.head_dim,
+        hidden_act: cfg.hidden_act,
+        hidden_size: cfg.hidden_size,
+        initializer_range: cfg.initializer_range as f64,
+        intermediate_size: cfg.intermediate_size,
+        max_position_embeddings: cfg.max_position_embeddings,
+        max_window_layers: 0,
+        num_attention_heads: cfg.num_attention_heads,
+        num_hidden_layers: cfg.num_hidden_layers,
+        num_key_value_heads: cfg.num_key_value_heads,
+        rms_norm_eps: cfg.rms_norm_eps,
+        rope_theta: cfg.rope_theta,
+        tie_word_embeddings: true,
+        torch_dtype: cfg.dtype.clone(),
+        use_cache: cfg.use_cache,
+        use_sliding_window: false,
+        vocab_size: cfg.vocab_size,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Qwen3VLVisionConfig {
     pub deepstack_visual_indexes: Vec<usize>,
@@ -72,16 +100,4 @@ pub struct Qwen3VLConfig {
     pub vision_config: Qwen3VLVisionConfig,
     pub vision_end_token_id: usize,
     pub vision_start_token_id: usize,
-}
-
-#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
-pub struct Qwen3VLGenerationConfig {
-    pub bos_token_id: usize,
-    pub pad_token_id: usize,
-    pub do_sample: bool,
-    pub eos_token_id: Vec<usize>,
-    pub top_p: f32,
-    pub top_k: usize,
-    pub temperature: f32,
-    pub repetition_penalty: f32,
 }

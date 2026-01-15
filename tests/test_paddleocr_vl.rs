@@ -19,7 +19,7 @@ fn paddleocr_vl_generate() -> Result<()> {
                         "type": "image",
                         "image_url": 
                         {
-                            "url": "file://./assets/img/ocr_test1.png"
+                            "url": "https://www.qqxiuzi.cn/zh/shouxie-shufa/welcome.png"
                         }
                     },              
                     {
@@ -69,7 +69,7 @@ async fn paddleocr_vl_stream() -> Result<()> {
                         "type": "image",
                         "image_url": 
                         {
-                            "url": "file://./assets/img/ocr_test1.png"
+                            "url": "https://www.qqxiuzi.cn/zh/shouxie-shufa/welcome.png"
                         }
                     },              
                     {

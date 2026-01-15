@@ -1,19 +1,18 @@
 use std::{pin::pin, time::Instant};
 
-use aha::models::{GenerateModel, glm_asr_nano::generate::GlmAsrNanoGenerateModel};
+use aha::models::{GenerateModel, fun_asr_nano::generate::FunAsrNanoGenerateModel};
 use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use anyhow::Result;
 use rocket::futures::StreamExt;
-
 #[test]
-fn glm_asr_nano_generate() -> Result<()> {
-    // RUST_BACKTRACE=1 cargo test -F cuda glm_asr_nano_generate -r -- --nocapture
+fn fun_asr_nano_generate() -> Result<()> {
+    // RUST_BACKTRACE=1 cargo test -F cuda fun_asr_nano_generate -r -- --nocapture
     let save_dir =
         aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
-    let model_path = format!("{}/ZhipuAI/GLM-ASR-Nano-2512/", save_dir);
+    let model_path = format!("{}/FunAudioLLM/Fun-ASR-Nano-2512/", save_dir);
     let message = r#"
     {
-        "model": "glm-asr-nano",
+        "model": "fun-asr-nano",
         "messages": [
             {
                 "role": "user",
@@ -27,7 +26,7 @@ fn glm_asr_nano_generate() -> Result<()> {
                     },           
                     {
                         "type": "text", 
-                        "text": "Please transcribe this audio into text"
+                        "text": "语音转写："
                     }
                 ]
             }
@@ -36,11 +35,11 @@ fn glm_asr_nano_generate() -> Result<()> {
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
     let i_start = Instant::now();
-    let mut glm_asr_model = GlmAsrNanoGenerateModel::init(&model_path, None, None)?;
+    let mut fun_asr_model = FunAsrNanoGenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
     let i_start = Instant::now();
-    let res = glm_asr_model.generate(mes)?;
+    let res = fun_asr_model.generate(mes)?;
     let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
     if res.usage.is_some() {
@@ -54,14 +53,14 @@ fn glm_asr_nano_generate() -> Result<()> {
 }
 
 #[tokio::test]
-async fn glm_asr_nano_stream() -> Result<()> {
-    // RUST_BACKTRACE=1 cargo test -F cuda glm_asr_nano_stream -r -- --nocapture
+async fn fun_asr_nano_stream() -> Result<()> {
+    // RUST_BACKTRACE=1 cargo test -F cuda fun_asr_nano_stream -r -- --nocapture
     let save_dir =
         aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
-    let model_path = format!("{}/ZhipuAI/GLM-ASR-Nano-2512/", save_dir);
+    let model_path = format!("{}/FunAudioLLM/Fun-ASR-Nano-2512/", save_dir);
     let message = r#"
     {
-        "model": "glm-asr-nano",
+        "model": "fun-asr-nano",
         "messages": [
             {
                 "role": "user",
@@ -75,7 +74,7 @@ async fn glm_asr_nano_stream() -> Result<()> {
                     },           
                     {
                         "type": "text", 
-                        "text": "Please transcribe this audio into text"
+                        "text": "语音转写："
                     }
                 ]
             }
@@ -84,11 +83,11 @@ async fn glm_asr_nano_stream() -> Result<()> {
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
     let i_start = Instant::now();
-    let mut glm_asr_model = GlmAsrNanoGenerateModel::init(&model_path, None, None)?;
+    let mut fun_asr_model = FunAsrNanoGenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
     let i_start = Instant::now();
-    let mut stream = pin!(glm_asr_model.generate_stream(mes)?);
+    let mut stream = pin!(fun_asr_model.generate_stream(mes)?);
     while let Some(item) = stream.next().await {
         println!("generate: \n {:?}", item);
     }

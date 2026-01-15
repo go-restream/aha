@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::thread;
 use std::{collections::HashSet, path::PathBuf};
 
 use aha_openai_dive::v1::resources::chat::{
@@ -13,22 +14,45 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use crate::utils::{ceil_by_factor, floor_by_factor, round_by_factor};
 
 pub fn load_image_from_url(url: &str) -> Result<DynamicImage> {
-    tokio::task::block_in_place(|| {
-        let response = reqwest::blocking::get(url)
-            .map_err(|e| anyhow!(format!("Failed to fetch image from url: {}", e)))?;
-        let bytes = response
-            .bytes()
-            .map_err(|e| anyhow!(format!("Failed to get image bytes: {}", e)))?;
+    let url = url.to_string();
+    thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let response = reqwest::blocking::get(url)
+                .map_err(|e| anyhow!(format!("Failed to fetch image from url: {}", e)))?;
+            let bytes = response
+                .bytes()
+                .map_err(|e| anyhow!(format!("Failed to get image bytes: {}", e)))?;
 
-        let cursor = Cursor::new(bytes);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| anyhow!(format!("Failed to read image format: {}", e)))?
-            .decode()
-            .map_err(|e| anyhow!(format!("Failed to decode image: {}", e)))?;
-        Ok(img)
+            let cursor = Cursor::new(bytes);
+            let img = ImageReader::new(cursor)
+                .with_guessed_format()
+                .map_err(|e| anyhow!(format!("Failed to read image format: {}", e)))?
+                .decode()
+                .map_err(|e| anyhow!(format!("Failed to decode image: {}", e)))?;
+            Ok(img)
+        })
     })
+    .join()
+    .unwrap()
 }
+// pub fn _load_image_from_url(url: &str) -> Result<DynamicImage> {
+//     tokio::task::block_in_place(|| {
+//         let response = reqwest::blocking::get(url)
+//             .map_err(|e| anyhow!(format!("Failed to fetch image from url: {}", e)))?;
+//         let bytes = response
+//             .bytes()
+//             .map_err(|e| anyhow!(format!("Failed to get image bytes: {}", e)))?;
+
+//         let cursor = Cursor::new(bytes);
+//         let img = ImageReader::new(cursor)
+//             .with_guessed_format()
+//             .map_err(|e| anyhow!(format!("Failed to read image format: {}", e)))?
+//             .decode()
+//             .map_err(|e| anyhow!(format!("Failed to decode image: {}", e)))?;
+//         Ok(img)
+//     })
+// }
 
 pub fn load_image_from_base64(base64_data: &str) -> Result<DynamicImage> {
     let image_data = general_purpose::STANDARD

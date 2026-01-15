@@ -16,7 +16,8 @@ show_help() {
     echo "Available models:"
     echo "  minicpm4-0.5b"
     echo "  qwen2.5vl-3b"
-    echo "  qwen2.5vl-7b"
+    echo "  qwen2.5vl-7b" 
+    echo "  qwen3-0.6b"
     echo "  qwen3vl-2b"
     echo "  qwen3vl-4b"
     echo "  qwen3vl-8b"
@@ -28,6 +29,7 @@ show_help() {
     echo "  voxcpm"
     echo "  voxcpm1.5"
     echo "  glm-asr-nano-2512"
+    echo "  fun-asr-nano-2512"
     echo ""
     exit 1
 }
@@ -51,6 +53,9 @@ case $MODEL_ALIAS in
     "qwen2.5vl-7b")
         MODEL_ID="Qwen/Qwen2.5-VL-7B-Instruct"
         ;;
+    "qwen3-0.6b")
+        MODEL_ID="Qwen/Qwen3-0.6B"
+        ;;
     "qwen3vl-2b")
         MODEL_ID="Qwen/Qwen3-VL-2B-Instruct"
         ;;
@@ -73,16 +78,19 @@ case $MODEL_ALIAS in
         MODEL_ID="PaddlePaddle/PaddleOCR-VL"
         ;;
     "RMBG2.0")
-        MODEL_ID="AI-ModelScope/RMBG-2.0"
+        MODEL_ID="briaai/RMBG-2.0"
         ;;
     "voxcpm")
-        MODEL_ID="OpenBMB/VoxCPM-0.5B"
+        MODEL_ID="openbmb/VoxCPM-0.5B"
         ;;
     "voxcpm1.5")
-        MODEL_ID="OpenBMB/VoxCPM1.5"
+        MODEL_ID="openbmb/VoxCPM1.5"
         ;;
     "glm-asr-nano-2512")
         MODEL_ID="zai-org/GLM-ASR-Nano-2512"
+        ;;
+    "fun-asr-nano-2512")
+        MODEL_ID="FunAudioLLM/Fun-ASR-Nano-2512"
         ;;
     *)
         echo "Error: Unknown model alias '$MODEL_ALIAS'"

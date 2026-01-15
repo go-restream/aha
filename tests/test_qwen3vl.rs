@@ -29,7 +29,7 @@ fn qwen3vl_generate() -> Result<()> {
                     },              
                     {
                         "type": "text", 
-                        "text": "视频中发生了什么？, 现在几点了"
+                        "text": "视频中发生了什么？"
                     }
                 ]
             }

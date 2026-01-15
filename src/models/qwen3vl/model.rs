@@ -7,12 +7,14 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, TwoLinearMLP, eager_attention_forward, get_layer_norm},
-        qwen3vl::config::{Qwen3VLConfig, Qwen3VLTextConfig, Qwen3VLVisionConfig},
+        common::{TwoLinearMLP, eager_attention_forward, get_layer_norm},
+        qwen3::model::Qwen3DecoderLayer,
+        qwen3vl::config::{
+            Qwen3VLConfig, Qwen3VLTextConfig, Qwen3VLVisionConfig, qwen3vl_text_config2qwen3_config,
+        },
     },
     position_embed::rope::{
-        Qwen2_5VisionRotaryEmbedding, Qwen3VLTextRotaryEmbedding, apply_rotary_pos_emb,
-        apply_rotary_pos_emb_vision,
+        Qwen2_5VisionRotaryEmbedding, Qwen3VLTextRotaryEmbedding, apply_rotary_pos_emb_vision,
     },
     utils::tensor_utils::{
         bitor_tensor, get_vision_next_indices, linspace, mask_index_add, masked_scatter_dim0,
@@ -519,181 +521,9 @@ impl Qwen3VLVisionModel {
     }
 }
 
-pub struct Qwen3VLTextAttention {
-    q_proj: Linear,
-    k_proj: Linear,
-    v_proj: Linear,
-    o_proj: Linear,
-    q_norm: RmsNorm,
-    k_norm: RmsNorm,
-    num_attention_heads: usize,
-    num_key_value_heads: usize,
-    num_kv_groups: usize,
-    head_dim: usize,
-    scaling: f64,
-    kv_cache: Option<(Tensor, Tensor)>,
-}
-
-impl Qwen3VLTextAttention {
-    pub fn new(config: Qwen3VLTextConfig, vb: VarBuilder) -> Result<Self> {
-        let hidden_size = config.hidden_size;
-        let num_attention_heads = config.num_attention_heads;
-        let head_dim = config.head_dim;
-        let num_key_value_heads = config.num_key_value_heads;
-        let num_kv_groups = num_attention_heads / num_key_value_heads;
-        let scaling = 1f64 / f64::sqrt(head_dim as f64);
-        let (q_proj, k_proj, v_proj, o_proj) = if config.attention_bias {
-            let q_proj = linear(hidden_size, num_attention_heads * head_dim, vb.pp("q_proj"))?;
-            let k_proj = linear(hidden_size, num_key_value_heads * head_dim, vb.pp("k_proj"))?;
-            let v_proj = linear(hidden_size, num_key_value_heads * head_dim, vb.pp("v_proj"))?;
-            let o_proj = linear(num_attention_heads * head_dim, hidden_size, vb.pp("o_proj"))?;
-            (q_proj, k_proj, v_proj, o_proj)
-        } else {
-            let q_proj =
-                linear_no_bias(hidden_size, num_attention_heads * head_dim, vb.pp("q_proj"))?;
-            let k_proj =
-                linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("k_proj"))?;
-            let v_proj =
-                linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("v_proj"))?;
-            let o_proj =
-                linear_no_bias(num_attention_heads * head_dim, hidden_size, vb.pp("o_proj"))?;
-            (q_proj, k_proj, v_proj, o_proj)
-        };
-        let q_norm = rms_norm(head_dim, config.rms_norm_eps, vb.pp("q_norm"))?;
-        let k_norm = rms_norm(head_dim, config.rms_norm_eps, vb.pp("k_norm"))?;
-        Ok(Self {
-            q_proj,
-            k_proj,
-            v_proj,
-            o_proj,
-            q_norm,
-            k_norm,
-            num_attention_heads,
-            num_key_value_heads,
-            num_kv_groups,
-            head_dim,
-            scaling,
-            kv_cache: None,
-        })
-    }
-
-    pub fn forward(
-        &mut self,
-        xs: &Tensor,
-        cos: &Tensor,
-        sin: &Tensor,
-        attention_mask: Option<&Tensor>,
-    ) -> Result<Tensor> {
-        let (b_sz, q_len, _) = xs.dims3()?;
-        let query_states = self.q_proj.forward(xs)?.reshape((
-            b_sz,
-            q_len,
-            self.num_attention_heads,
-            self.head_dim,
-        ))?;
-        let query_states = self.q_norm.forward(&query_states)?.transpose(1, 2)?;
-        let key_states = self.k_proj.forward(xs)?.reshape((
-            b_sz,
-            q_len,
-            self.num_key_value_heads,
-            self.head_dim,
-        ))?;
-        let key_states = self.k_norm.forward(&key_states)?.transpose(1, 2)?;
-        let value_states = self.v_proj.forward(xs)?;
-        let value_states = value_states
-            .reshape((b_sz, q_len, self.num_key_value_heads, self.head_dim))?
-            .transpose(1, 2)?;
-        let (query_states, key_states) =
-            apply_rotary_pos_emb(&query_states, &key_states, cos, sin, false)?;
-        let (key_states, value_states) = match &self.kv_cache {
-            None => (key_states, value_states),
-            Some((prev_k, prev_v)) => {
-                let key_states = Tensor::cat(&[prev_k, &key_states], 2)?;
-                let value_states = Tensor::cat(&[prev_v, &value_states], 2)?;
-                (key_states, value_states)
-            }
-        };
-        self.kv_cache = Some((key_states.clone(), value_states.clone()));
-        let attn_output = eager_attention_forward(
-            &query_states,
-            &key_states,
-            &value_states,
-            Some(self.num_kv_groups),
-            attention_mask,
-            self.scaling,
-        )?;
-        let attn_output =
-            attn_output.reshape((b_sz, q_len, self.num_attention_heads * self.head_dim))?;
-        let attn_output = attn_output.apply(&self.o_proj)?;
-        Ok(attn_output)
-    }
-
-    pub fn clear_kv_cache(&mut self) {
-        self.kv_cache = None
-    }
-}
-
-pub struct Qwen3VLTextDecoderLayer {
-    self_attn: Qwen3VLTextAttention,
-    mlp: GateUpDownMLP,
-    input_layernorm: RmsNorm,
-    post_attention_layernorm: RmsNorm,
-}
-
-impl Qwen3VLTextDecoderLayer {
-    pub fn new(config: Qwen3VLTextConfig, vb: VarBuilder) -> Result<Self> {
-        let self_attn = Qwen3VLTextAttention::new(config.clone(), vb.pp("self_attn"))?;
-        let mlp = GateUpDownMLP::new(
-            vb.pp("mlp"),
-            config.hidden_size,
-            config.intermediate_size,
-            config.hidden_act,
-            false,
-        )?;
-        let input_layernorm = rms_norm(
-            config.hidden_size,
-            config.rms_norm_eps,
-            vb.pp("input_layernorm"),
-        )?;
-        let post_attention_layernorm = rms_norm(
-            config.hidden_size,
-            config.rms_norm_eps,
-            vb.pp("post_attention_layernorm"),
-        )?;
-        Ok(Self {
-            self_attn,
-            mlp,
-            input_layernorm,
-            post_attention_layernorm,
-        })
-    }
-
-    pub fn forward(
-        &mut self,
-        xs: &Tensor,
-        cos: &Tensor,
-        sin: &Tensor,
-        attention_mask: Option<&Tensor>,
-    ) -> Result<Tensor> {
-        let residual = xs.clone();
-        let xs = self.input_layernorm.forward(xs)?;
-        let xs = self.self_attn.forward(&xs, cos, sin, attention_mask)?;
-        let xs = residual.add(&xs)?;
-        let residual = xs.clone();
-        let xs = self.post_attention_layernorm.forward(&xs)?;
-        let xs = self.mlp.forward(&xs)?;
-        let xs = residual.add(&xs)?;
-        Ok(xs)
-    }
-
-    pub fn clear_kv_cache(&mut self) {
-        self.self_attn.clear_kv_cache();
-    }
-}
-
 pub struct Qwen3VLTextModel {
     embed_tokens: Embedding,
-    layers: Vec<Qwen3VLTextDecoderLayer>,
+    layers: Vec<Qwen3DecoderLayer>,
     norm: RmsNorm,
     rotary_emb: Qwen3VLTextRotaryEmbedding,
     mrope_section: Vec<usize>,
@@ -706,7 +536,8 @@ impl Qwen3VLTextModel {
         let mut layers = vec![];
         let vb_l = vb.pp("layers");
         for layer_idx in 0..config.num_hidden_layers {
-            let layer = Qwen3VLTextDecoderLayer::new(config.clone(), vb_l.pp(layer_idx))?;
+            let qwen3_cfg = qwen3vl_text_config2qwen3_config(&config);
+            let layer = Qwen3DecoderLayer::new(&qwen3_cfg, vb_l.pp(layer_idx))?;
             layers.push(layer)
         }
         let norm = rms_norm(config.hidden_size, config.rms_norm_eps, vb.pp("norm"))?;

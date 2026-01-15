@@ -2,6 +2,20 @@ use anyhow::{Result, anyhow};
 use candle_core::{D, DType, Device, IndexOp, Tensor, shape::Dim};
 use candle_nn::ops::sigmoid;
 
+pub fn mask_filled(on_true: &Tensor, mask: &Tensor, on_false: f32) -> Result<Tensor> {
+    let (mask_seq_len, _) = mask.dims2()?;
+    let (_, _, seq_len, _) = on_true.dims4()?;
+    assert!(
+        mask_seq_len >= seq_len,
+        "mask seq_len less than input data seq_len"
+    );
+    let mask = mask.i((..seq_len, ..seq_len))?;
+    let mask = mask.broadcast_as(on_true.shape())?;
+    let on_false = Tensor::new(on_false, on_true.device())?.broadcast_as(on_true.shape())?;
+    let filled = mask.where_cond(on_true, &on_false)?;
+    Ok(filled)
+}
+
 pub fn prepare_causal_attention_mask(
     b_size: usize,
     tgt_len: usize,
@@ -867,6 +881,31 @@ pub fn pad_reflect_last_dim(t: &Tensor, pad: (usize, usize)) -> Result<Tensor> {
         let last_dim_id = right.rank() - 1;
         let right_flip = right.flip(&[last_dim_id])?;
         pad_tensor = Tensor::cat(&[&pad_tensor, &right_flip], D::Minus1)?;
+    }
+    Ok(pad_tensor)
+}
+
+pub fn pad_replicate_last_dim(t: &Tensor, pad: (usize, usize)) -> Result<Tensor> {
+    let (pad_l, pad_r) = pad;
+    let last_dim = t.dim(D::Minus1)?;
+
+    let mut pad_tensor = t.clone();
+    if pad_l > 0 {
+        let left = pad_tensor.narrow(D::Minus1, 0, 1)?.contiguous()?;
+        let rank = left.rank();
+        let mut shape = vec![1usize; rank - 1];
+        shape.push(pad_l);
+        let left_pad = left.repeat(shape)?;
+        pad_tensor = Tensor::cat(&[&left_pad, &pad_tensor], D::Minus1)?;
+    }
+    if pad_r > 0 {
+        let start_i = last_dim - 1;
+        let right = pad_tensor.narrow(D::Minus1, start_i, 1)?.contiguous()?;
+        let rank = right.rank();
+        let mut shape = vec![1usize; rank - 1];
+        shape.push(pad_r);
+        let right_pad = right.repeat(shape)?;
+        pad_tensor = Tensor::cat(&[&pad_tensor, &right_pad], D::Minus1)?;
     }
     Ok(pad_tensor)
 }

@@ -147,6 +147,7 @@ impl VoxCPMGenerate {
             }
             None => self.generate_simple(target_text)?,
         };
+        self.voxcpm.clear_kv_cache();
         Ok(audio)
     }
 
@@ -197,6 +198,7 @@ impl VoxCPMGenerate {
             // retry_badcase,
             retry_badcase_ratio_threshold,
         )?;
+        self.voxcpm.clear_kv_cache();
         Ok(audio)
     }
 
@@ -223,19 +225,25 @@ impl GenerateModel for VoxCPMGenerate {
         } else {
             None
         };
-        let audio = self.voxcpm.generate(
-            target_text,
-            prompt_text,
-            prompt_wav_path,
-            min_len,
-            max_len,
-            inference_timesteps,
-            cfg_value,
-            retry_badcase_ratio_threshold,
-        )?;
+        let audio = self
+            .voxcpm
+            .generate(
+                target_text,
+                prompt_text,
+                prompt_wav_path,
+                min_len,
+                max_len,
+                inference_timesteps,
+                cfg_value,
+                retry_badcase_ratio_threshold,
+            )
+            .inspect_err(|_| {
+                self.voxcpm.clear_kv_cache();
+            })?;
         let wav_u8 = get_audio_wav_u8(&audio, self.sample_rate as u32)?;
         let base64_audio = BASE64_STANDARD.encode(wav_u8);
         let response = build_audio_completion_response(&base64_audio, &self.model_name);
+        self.voxcpm.clear_kv_cache();
         Ok(response)
     }
     #[allow(unused_variables)]

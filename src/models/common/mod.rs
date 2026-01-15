@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use candle_core::{D, Tensor};
 use candle_nn::{
     Activation, BatchNorm, BatchNormConfig, Conv1d, Conv1dConfig, Conv2d, Conv2dConfig, Embedding,
@@ -6,6 +6,7 @@ use candle_nn::{
     conv1d_no_bias, conv2d, conv2d_no_bias, embedding, layer_norm, linear, linear_no_bias,
     rms_norm,
 };
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     position_embed::rope::{RoPE, apply_rotary_pos_emb},
@@ -126,6 +127,9 @@ impl NaiveAttention {
         num_key_value_heads: usize,
         head_dim: Option<usize>,
         bias: bool,
+        q_proj_pp_name: Option<&str>,
+        k_proj_pp_name: Option<&str>,
+        v_proj_pp_name: Option<&str>,
         o_proj_pp_name: Option<&str>,
     ) -> Result<Self> {
         let num_kv_groups = num_attention_heads / num_key_value_heads;
@@ -133,12 +137,27 @@ impl NaiveAttention {
             None => hidden_size / num_attention_heads,
             Some(dim) => dim,
         };
+        let q_proj_pp_name = q_proj_pp_name.unwrap_or("q_proj");
+        let k_proj_pp_name = k_proj_pp_name.unwrap_or("k_proj");
+        let v_proj_pp_name = v_proj_pp_name.unwrap_or("v_proj");
         let o_proj_pp_name = o_proj_pp_name.unwrap_or("o_proj");
         let (q_proj, k_proj, v_proj, o_proj) = if bias {
             (
-                linear(hidden_size, num_attention_heads * head_dim, vb.pp("q_proj"))?,
-                linear(hidden_size, num_key_value_heads * head_dim, vb.pp("k_proj"))?,
-                linear(hidden_size, num_key_value_heads * head_dim, vb.pp("v_proj"))?,
+                linear(
+                    hidden_size,
+                    num_attention_heads * head_dim,
+                    vb.pp(q_proj_pp_name),
+                )?,
+                linear(
+                    hidden_size,
+                    num_key_value_heads * head_dim,
+                    vb.pp(k_proj_pp_name),
+                )?,
+                linear(
+                    hidden_size,
+                    num_key_value_heads * head_dim,
+                    vb.pp(v_proj_pp_name),
+                )?,
                 linear(
                     num_attention_heads * head_dim,
                     hidden_size,
@@ -147,9 +166,21 @@ impl NaiveAttention {
             )
         } else {
             (
-                linear_no_bias(hidden_size, num_attention_heads * head_dim, vb.pp("q_proj"))?,
-                linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("k_proj"))?,
-                linear_no_bias(hidden_size, num_key_value_heads * head_dim, vb.pp("v_proj"))?,
+                linear_no_bias(
+                    hidden_size,
+                    num_attention_heads * head_dim,
+                    vb.pp(q_proj_pp_name),
+                )?,
+                linear_no_bias(
+                    hidden_size,
+                    num_key_value_heads * head_dim,
+                    vb.pp(k_proj_pp_name),
+                )?,
+                linear_no_bias(
+                    hidden_size,
+                    num_key_value_heads * head_dim,
+                    vb.pp(v_proj_pp_name),
+                )?,
                 linear_no_bias(
                     num_attention_heads * head_dim,
                     hidden_size,
@@ -305,6 +336,9 @@ impl NaiveAttnTwoLinearMLPBlock {
             num_key_value_heads,
             head_dim,
             attn_bias,
+            None,
+            None,
+            None,
             o_proj_pp_name,
         )?;
         let mlp = TwoLinearMLP::new(
@@ -386,6 +420,9 @@ impl NaiveAttnGateUpDownMLPBlock {
             num_key_value_heads,
             head_dim,
             attn_bias,
+            None,
+            None,
+            None,
             o_proj_pp_name,
         )?;
         let mlp = GateUpDownMLP::new(
@@ -809,5 +846,48 @@ impl LlamaForCausalLM {
     }
     pub fn clear_kv_cache(&mut self) {
         self.model.clear_kv_cache();
+    }
+}
+
+pub fn conv1d_group_parallel(xs: &Tensor, conv1d: &Conv1d) -> Result<Tensor> {
+    let groups = conv1d.config().groups;
+    let xs = if groups == 1 {
+        xs.conv1d_with_algo(
+            conv1d.weight(),
+            conv1d.config().padding,
+            conv1d.config().stride,
+            conv1d.config().dilation,
+            groups,
+            conv1d.config().cudnn_fwd_algo,
+        )?
+    } else {
+        let blocks = xs.chunk(groups, 1)?;
+        let kernel = conv1d.weight().chunk(groups, 0)?;
+        let blocks = blocks
+            // .iter()
+            .par_iter()
+            .zip(&kernel)
+            .map(|(block, kernel)| {
+                block
+                    .conv1d_with_algo(
+                        kernel,
+                        conv1d.config().padding,
+                        conv1d.config().stride,
+                        conv1d.config().dilation,
+                        1,
+                        conv1d.config().cudnn_fwd_algo,
+                    )
+                    .map_err(|e| anyhow!(format!("tensor conv1d_with_algo error:{}", e)))
+            })
+            .collect::<Result<Vec<Tensor>>>()?;
+        Tensor::cat(&blocks, 1)?
+    };
+    match conv1d.bias() {
+        None => Ok(xs),
+        Some(bias) => {
+            let b = bias.dims1()?;
+            let bias = bias.reshape((1, b, 1))?;
+            Ok(xs.broadcast_add(&bias)?)
+        }
     }
 }

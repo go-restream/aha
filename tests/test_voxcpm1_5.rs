@@ -27,17 +27,17 @@ fn voxcpm1_5_use_message_generate() -> Result<()> {
                         "type": "audio",
                         "audio_url": 
                         {
-                            "url": "https://sis-sample-audio.obs.cn-north-1.myhuaweicloud.com/16k16bit.wav"
+                            "url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"
                         }
                     },              
                     {
                         "type": "text", 
-                        "text": "VoxCPM is an innovative end-to-end TTS model from ModelBest, designed to generate highly realistic speech."
+                        "text": "老大爷我来啦，红红火火恍恍惚惚"
                     }
                 ]
             }
         ],
-        "metadata": {"prompt_text": "华为致力于把数字世界带给每个人，每个家庭，每个组织，构建万物互联的智能世界。"}
+        "metadata": {"prompt_text": "天雷滚滚我好怕怕，劈得我浑身掉渣渣。突破天劫我笑哈哈，逆天改命我吹喇叭，滴答滴答滴滴答"}
     }
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
@@ -72,7 +72,7 @@ fn voxcpm1_5_generate() -> Result<()> {
     let i_start = Instant::now();
     // let generate = voxcpm_generate.generate_simple("太阳当空照，花儿对我笑，小鸟说早早早".to_string())?;
     let generate = voxcpm_generate.inference(
-        "VoxCPM is an innovative end-to-end TTS model from ModelBest, designed to generate highly realistic speech.".to_string(),
+        "老大爷我来啦，红红火火恍恍惚惚".to_string(),
         Some("啥子小师叔，打狗还要看主人，你再要继续，我就是你的对手".to_string()),
         Some("file://./assets/audio/voice_01.wav".to_string()),
         // Some("一定被灰太狼给吃了，我已经为他准备好了花圈了".to_string()),

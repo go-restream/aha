@@ -11,11 +11,8 @@ use crate::{
     chat_template::ChatTemplate,
     models::{
         GenerateModel,
-        qwen3vl::{
-            config::{Qwen3VLConfig, Qwen3VLGenerationConfig},
-            model::Qwen3VLModel,
-            processor::Qwen3VLProcessor,
-        },
+        qwen3::config::Qwen3GenerationConfig,
+        qwen3vl::{config::Qwen3VLConfig, model::Qwen3VLModel, processor::Qwen3VLProcessor},
     },
     tokenizer::TokenizerModel,
     utils::{
@@ -32,7 +29,7 @@ pub struct Qwen3VLGenerateModel<'a> {
     device: Device,
     eos_token_id1: u32,
     eos_token_id2: u32,
-    generation_config: Qwen3VLGenerationConfig,
+    generation_config: Qwen3GenerationConfig,
     model_name: String,
 }
 
@@ -50,7 +47,7 @@ impl<'a> Qwen3VLGenerateModel<'a> {
         let vb = unsafe { VarBuilder::from_mmaped_safetensors(&model_list, dtype, &device)? };
         let qwen3_vl = Qwen3VLModel::new(cfg, vb)?;
         let generation_config_path = path.to_string() + "/generation_config.json";
-        let generation_config: Qwen3VLGenerationConfig =
+        let generation_config: Qwen3GenerationConfig =
             serde_json::from_slice(&std::fs::read(generation_config_path)?)?;
         Ok(Self {
             chat_template,

@@ -36,6 +36,10 @@
     - 模型：[RMBG2.0](https://huggingface.co/briaai/RMBG-2.0) 开源协议：[Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
 * GLM-ASR-Nano-2512 - 智谱AI语音识别模型
     - 模型：[GLM-ASR-Nano-2512](https://huggingface.co/zai-org/GLM-ASR-Nano-2512) 开源协议：[MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md)
+* Fun-ASR-Nano-2512 - 通义百聆语音识别模型
+    - 模型:[Fun-ASR-Nano-2512](https://huggingface.co/FunAudioLLM/Fun-ASR-Nano-2512) 开源协议未标明
+* [Qwen3](https://huggingface.co/collections/Qwen/qwen3) - 通义千问 Qwen3系列语言模型
+    - 模型:[Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) 开源协议: [Apache license 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md)
 
 ## 计划支持
 我们持续扩展支持的模型列表，欢迎贡献！
@@ -106,6 +110,7 @@ cargo run -F cuda -r -- [参数]
     * minicpm4-0.5b：OpenBMB/MiniCPM4-0.5B 模型
     * qwen2.5vl-3b：Qwen/Qwen2.5-VL-3B-Instruct 模型
     * qwen2.5vl-7b：Qwen/Qwen2.5-VL-7B-Instruct 模型
+    * qwen3-0.6b: Qwen/Qwen3-0.6B 模型
     * qwen3vl-2b：Qwen/Qwen3-VL-2B-Instruct 模型
     * qwen3vl-4b：Qwen/Qwen3-VL-4B-Instruct 模型
     * qwen3vl-8b：Qwen/Qwen3-VL-8B-Instruct 模型
@@ -117,6 +122,7 @@ cargo run -F cuda -r -- [参数]
     * voxcpm: OpenBMB/VoxCPM-0.5B 模型
     * voxcpm1.5: OpenBMB/VoxCPM1.5 模型
     * glm-asr-nano-2512: ZhipuAI/GLM-ASR-Nano-2512 模型
+    * fun-asr-nano-2512: FunAudioLLM/Fun-ASR-Nano-2512 模型
 * 示例：--model deepseek-ocr 或 -m qwen3vl-2b
 
 3. 权重路径
@@ -153,7 +159,7 @@ cargo run -F cuda -r -- [参数]
 1. 对话接口
 - **端点**: `POST /chat/completions`
 - **功能**: 多模态对话和文本生成
-- **支持模型**: Qwen2.5VL,Qwen3VL,DeepSeekOCR, GLM-ASR-Nano-2512 等
+- **支持模型**: Qwen2.5VL, Qwen3, Qwen3VL, DeepSeekOCR, GLM-ASR-Nano-2512, Fun-ASR-Nano-2512 等
 - **请求格式**: OpenAI Chat Completion 格式
 - **响应格式**: OpenAI Chat Completion 格式
 - **流式支持**: 支持
@@ -289,6 +295,9 @@ cargo test -F cuda voxcpm_generate -r -- --nocapture
 2. 提交新的 Issue，包含详细描述和复现步骤
 
 ## 更新日志
+### v0.1.8
+* 支持Fun-ASR-Nano-2512, Qwen3 模型
+
 ### v0.1.7
 * 支持GLM-ASR-Nano-2512 模型
 

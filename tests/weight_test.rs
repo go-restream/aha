@@ -152,3 +152,47 @@ fn glm_asr_nano_weight() -> Result<()> {
     println!("model_list: {:?}", model_list);
     Ok(())
 }
+
+#[test]
+fn fun_asr_nano_weight() -> Result<()> {
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/FunAudioLLM/Fun-ASR-Nano-2512/", save_dir);
+    let model_list = find_type_files(&model_path, "pt")?;
+    println!("model_list: {:?}", model_list);
+    // let dev = get_device(None);
+    let mut dict_to_hashmap = HashMap::new();
+    // let mut dtype = candle_core::DType::F32;
+    for m in model_list {
+        let dict = read_all_with_key(m, Some("state_dict"))?;
+        // dtype = dict[0].1.dtype();
+        for (k, v) in dict {
+            if k.contains("model") {
+                println!("key: {}, tensor shape: {:?}", k, v);
+            }
+            dict_to_hashmap.insert(k, v);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn qwen3_weight() -> Result<()> {
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/Qwen/Qwen3-0.6B/", save_dir);
+    let model_list = find_type_files(&model_path, "safetensors")?;
+
+    let device = Device::Cpu;
+    for m in &model_list {
+        let weights = safetensors::load(m, &device)?;
+        for (key, tensor) in weights.iter() {
+            // if key.contains(".embed_tokens") {
+            //     println!("=== {} === {:?}", key, tensor.shape());
+            // }
+            println!("=== {} === {:?}", key, tensor.shape());
+        }
+    }
+    println!("model_list: {:?}", model_list);
+    Ok(())
+}
