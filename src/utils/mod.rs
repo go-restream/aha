@@ -4,7 +4,7 @@ pub mod tensor_utils;
 pub mod video_utils;
 
 use std::io::Read;
-use std::{collections::HashMap, fs, process::Command, time::Duration};
+use std::{collections::HashMap, fs, path::PathBuf, process::Command, time::Duration};
 
 use aha_openai_dive::v1::resources::{
     chat::{
@@ -757,4 +757,18 @@ pub async fn download_model(
             }
         }
     }
+}
+
+pub fn get_file_path(file: &str) -> Result<PathBuf> {
+    let path = url::Url::parse(file)?;
+    let path = path.to_file_path();
+    let path = match path {
+        Ok(path) => path,
+        Err(_) => {
+            let mut path = file.to_owned();
+            path = path.split_off(7);
+            PathBuf::from(path)
+        }
+    };
+    Ok(path)
 }
