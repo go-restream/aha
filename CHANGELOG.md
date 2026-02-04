@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased] - 2025-02-04
+
+### Added
+- Support for Qwen3-ASR model
 
 ## [Unreleased]
 

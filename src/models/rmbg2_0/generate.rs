@@ -49,7 +49,7 @@ impl RMBG2_0Model {
             img_std,
             device,
             dtype,
-            model_name: "RMBG2.0".to_string(),
+            model_name: "rmbg2.0".to_string(),
         })
     }
 

@@ -130,7 +130,7 @@ cargo run -F cuda -r -- [参数]
     * deepseek-ocr: deepseek-ai/DeepSeek-OCR 模型
     * hunyuan-ocr: Tencent-Hunyuan/HunyuanOCR 模型
     * paddleocr-vl: PaddlePaddle/PaddleOCR-VL 模型
-    * RMBG2.0: AI-ModelScope/RMBG-2.0 模型
+    * rmbg2.0: AI-ModelScope/RMBG-2.0 模型
     * voxcpm: OpenBMB/VoxCPM-0.5B 模型
     * voxcpm1.5: OpenBMB/VoxCPM1.5 模型
     * glm-asr-nano-2512: ZhipuAI/GLM-ASR-Nano-2512 模型

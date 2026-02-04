@@ -3,7 +3,8 @@ pub mod img_utils;
 pub mod tensor_utils;
 pub mod video_utils;
 
-use std::{fs, path::PathBuf, process::Command};
+use std::io::Read;
+use std::{collections::HashMap, fs, path::PathBuf, process::Command, time::Duration};
 
 use aha_openai_dive::v1::resources::{
     chat::{
@@ -14,10 +15,18 @@ use aha_openai_dive::v1::resources::{
     },
     shared::{FinishReason, Usage},
 };
-use anyhow::Result;
-use candle_core::{DType, Device};
+use anyhow::{Result, anyhow};
+use byteorder::{LittleEndian, ReadBytesExt};
+use candle_core::{
+    Context, DType, Device, Shape, Tensor,
+    pickle::{Object, Stack, TensorInfo, read_all_with_key},
+};
+use candle_nn::VarBuilder;
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use dirs::home_dir;
+use half::{bf16, f16, slice::HalfFloatSliceExt};
+use modelscope::ModelScope;
+use tokio::time::sleep;
 
 pub fn get_device(device: Option<&Device>) -> Device {
     match device {
@@ -126,6 +135,228 @@ pub fn find_type_files(path: &str, extension_type: &str) -> Result<Vec<String>> 
     }
 
     Ok(files)
+}
+
+pub fn get_vb_model_path(
+    model_path: String,
+    dtype: DType,
+    device: Device,
+    key: Option<&'_ str>,
+) -> Result<VarBuilder<'_>> {
+    let mut dict_to_hashmap = HashMap::new();
+    let dict = read_all_with_key(&model_path, key)?;
+    for (k, v) in dict {
+        dict_to_hashmap.insert(k, v);
+    }
+    let vb = VarBuilder::from_tensors(dict_to_hashmap, dtype, &device);
+    Ok(vb)
+}
+
+pub fn get_vb_extension(
+    path: String,
+    extension_type: String,
+    dtype: DType,
+    device: Device,
+    key: Option<&'_ str>,
+) -> Result<VarBuilder<'_>> {
+    let model_list = find_type_files(&path, &extension_type)?;
+    let mut dict_to_hashmap = HashMap::new();
+    for m in model_list {
+        let dict = read_all_with_key(m, key)?;
+        for (k, v) in dict {
+            dict_to_hashmap.insert(k, v);
+        }
+    }
+    let vb = VarBuilder::from_tensors(dict_to_hashmap, dtype, &device);
+    Ok(vb)
+}
+
+pub fn crate_tensor_from_reader<R: std::io::Read>(
+    shape: Shape,
+    dtype: DType,
+    reader: &mut R,
+) -> Result<Tensor> {
+    let elem_count = shape.elem_count();
+    match dtype {
+        DType::BF16 => {
+            let mut data_t = vec![bf16::ZERO; elem_count];
+            reader.read_u16_into::<LittleEndian>(data_t.reinterpret_cast_mut())?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::F16 => {
+            let mut data_t = vec![f16::ZERO; elem_count];
+            reader.read_u16_into::<LittleEndian>(data_t.reinterpret_cast_mut())?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::F32 => {
+            let mut data_t = vec![0f32; elem_count];
+            reader.read_f32_into::<LittleEndian>(&mut data_t)?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::F64 => {
+            let mut data_t = vec![0f64; elem_count];
+            reader.read_f64_into::<LittleEndian>(&mut data_t)?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::U8 => {
+            let mut data_t = vec![0u8; elem_count];
+            reader.read_exact(&mut data_t)?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::U32 => {
+            let mut data_t = vec![0u32; elem_count];
+            reader.read_u32_into::<LittleEndian>(&mut data_t)?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+        DType::I64 => {
+            let mut data_t = vec![0i64; elem_count];
+            reader.read_i64_into::<LittleEndian>(&mut data_t)?;
+            Ok(Tensor::from_vec(data_t, shape, &Device::Cpu)?)
+        }
+    }
+}
+
+pub fn read_pth_tensor_info_cycle<P: AsRef<std::path::Path>>(
+    path: P,
+    key: Option<&str>,
+) -> Result<Vec<(String, Tensor)>> {
+    let file = std::fs::File::open(path.as_ref())?;
+    let zip_reader = std::io::BufReader::new(file);
+    let mut zip = zip::ZipArchive::new(zip_reader)?;
+    let zip_file_names = zip
+        .file_names()
+        .map(|f| f.to_string())
+        .collect::<Vec<String>>();
+
+    let mut tensor_infos = vec![];
+    for file_name in zip_file_names.iter() {
+        if !file_name.ends_with("data.pkl") {
+            continue;
+        }
+        let dir_name = std::path::PathBuf::from(file_name.strip_suffix(".pkl").context("no .pkl")?);
+        let reader = zip.by_name(file_name)?;
+        let mut reader = std::io::BufReader::new(reader);
+        let mut stack = Stack::empty();
+        stack.read_loop(&mut reader)?;
+        let obj = stack.finalize()?;
+
+        let obj = match obj {
+            Object::Build { callable, args } => match *callable {
+                Object::Reduce { callable, args: _ } => match *callable {
+                    Object::Class {
+                        module_name,
+                        class_name,
+                    } if module_name == "__torch__" && class_name == "Module" => *args,
+                    _ => continue,
+                },
+                _ => continue,
+            },
+            obj => obj,
+        };
+
+        // If key is provided, then we need to extract the state_dict from the object.
+        let obj = if let Some(key) = key {
+            let multi_key: Vec<&str> = key.split(".").collect();
+            if multi_key.len() > 1 {
+                let mut current_obj = obj;
+                for k in multi_key.iter() {
+                    if let Object::Dict(key_values) = current_obj {
+                        current_obj = key_values
+                            .into_iter()
+                            .find(|(key_obj, _)| *key_obj == Object::Unicode(k.to_string()))
+                            .map(|(_, v)| v)
+                            .ok_or_else(|| anyhow!(format!("key '{}' not found", k)))?;
+                    } else {
+                        return Err(anyhow!(format!(
+                            "Expected dictionary at key '{}', but found other type",
+                            k
+                        )));
+                    }
+                }
+                current_obj
+            } else {
+                if let Object::Dict(key_values) = obj {
+                    key_values
+                        .into_iter()
+                        .find(|(k, _)| *k == Object::Unicode(key.to_owned()))
+                        .map(|(_, v)| v)
+                        .ok_or_else(|| anyhow!(format!("key {key} not found")))?
+                } else {
+                    obj
+                }
+            }
+        } else {
+            obj
+        };
+
+        // If the object is a dict, then we can extract the tensor info from it.
+        // NOTE: We are assuming that the `obj` is state_dict by this stage.
+        if let Object::Dict(key_values) = obj {
+            for (name, value) in key_values.into_iter() {
+                match value.into_tensor_info(name, &dir_name) {
+                    Ok(Some(tensor_info)) => tensor_infos.push(tensor_info),
+                    Ok(None) => {}
+                    Err(err) => eprintln!("skipping: {err:?}"),
+                }
+            }
+        }
+    }
+    let tensor_infos: HashMap<String, TensorInfo> = tensor_infos
+        .into_iter()
+        .map(|ti| (ti.name.to_string(), ti))
+        .collect();
+
+    let tensor_names = tensor_infos.keys();
+    let mut tensors = Vec::with_capacity(tensor_names.len());
+    for name in tensor_names {
+        let _ = match tensor_infos.get(name) {
+            None => {}
+            Some(tensor_info) => {
+                let zip_reader = std::io::BufReader::new(std::fs::File::open(&path)?);
+                let mut zip = zip::ZipArchive::new(zip_reader)?;
+                let mut reader = zip.by_name(&tensor_info.path)?;
+                let is_fortran_contiguous = tensor_info.layout.is_fortran_contiguous();
+                let rank = tensor_info.layout.shape().rank();
+
+                // Reading the data is a bit tricky as it can be strided, for now only support the basic
+                // case and when the tensor is fortran contiguous.
+                if !tensor_info.layout.is_contiguous() && !is_fortran_contiguous {
+                    return Err(anyhow!(format!(
+                        "cannot retrieve non-contiguous tensors {:?}",
+                        tensor_info.layout
+                    )));
+                }
+                let start_offset = tensor_info.layout.start_offset();
+                if start_offset > 0 {
+                    std::io::copy(
+                        &mut reader.by_ref().take(start_offset as u64),
+                        &mut std::io::sink(),
+                    )?;
+                }
+                let tensor = crate_tensor_from_reader(
+                    tensor_info.layout.shape().clone(),
+                    tensor_info.dtype,
+                    &mut reader,
+                )?;
+
+                if rank > 1 && is_fortran_contiguous {
+                    // Reverse the shape, e.g. Shape(2, 3, 4) -> Shape(4, 3, 2)
+                    let shape_reversed: Vec<_> =
+                        tensor_info.layout.dims().iter().rev().cloned().collect();
+                    let tensor = tensor.reshape(shape_reversed)?;
+
+                    // Permute (transpose) the dimensions, e.g. Shape(4, 3, 2) -> Shape(2, 3, 4)
+                    let dim_indeces_reversed: Vec<_> = (0..rank).rev().collect();
+                    let tensor = tensor.permute(dim_indeces_reversed)?;
+                    // Ok(Some(tensor))
+                    tensors.push((name.clone(), tensor));
+                } else {
+                    tensors.push((name.clone(), tensor));
+                }
+            }
+        };
+    }
+    Ok(tensors)
 }
 
 pub fn round_by_factor(num: u32, factor: u32) -> u32 {
@@ -481,6 +712,25 @@ pub fn extract_user_text(mes: &ChatCompletionParameters) -> Result<String> {
     Ok(ret)
 }
 
+pub fn extract_user_text_vec(mes: &ChatCompletionParameters) -> Result<Vec<String>> {
+    let mut ret = vec![];
+    for chat_mes in mes.messages.clone() {
+        if let ChatMessage::User { content, .. } = chat_mes.clone()
+            && let ChatMessageContent::ContentPart(part_vec) = content
+        {
+            for part in part_vec {
+                if let ChatMessageContentPart::Text(text_part) = part {
+                    let text = text_part.text;
+                    if text.chars().count() > 0 {
+                        ret.push(text);
+                    }
+                }
+            }
+        }
+    }
+    Ok(ret)
+}
+
 pub fn get_default_save_dir() -> Option<String> {
     home_dir().map(|mut path| {
         path.push(".aha");
@@ -489,6 +739,43 @@ pub fn get_default_save_dir() -> Option<String> {
         }
         path.to_string_lossy().to_string()
     })
+}
+
+pub async fn download_model(
+    model_id: &str,
+    save_dir: &str,
+    max_retries: u32,
+) -> anyhow::Result<()> {
+    let mut attempts = 0u32;
+    loop {
+        attempts += 1;
+        println!(
+            "Attempting to download model (attempt {}/{})",
+            attempts, max_retries
+        );
+
+        match ModelScope::download(model_id, save_dir).await {
+            Ok(()) => {
+                println!("Model downloaded successfully");
+                return Ok(());
+            }
+            Err(e) => {
+                if attempts >= max_retries {
+                    return Err(anyhow::anyhow!(
+                        "Failed to download model after {} attempts. Last error: {}",
+                        max_retries,
+                        e
+                    ));
+                }
+
+                println!(
+                    "Download failed (attempt {}): {}. Retrying in 2 seconds...",
+                    attempts, e
+                );
+                sleep(Duration::from_secs(2)).await;
+            }
+        }
+    }
 }
 
 pub fn get_file_path(file: &str) -> Result<PathBuf> {
@@ -503,4 +790,15 @@ pub fn get_file_path(file: &str) -> Result<PathBuf> {
         }
     };
     Ok(path)
+}
+
+pub fn capitalize_first_letter(input: &str) -> String {
+    if input.is_empty() {
+        return input.to_string();
+    }
+
+    let mut chars = input.chars();
+    let first_char = chars.next().unwrap().to_uppercase().collect::<String>();
+    let remaining = chars.as_str().to_lowercase();
+    format!("{}{}", first_char, remaining)
 }

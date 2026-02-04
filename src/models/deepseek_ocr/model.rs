@@ -875,6 +875,9 @@ impl DeepseekV2MoE {
                 config.moe_intermediate_size,
                 Activation::Silu,
                 false,
+                None,
+                None,
+                None,
             )?;
             experts.push(mlp);
         }
@@ -885,6 +888,9 @@ impl DeepseekV2MoE {
             config.moe_intermediate_size * config.n_shared_experts,
             Activation::Silu,
             false,
+            None,
+            None,
+            None,
         )?;
         Ok(Self {
             // num_experts_per_tok: config.num_experts_per_tok,
@@ -998,6 +1004,9 @@ impl DeepseekV2DecoderLayer {
                 config.intermediate_size,
                 Activation::Silu,
                 false,
+                None,
+                None,
+                None,
             )?)
         };
         let input_layernorm = rms_norm(

@@ -180,6 +180,9 @@ impl Qwen2_5VLVisionBlock {
             cfg.vision_config.intermediate_size,
             cfg.vision_config.hidden_act,
             true,
+            None,
+            None,
+            None,
         )?;
         let norm1 = rms_norm(
             cfg.vision_config.hidden_size,
@@ -616,6 +619,9 @@ impl Qwen2_5VLTextDecoderLayer {
             cfg.intermediate_size,
             cfg.hidden_act,
             false,
+            None,
+            None,
+            None,
         )?;
         let input_layernorm =
             rms_norm(cfg.hidden_size, cfg.rms_norm_eps, vb.pp("input_layernorm"))?;

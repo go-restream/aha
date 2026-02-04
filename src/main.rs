@@ -1,14 +1,15 @@
-use std::{net::IpAddr, str::FromStr, time::Duration};
+use std::{net::IpAddr, str::FromStr};
 
-use aha::{models::WhichModel, utils::get_default_save_dir};
+use aha::{
+    models::WhichModel,
+    utils::{download_model, get_default_save_dir},
+};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use modelscope::ModelScope;
 use rocket::{
     Config,
     data::{ByteUnit, Limits},
     routes,
 };
-use tokio::time::sleep;
 
 use crate::api::init;
 mod api;
@@ -141,39 +142,6 @@ struct RunArgs {
     weight_path: String,
 }
 
-async fn download_model(model_id: &str, save_dir: &str, max_retries: u32) -> anyhow::Result<()> {
-    let mut attempts = 0u32;
-    loop {
-        attempts += 1;
-        println!(
-            "Attempting to download model (attempt {}/{})",
-            attempts, max_retries
-        );
-
-        match ModelScope::download(model_id, save_dir).await {
-            Ok(()) => {
-                println!("Model downloaded successfully");
-                return Ok(());
-            }
-            Err(e) => {
-                if attempts >= max_retries {
-                    return Err(anyhow::anyhow!(
-                        "Failed to download model after {} attempts. Last error: {}",
-                        max_retries,
-                        e
-                    ));
-                }
-
-                println!(
-                    "Download failed (attempt {}): {}. Retrying in 2 seconds...",
-                    attempts, e
-                );
-                sleep(Duration::from_secs(2)).await;
-            }
-        }
-    }
-}
-
 /// Get the ModelScope model ID for a given WhichModel variant
 fn get_model_id(model: WhichModel) -> &'static str {
     match model {
@@ -181,6 +149,8 @@ fn get_model_id(model: WhichModel) -> &'static str {
         WhichModel::Qwen2_5vl3B => "Qwen/Qwen2.5-VL-3B-Instruct",
         WhichModel::Qwen2_5vl7B => "Qwen/Qwen2.5-VL-7B-Instruct",
         WhichModel::Qwen3_0_6B => "Qwen/Qwen3-0.6B",
+        WhichModel::Qwen3ASR0_6B => "Qwen/Qwen3-ASR-0.6B",
+        WhichModel::Qwen3ASR1_7B => "Qwen/Qwen3-ASR-1.7B",
         WhichModel::Qwen3vl2B => "Qwen/Qwen3-VL-2B-Instruct",
         WhichModel::Qwen3vl4B => "Qwen/Qwen3-VL-4B-Instruct",
         WhichModel::Qwen3vl8B => "Qwen/Qwen3-VL-8B-Instruct",
@@ -203,6 +173,8 @@ fn run_list() -> anyhow::Result<()> {
         WhichModel::Qwen2_5vl3B,
         WhichModel::Qwen2_5vl7B,
         WhichModel::Qwen3_0_6B,
+        WhichModel::Qwen3ASR0_6B,
+        WhichModel::Qwen3ASR1_7B,
         WhichModel::Qwen3vl2B,
         WhichModel::Qwen3vl4B,
         WhichModel::Qwen3vl8B,
@@ -320,6 +292,14 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
         WhichModel::Qwen3_0_6B => {
             use aha::exec::qwen3::Qwen3Exec;
             Qwen3Exec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::Qwen3ASR0_6B => {
+            use aha::exec::qwen3_asr::Qwen3ASRExec;
+            Qwen3ASRExec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::Qwen3ASR1_7B => {
+            use aha::exec::qwen3_asr::Qwen3ASRExec;
+            Qwen3ASRExec::run(&input, output.as_deref(), &weight_path)?;
         }
         WhichModel::Qwen3vl2B => {
             use aha::exec::qwen3vl::Qwen3vlExec;

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use candle_core::{D, DType, Device, IndexOp, Tensor};
 use candle_transformers::models::deepseek2::SplitOp;
 
@@ -158,6 +158,68 @@ pub fn glm_asr_apply_rotary_pos_emb(
     Ok((q_embed, k_embed))
 }
 
+pub fn roformer_rotate(x: &Tensor) -> Result<Tensor> {
+    let dims = x.dims();
+    let last_dim = dims
+        .last()
+        .ok_or(anyhow!("Input tensor must have at least one dimension"))?;
+    if last_dim % 2 != 0 {
+        return Err(anyhow!(
+            "Last dimension size must be even, got {}",
+            last_dim
+        ));
+    }
+    let new_dims: Vec<usize> = dims[..dims.len() - 1]
+        .iter()
+        .copied()
+        .chain([last_dim / 2, 2])
+        .collect();
+    let x_reshape = x.reshape(new_dims)?;
+    let x_chunks = x_reshape.chunk(2, D::Minus1)?;
+    let x1 = &x_chunks[0];
+    let x2 = &x_chunks[1];
+    // let x1 = x_reshape.narrow(D::Minus1, 0, 1)?;
+    // let x2 = x_reshape.narrow(D::Minus1, 1, 1)?;
+    let x2_neg = x2.affine(-1.0, 0.0)?;
+    let rotate_x = Tensor::cat(&[&x2_neg, x1], D::Minus1)?;
+    Ok(rotate_x.flatten(D::Minus2, D::Minus1)?)
+}
+
+pub fn apply_rotary_pos_emb_roformer(
+    q: &Tensor,
+    k: &Tensor,
+    cos: &Tensor,
+    sin: &Tensor,
+    tof32: bool,
+) -> Result<(Tensor, Tensor)> {
+    let mut cos = cos.clone();
+    let mut sin = sin.clone();
+    if cos.rank() == 2 {
+        // (seq_len, head_dim) -> (1, 1, seq_len, head_dim)
+        cos = cos.unsqueeze(0)?.unsqueeze(0)?;
+        sin = sin.unsqueeze(0)?.unsqueeze(0)?;
+    }
+    if cos.rank() == 3 {
+        // (bs, seq_len, head_dim) -> (bs, 1, seq_len, head_dim)
+        cos = cos.unsqueeze(1)?;
+        sin = sin.unsqueeze(1)?;
+    }
+    let orig_dtype = q.dtype();
+    let q = if tof32 { &q.to_dtype(DType::F32)? } else { q };
+    let k = if tof32 { &k.to_dtype(DType::F32)? } else { k };
+    let cos = cos.to_dtype(q.dtype())?;
+    let sin = sin.to_dtype(q.dtype())?;
+    let q_embed = q
+        .broadcast_mul(&cos)?
+        .add(&roformer_rotate(q)?.broadcast_mul(&sin)?)?
+        .to_dtype(orig_dtype)?;
+    let k_embed = k
+        .broadcast_mul(&cos)?
+        .add(&roformer_rotate(k)?.broadcast_mul(&sin)?)?
+        .to_dtype(orig_dtype)?;
+    Ok((q_embed, k_embed))
+}
+
 #[derive(Debug, Clone)]
 pub struct Qwen2_5VLTextRotaryEmbedding {
     inv_freq: Vec<f32>,
@@ -278,6 +340,70 @@ impl Qwen3VLTextRotaryEmbedding {
         }
         Ok(freqs_t)
     }
+
+    pub fn apply_interleaved_mrope_asr(
+        &self,
+        freqs: &Tensor,
+        mrope_section: Vec<usize>,
+    ) -> Result<Tensor> {
+        let mut freqs_t = freqs.i(0)?.contiguous()?; //(3, bs, seq_len, head_dim //2) -> (bs, seq_len, head_dim //2)
+
+        // for dim in 1..3 {
+        for (dim, offset) in (1..3).enumerate() {
+            let dim = dim +1;
+            let length = mrope_section[dim];
+            let idx = Tensor::arange_step(offset as u32, length as u32, 3, freqs.device())?;
+            let src = freqs.i(dim)?.contiguous()?; // (bs, seq_len, head_dim //2)
+            let src = src.index_select(&idx, D::Minus1)?.contiguous()?;
+            let idx = idx
+                .unsqueeze(0)?
+                .unsqueeze(0)?
+                .broadcast_as(src.shape())?
+                .contiguous()?;
+            freqs_t = freqs_t.scatter(&idx, &src, D::Minus1)?;
+        }
+        Ok(freqs_t)
+    }
+
+    pub fn forward_asr(
+        &self,
+        position_ids: &Tensor,
+        dtype: DType,
+        mrope_section: Vec<usize>,
+    ) -> Result<(Tensor, Tensor)> {
+        // position_ids shape: (3, bs, position) -> (3, bs, 1, position)
+        let position_ids = if position_ids.rank() == 2 {
+            let (bs, len) = position_ids.dims2()?;
+            position_ids.unsqueeze(0)?.expand((3, bs, len))?
+        } else {
+            position_ids.clone()
+        };
+        let position_ids_expanded = position_ids
+            .unsqueeze(D::Minus2)?
+            .to_dtype(DType::F32)?
+            .contiguous()?;
+        // inv_freq Vec<f32> -> Tensor(1, 1, head_dim / 2, 1) -> (3, bs, head_dim / 2, 1)
+        let inv_freq_expanded = Tensor::from_vec(
+            self.inv_freq.clone(),
+            (1, 1, self.inv_freq.len(), 1),
+            position_ids.device(),
+        )?
+        .broadcast_as((3, position_ids.dim(1)?, self.inv_freq.len(), 1))?
+        .to_dtype(DType::F32)?
+        .contiguous()?;
+
+        // (3, bs, head_dim / 2, 1) matmul (3, bs, 1, position)
+        //    -> (3, bs, head_dim / 2, seq_len) -> (3, bs, seq_len, head_dim / 2)
+        let freqs = inv_freq_expanded
+            .matmul(&position_ids_expanded)?
+            .transpose(2, 3)?;
+        let freqs = self.apply_interleaved_mrope_asr(&freqs, mrope_section)?;
+        let emb = Tensor::cat(&[&freqs, &freqs], D::Minus1)?.contiguous()?;
+        let cos = emb.cos()?;
+        let sin = emb.sin()?;
+        Ok((cos.to_dtype(dtype)?, sin.to_dtype(dtype)?))
+    }
+
     pub fn forward(
         &self,
         position_ids: &Tensor,

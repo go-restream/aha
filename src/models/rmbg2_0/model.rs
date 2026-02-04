@@ -7,7 +7,8 @@ use candle_nn::{
 
 use crate::{
     models::common::{
-        TwoLinearMLP, deform_conv2d_kernel, get_batch_norm, get_conv2d, get_layer_norm,
+        Conv2dWithBN, TwoLinearMLP, deform_conv2d_kernel, get_batch_norm, get_conv2d,
+        get_layer_norm,
     },
     utils::tensor_utils::{
         get_equal_mask, index_select_2d, interpolate_bilinear, split_tensor_with_size,
@@ -891,7 +892,7 @@ impl _ASPPModuleDeformable {
             padding,
             false,
         )?;
-        let bn = get_batch_norm(vb.pp("bn"), 1e-5, out_c)?;
+        let bn = get_batch_norm(vb.pp("bn"), 1e-5, out_c, true)?;
         Ok(Self { atrous_conv, bn })
     }
 
@@ -957,7 +958,8 @@ impl ASPPDeformable {
             1,
             false,
         )?;
-        let global_avg_pool_2 = get_batch_norm(vb.pp("global_avg_pool.2"), 1e-5, in_channelster)?;
+        let global_avg_pool_2 =
+            get_batch_norm(vb.pp("global_avg_pool.2"), 1e-5, in_channelster, true)?;
         let conv1 = get_conv2d(
             vb.pp("conv1"),
             in_channelster * (2 + parallel_block_sizes.len()),
@@ -969,7 +971,7 @@ impl ASPPDeformable {
             1,
             false,
         )?;
-        let bn1 = get_batch_norm(vb.pp("bn1"), 1e-5, out_c)?;
+        let bn1 = get_batch_norm(vb.pp("bn1"), 1e-5, out_c, true)?;
         Ok(Self {
             aspp1,
             aspp_deforms_0,
@@ -1031,8 +1033,8 @@ impl BasicDecBlk {
             1,
             true,
         )?;
-        let bn_in = get_batch_norm(vb.pp("bn_in"), 1e-5, inter_channels)?;
-        let bn_out = get_batch_norm(vb.pp("bn_out"), 1e-5, out_c)?;
+        let bn_in = get_batch_norm(vb.pp("bn_in"), 1e-5, inter_channels, true)?;
+        let bn_out = get_batch_norm(vb.pp("bn_out"), 1e-5, out_c, true)?;
         Ok(Self {
             conv_in,
             dec_att,
@@ -1068,32 +1070,6 @@ impl SimpleConvs {
     pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
         let x = self.conv1.forward(x)?;
         let x = self.conv_out.forward(&x)?;
-        Ok(x)
-    }
-}
-
-struct Conv2dWithBN {
-    conv_0: Conv2d,
-    bn_1: BatchNorm,
-}
-
-impl Conv2dWithBN {
-    pub fn new(
-        vb: VarBuilder,
-        in_c: usize,
-        out_c: usize,
-        ks: usize,
-        padding: usize,
-        stride: usize,
-    ) -> Result<Self> {
-        let conv_0 = get_conv2d(vb.pp("0"), in_c, out_c, ks, padding, stride, 1, 1, true)?;
-        let bn_1 = get_batch_norm(vb.pp("1"), 1e-5, out_c)?;
-        Ok(Self { conv_0, bn_1 })
-    }
-
-    pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
-        let x = self.conv_0.forward(x)?;
-        let x = self.bn_1.forward_t(&x, false)?.relu()?;
         Ok(x)
     }
 }
@@ -1207,9 +1183,12 @@ impl Decoder {
         // let conv_ms_spvn_2 =
         //     get_conv2d(vb.pp("conv_ms_spvn_2"), channels[3], 1, 1, 0, 1, 1, 1, true)?;
         let n = 16usize;
-        let gdt_convs_4 = Conv2dWithBN::new(vb.pp("gdt_convs_4"), channels[1], n, 3, 1, 1)?;
-        let gdt_convs_3 = Conv2dWithBN::new(vb.pp("gdt_convs_3"), channels[2], n, 3, 1, 1)?;
-        let gdt_convs_2 = Conv2dWithBN::new(vb.pp("gdt_convs_2"), channels[3], n, 3, 1, 1)?;
+        let gdt_convs_4 =
+            Conv2dWithBN::new(vb.pp("gdt_convs_4"), channels[1], n, 3, 1, 1, true, true)?;
+        let gdt_convs_3 =
+            Conv2dWithBN::new(vb.pp("gdt_convs_3"), channels[2], n, 3, 1, 1, true, true)?;
+        let gdt_convs_2 =
+            Conv2dWithBN::new(vb.pp("gdt_convs_2"), channels[3], n, 3, 1, 1, true, true)?;
 
         let gdt_convs_attn_4 = get_conv2d(vb.pp("gdt_convs_attn_4.0"), n, 1, 1, 0, 1, 1, 1, true)?;
         let gdt_convs_attn_3 = get_conv2d(vb.pp("gdt_convs_attn_3.0"), n, 1, 1, 0, 1, 1, 1, true)?;

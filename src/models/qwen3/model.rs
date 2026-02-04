@@ -150,6 +150,9 @@ impl Qwen3DecoderLayer {
             config.intermediate_size,
             config.hidden_act,
             false,
+            None,
+            None,
+            None,
         )?;
         let input_layernorm = rms_norm(
             config.hidden_size,

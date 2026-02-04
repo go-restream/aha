@@ -1,15 +1,15 @@
 use anyhow::{Result, anyhow};
-use candle_core::{D, Tensor};
+use candle_core::{D, IndexOp, Tensor};
 use candle_nn::{
-    Activation, BatchNorm, BatchNormConfig, Conv1d, Conv1dConfig, Conv2d, Conv2dConfig, Embedding,
-    LayerNorm, LayerNormConfig, Linear, Module, RmsNorm, VarBuilder, batch_norm, conv1d,
-    conv1d_no_bias, conv2d, conv2d_no_bias, embedding, layer_norm, linear_b, linear_no_bias,
-    rms_norm,
+    Activation, BatchNorm, BatchNormConfig, Conv1d, Conv1dConfig, Conv2d, Conv2dConfig,
+    ConvTranspose1d, ConvTranspose1dConfig, Embedding, LayerNorm, LayerNormConfig, Linear, Module,
+    ModuleT, RmsNorm, VarBuilder, batch_norm, conv1d, conv1d_no_bias, conv2d, conv2d_no_bias,
+    embedding, layer_norm, linear_b, linear_no_bias, ops::sigmoid, rms_norm,
 };
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    position_embed::rope::{RoPE, apply_rotary_pos_emb},
+    position_embed::rope::{RoPE, apply_rotary_pos_emb, apply_rotary_pos_emb_roformer},
     utils::tensor_utils::{prepare_causal_attention_mask, repeat_kv},
 };
 
@@ -28,10 +28,16 @@ impl GateUpDownMLP {
         intermediate_size: usize,
         act_fn: Activation,
         bias: bool,
+        gate_pp_name: Option<&str>,
+        up_pp_name: Option<&str>,
+        down_pp_name: Option<&str>,
     ) -> Result<Self> {
-        let gate_proj = linear_b(hidden_size, intermediate_size, bias, vb.pp("gate_proj"))?;
-        let up_proj = linear_b(hidden_size, intermediate_size, bias, vb.pp("up_proj"))?;
-        let down_proj = linear_b(intermediate_size, hidden_size, bias, vb.pp("down_proj"))?;
+        let gate_pp_name = gate_pp_name.unwrap_or("gate_proj");
+        let up_pp_name = up_pp_name.unwrap_or("up_proj");
+        let down_pp_name = down_pp_name.unwrap_or("down_proj");
+        let gate_proj = linear_b(hidden_size, intermediate_size, bias, vb.pp(gate_pp_name))?;
+        let up_proj = linear_b(hidden_size, intermediate_size, bias, vb.pp(up_pp_name))?;
+        let down_proj = linear_b(intermediate_size, hidden_size, bias, vb.pp(down_pp_name))?;
         Ok(Self {
             gate_proj,
             up_proj,
@@ -87,7 +93,6 @@ impl TwoLinearMLP {
 }
 
 #[derive(Debug, Clone)]
-// pub struct AttentionNobias {
 pub struct NaiveAttention {
     q_proj: Linear,
     k_proj: Linear,
@@ -257,6 +262,154 @@ impl NaiveAttention {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct QKVCatAttention {
+    qkv_proj: Linear,
+    o_proj: Linear,
+    num_heads: usize,
+    head_dim: usize,
+    middle_size: usize,
+    kv_cache: Option<(Tensor, Tensor)>,
+}
+
+impl QKVCatAttention {
+    pub fn new(
+        vb: VarBuilder,
+        hidden_size: usize,
+        num_attention_heads: usize,
+        head_dim: Option<usize>,
+        bias: bool,
+        qkv_proj_pp_name: Option<&str>,
+        o_proj_pp_name: Option<&str>,
+    ) -> Result<Self> {
+        let head_dim = match head_dim {
+            None => hidden_size / num_attention_heads,
+            Some(dim) => dim,
+        };
+        let qkv_proj_pp_name = qkv_proj_pp_name.unwrap_or("wqkv");
+        let o_proj_pp_name = o_proj_pp_name.unwrap_or("o_proj");
+        let qkv_proj = linear_b(
+            hidden_size,
+            3 * num_attention_heads * head_dim,
+            bias,
+            vb.pp(qkv_proj_pp_name),
+        )?;
+        let o_proj = linear_b(
+            num_attention_heads * head_dim,
+            hidden_size,
+            bias,
+            vb.pp(o_proj_pp_name),
+        )?;
+
+        Ok(Self {
+            qkv_proj,
+            o_proj,
+            num_heads: num_attention_heads,
+            head_dim,
+            middle_size: num_attention_heads * head_dim,
+            kv_cache: None,
+        })
+    }
+
+    pub fn forward(
+        &self,
+        xs: &Tensor,
+        cos: Option<&Tensor>,
+        sin: Option<&Tensor>,
+        attention_mask: Option<&Tensor>,
+        tof32: bool,
+        use_roformer: bool,
+    ) -> Result<Tensor> {
+        let (b, q_len, _) = xs.dims3()?;
+        // (3, B, n_head, seq_len, head_dim)
+        let qkv = self
+            .qkv_proj
+            .forward(xs)?
+            .reshape((b, q_len, 3, self.num_heads, ()))?
+            .permute((2, 0, 3, 1, 4))?
+            .contiguous()?;
+        let query_states = qkv.i(0)?.contiguous()?;
+        let key_states = qkv.i(1)?.contiguous()?;
+        let value_states = qkv.i(2)?.contiguous()?;
+        let (query_states, key_states) = if let Some(cos) = cos
+            && let Some(sin) = sin
+        {
+            if use_roformer {
+                apply_rotary_pos_emb_roformer(&query_states, &key_states, cos, sin, tof32)?
+            } else {
+                apply_rotary_pos_emb(&query_states, &key_states, cos, sin, tof32)?
+            }
+        } else {
+            (query_states, key_states)
+        };
+
+        let scale = 1f64 / f64::sqrt(self.head_dim as f64);
+        let attn_output = eager_attention_forward(
+            &query_states,
+            &key_states,
+            &value_states,
+            None,
+            attention_mask,
+            scale,
+        )?;
+        let attn_output = attn_output.reshape((b, q_len, self.middle_size))?;
+        let attn_output = attn_output.apply(&self.o_proj)?;
+        Ok(attn_output)
+    }
+
+    pub fn forward_with_cache(
+        &mut self,
+        xs: &Tensor,
+        cos: &Tensor,
+        sin: &Tensor,
+        attention_mask: Option<&Tensor>,
+        tof32: bool,
+        use_roformer: bool,
+    ) -> Result<Tensor> {
+        let (b, q_len, _) = xs.dims3()?;
+        let qkv = self
+            .qkv_proj
+            .forward(xs)?
+            .reshape((b, q_len, 3, self.num_heads, ()))?
+            .permute((2, 0, 3, 1, 4))?
+            .contiguous()?;
+        let query_states = qkv.i(0)?.contiguous()?;
+        let key_states = qkv.i(1)?.contiguous()?;
+        let value_states = qkv.i(2)?.contiguous()?;
+        let (query_states, key_states) = if use_roformer {
+            apply_rotary_pos_emb_roformer(&query_states, &key_states, cos, sin, tof32)?
+        } else {
+            apply_rotary_pos_emb(&query_states, &key_states, cos, sin, tof32)?
+        };
+        let (key_states, value_states) = match &self.kv_cache {
+            None => (key_states, value_states),
+            Some((prev_k, prev_v)) => {
+                let key_states = Tensor::cat(&[prev_k, &key_states], 2)?;
+                let value_states = Tensor::cat(&[prev_v, &value_states], 2)?;
+                (key_states, value_states)
+            }
+        };
+
+        self.kv_cache = Some((key_states.clone(), value_states.clone()));
+        let scale = 1f64 / f64::sqrt(self.head_dim as f64);
+        let attn_output = eager_attention_forward(
+            &query_states,
+            &key_states,
+            &value_states,
+            None,
+            attention_mask,
+            scale,
+        )?;
+        let attn_output = attn_output.reshape((b, q_len, self.middle_size))?;
+        let attn_output = attn_output.apply(&self.o_proj)?;
+        Ok(attn_output)
+    }
+
+    pub fn clear_kv_cache(&mut self) {
+        self.kv_cache = None
+    }
+}
+
 pub struct NaiveAttnTwoLinearMLPBlock {
     self_attn: NaiveAttention,
     mlp: TwoLinearMLP,
@@ -390,6 +543,9 @@ impl NaiveAttnGateUpDownMLPBlock {
             intermediate_size,
             hidden_act,
             mlp_bias,
+            None,
+            None,
+            None,
         )?;
         let input_layernorm = rms_norm(hidden_size, norm_eps, vb.pp(input_norm_pp_name))?;
         let post_attention_layernorm = rms_norm(hidden_size, norm_eps, vb.pp(post_norm_pp_name))?;
@@ -543,11 +699,11 @@ pub fn get_layer_norm(vb: VarBuilder, eps: f64, dim: usize) -> Result<LayerNorm>
     Ok(norm)
 }
 
-pub fn get_batch_norm(vb: VarBuilder, eps: f64, dim: usize) -> Result<BatchNorm> {
+pub fn get_batch_norm(vb: VarBuilder, eps: f64, dim: usize, affine: bool) -> Result<BatchNorm> {
     let bn_config = BatchNormConfig {
         eps,
         remove_mean: true,
-        affine: true,
+        affine,
         momentum: 0.1,
     };
     let norm = batch_norm(dim, bn_config, vb)?;
@@ -848,5 +1004,166 @@ pub fn conv1d_group_parallel(xs: &Tensor, conv1d: &Conv1d) -> Result<Tensor> {
             let bias = bias.reshape((1, b, 1))?;
             Ok(xs.broadcast_add(&bias)?)
         }
+    }
+}
+
+pub struct GLU {
+    dim: usize,
+}
+
+impl GLU {
+    pub fn new(dim: usize) -> Result<Self> {
+        Ok(Self { dim })
+    }
+    pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        let half_dim = xs.dim(self.dim)? / 2;
+        let a = xs.narrow(self.dim, 0, half_dim)?;
+        let b = xs.narrow(self.dim, half_dim, half_dim)?;
+        let b = sigmoid(&b)?;
+        let xs = a.mul(&b)?;
+        Ok(xs)
+    }
+}
+
+pub struct WNConv1d {
+    conv: Conv1d,
+}
+impl WNConv1d {
+    pub fn new(
+        vb: VarBuilder,
+        in_c: usize,
+        out_c: usize,
+        kernel_size: usize,
+        dilation: usize,
+        padding: usize,
+        groups: usize,
+        stride: usize,
+        bias: bool,
+    ) -> Result<Self> {
+        let in_c = in_c / groups;
+        let weight_g = vb.get((out_c, 1, 1), "weight_g")?;
+        let weight_v = vb.get((out_c, in_c, kernel_size), "weight_v")?;
+        // let bias = vb.get(out_c, "bias").ok();
+        let bias = if bias {
+            vb.get(out_c, "bias").ok()
+        } else {
+            None
+        };
+        let weight_norm = weight_v.sqr()?.sum_keepdim(1)?.sum_keepdim(2)?.sqrt()?;
+        let normalized_weight = weight_v.broadcast_div(&weight_norm)?;
+        let scaled_weight = normalized_weight.broadcast_mul(&weight_g)?;
+        let cfg = Conv1dConfig {
+            padding,
+            stride,
+            dilation,
+            groups,
+            cudnn_fwd_algo: None,
+        };
+        let conv = Conv1d::new(scaled_weight, bias, cfg);
+        Ok(Self { conv })
+    }
+    pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
+        let x = self.conv.forward(x)?;
+        Ok(x)
+    }
+}
+
+pub struct WNConvTranspose1d {
+    conv_transpose: ConvTranspose1d,
+}
+
+impl WNConvTranspose1d {
+    pub fn new(
+        vb: VarBuilder,
+        in_c: usize,
+        out_c: usize,
+        dilation: usize,
+        kernel_size: usize,
+        padding: usize,
+        output_padding: usize,
+        groups: usize,
+        stride: usize,
+    ) -> Result<Self> {
+        let in_c = in_c / groups;
+        let weight_g = vb.get((in_c, 1, 1), "weight_g")?;
+        let weight_v = vb.get((in_c, out_c, kernel_size), "weight_v")?;
+        let bias = vb.get(out_c, "bias").ok();
+        let weight_norm = weight_v.sqr()?.sum_keepdim(1)?.sum_keepdim(2)?.sqrt()?;
+        let normalized_weight = weight_v.broadcast_div(&weight_norm)?;
+        let scaled_weight = normalized_weight.broadcast_mul(&weight_g)?;
+        let config = ConvTranspose1dConfig {
+            padding: padding,
+            output_padding: output_padding,
+            stride,
+            dilation,
+            groups,
+        };
+        let conv_transpose = ConvTranspose1d::new(scaled_weight, bias, config);
+        Ok(Self { conv_transpose })
+    }
+    pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
+        let x = self.conv_transpose.forward(x)?;
+        Ok(x)
+    }
+}
+
+pub struct Conv2dWithBN {
+    conv_0: Conv2d,
+    bn_1: BatchNorm,
+    bn_with_relu: bool,
+}
+
+impl Conv2dWithBN {
+    pub fn new(
+        vb: VarBuilder,
+        in_c: usize,
+        out_c: usize,
+        ks: usize,
+        padding: usize,
+        stride: usize,
+        bias: bool,
+        bn_with_relu: bool,
+    ) -> Result<Self> {
+        let conv_0 = get_conv2d(vb.pp("0"), in_c, out_c, ks, padding, stride, 1, 1, bias)?;
+        let bn_1 = get_batch_norm(vb.pp("1"), 1e-5, out_c, true)?;
+        Ok(Self {
+            conv_0,
+            bn_1,
+            bn_with_relu,
+        })
+    }
+
+    pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
+        let x = self.conv_0.forward(x)?;
+        let mut x = self.bn_1.forward_t(&x, false)?;
+        if self.bn_with_relu {
+            x = x.relu()?;
+        }
+        Ok(x)
+    }
+}
+
+pub struct WNLinear {
+    linear: Linear,
+}
+impl WNLinear {
+    pub fn new(vb: VarBuilder, in_dim: usize, out_dim: usize, bias: bool) -> Result<Self> {
+        let weight_g = vb.get((out_dim, 1), "weight_g")?;
+        let weight_v = vb.get((out_dim, in_dim), "weight_v")?;
+
+        let bias = if bias {
+            vb.get(out_dim, "bias").ok()
+        } else {
+            None
+        };
+        let weight_norm = weight_v.sqr()?.sum_keepdim(0)?.sqrt()?.affine(1.0, 1e-8)?;
+        let normalized_weight = weight_v.broadcast_div(&weight_norm)?;
+        let scaled_weight = normalized_weight.broadcast_mul(&weight_g)?;
+        let linear = Linear::new(scaled_weight, bias);
+        Ok(Self { linear })
+    }
+    pub fn forward(&self, x: &Tensor) -> Result<Tensor> {
+        let x = self.linear.forward(x)?;
+        Ok(x)
     }
 }

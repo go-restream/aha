@@ -1,22 +1,31 @@
 // use std::io::Cursor;
 
-use aha::utils::audio_utils::create_hann_window;
+use std::time::Instant;
+
+use aha::utils::{tensor_utils::interpolate_nearest_1d};
 use anyhow::Result;
-use candle_core::DType;
+use candle_core::{Tensor};
 // use symphonia::core::io::MediaSourceStream;
 
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda,ffmpeg messy_test -r -- --nocapture
     let device = &candle_core::Device::Cpu;
+    let t = Tensor::arange(0.0f32, 40.0, device)?.broadcast_as((1, 40, 40))?;
+    println!("t: {}", t);
+    let i_start = Instant::now();
+    let t_inter = interpolate_nearest_1d(&t, 20)?;
+    let i_duration = i_start.elapsed();
+    println!("Time elapsed in interpolate_nearest_1d is: {:?}", i_duration);
+    println!("t_inter: {}", t_inter);    
     // let url = "https://sis-sample-audio.obs.cn-north-1.myhuaweicloud.com/16k16bit.mp3";
     // let client = reqwest::blocking::Client::new();
     // let response = client.get(url).send()?;
     // let vec_u8 = response.bytes()?.to_vec();
     // let mut content = Cursor::new(vec_u8);
     // let mss = MediaSourceStream::new(Box::new(content), Default::default());
-    let window = create_hann_window(400, DType::F32, device)?;
-    println!("window: {}", window);
+    // let window = create_hann_window(400, DType::F32, device)?;
+    // println!("window: {}", window);
     // let audio_path = "file:///home/jhq/Videos/voice_01.wav";
     // let audio_path = "/home/jhq/Videos/zh.mp3";
     // let audio_path = "/home/jhq/Videos/zh.mp3";

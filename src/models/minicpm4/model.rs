@@ -121,6 +121,9 @@ impl MiniCPMDecoderLayer {
             cfg.intermediate_size,
             cfg.hidden_act,
             false,
+            None,
+            None,
+            None,
         )?;
         let input_layernorm =
             rms_norm(cfg.hidden_size, cfg.rms_norm_eps, vb.pp("input_layernorm"))?;

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aha::utils::{find_type_files, get_device};
+use aha::utils::{find_type_files, get_device, read_pth_tensor_info_cycle};
 use anyhow::Result;
 use candle_core::{Device, pickle::read_all_with_key, safetensors};
 use candle_nn::VarBuilder;
@@ -195,5 +195,43 @@ fn qwen3_weight() -> Result<()> {
         }
     }
     println!("model_list: {:?}", model_list);
+    Ok(())
+}
+
+#[test]
+fn index_tts2_weight() -> Result<()> {
+    let save_dir: String =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/IndexTeam/IndexTTS-2/", save_dir); 
+    let s2mel_path = model_path+ "/s2mel.pth";
+    // let wac2vec2_path = model_path+ "/wav2vec2bert_stats.pt";
+    // let model_path = format!("{}/iic/speech_campplus_sv_zh-cn_16k-common/", save_dir);
+    // let campplus_path = model_path+ "/campplus_cn_common.bin";
+    // let model_list = find_type_files(&model_path, "safetensors")?;
+    let model_list = vec![s2mel_path];
+    // let mut dict_to_hashmap = HashMap::new();
+    // let mut dtype = candle_core::DType::F32;
+    for m in model_list {
+        // let dict = read_all_with_key(m, Some("state_dict"))?;
+        // let dict = read_all_with_key(m, Some("net"))?;
+        let dict = read_pth_tensor_info_cycle(m, Some("net.cfm"))?;
+        // dtype = dict[0].1.dtype();
+        for (k, v) in dict {
+            // if k.contains("model") {
+            //     println!("key: {}, tensor shape: {:?}", k, v);
+            // }
+            // dict_to_hashmap.insert(k, v);
+            println!("key: {}, tensor shape: {:?}", k, v);
+        }
+    }
+    // let device = Device::Cpu;
+    // let semantic_codec_path = save_dir.to_string() + "/amphion/MaskGCT/semantic_codec/model.safetensors" ;
+    // let model_list = vec![semantic_codec_path];
+    // for m in model_list {
+    //     let weights = safetensors::load(m, &device)?;
+    //     for (key, tensor) in weights.iter() {            
+    //         println!("=== {} === {:?}", key, tensor.shape());
+    //     }
+    // }
     Ok(())
 }

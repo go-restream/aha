@@ -32,7 +32,7 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
 use crate::utils::get_default_save_dir;
-use crate::utils::tensor_utils::{linspace, pad_replicate_last_dim};
+use crate::utils::tensor_utils::{linspace, log10, pad_reflect_last_dim, pad_replicate_last_dim, split_tensor};
 
 // 重采样方法枚举
 #[derive(Debug, Clone, Copy)]
@@ -569,6 +569,11 @@ pub fn load_audio_use_symphonia(audio_vec: Vec<u8>, device: &Device) -> Result<(
     Ok((audio_tensor, sample_rate as usize))
 }
 
+pub fn load_audio(path: &str, device: &Device) -> Result<(Tensor, usize)> {
+    let audio_vec = get_audio_bytes_vec(path)?;
+    load_audio_use_symphonia(audio_vec, device)
+}
+
 pub fn load_audio_with_resample(
     path: &str,
     device: &Device,
@@ -945,16 +950,42 @@ pub fn load_and_resample_audio_ffmpeg(
 //     Ok(audio)
 // }
 
+// pub fn create_hann_window(window_size: usize, dtype: DType, device: &Device) -> Result<Tensor> {
+//     let n = window_size as f64;
+//     let window: Vec<f32> = (0..window_size)
+//         .map(|i| {
+//             let i_f64 = i as f64;
+//             let val = 0.5 * (1.0 - (2.0 * PI * i_f64 / n).cos());
+//             val as f32
+//         })
+//         .collect();
+//     Ok(Tensor::from_vec(window, window_size, device)?.to_dtype(dtype)?)
+// }
+
 pub fn create_hann_window(window_size: usize, dtype: DType, device: &Device) -> Result<Tensor> {
-    let n = window_size as f64;
-    let window: Vec<f32> = (0..window_size)
+    if window_size < 1 {
+        return Err(anyhow::anyhow!("window_size must bigger than 0"));
+    }
+    if window_size == 1 {
+        return Ok(Tensor::new(1.0f32, device)?.to_dtype(dtype)?);
+    }
+    let n = window_size as f64 - 1.0;
+    let start = 1_i64 - window_size as i64;
+    let end = window_size as i64;
+    let window: Vec<f32> = (start..end)
+        .step_by(2)
         .map(|i| {
             let i_f64 = i as f64;
-            let val = 0.5 * (1.0 - (2.0 * PI * i_f64 / n).cos());
+            let val = 0.5 + 0.5 * (PI * i_f64 / n).cos();
             val as f32
         })
         .collect();
     Ok(Tensor::from_vec(window, window_size, device)?.to_dtype(dtype)?)
+}
+
+pub fn create_povey_window(window_size: usize, dtype: DType, device: &Device) -> Result<Tensor> {
+    let window = create_hann_window(window_size, dtype, device)?;
+    Ok(window.powf(0.85)?)
 }
 
 pub fn crate_hamming_window(
@@ -1163,6 +1194,22 @@ pub fn apply_stft(waveform: &Tensor) -> Result<Tensor> {
         wave_fft.push(wave_i_fft);
     }
     let magnitudes = Tensor::cat(&wave_fft, 0)?;
+    Ok(magnitudes)
+}
+
+pub fn torch_stft(
+    waveform: &Tensor,
+    n_fft: usize,
+    hop_length: usize,
+    window: &Tensor,
+) -> Result<Tensor> {
+    // waveform: already padding
+    // (bs, n_frames, n_fft)
+    let frames = extract_frames(&waveform, n_fft, hop_length)?;
+    // 应用汉明窗口
+    let result = frames.broadcast_mul(window)?;
+    // 傅立叶变换
+    let magnitudes = apply_stft(&result)?;
     Ok(magnitudes)
 }
 
@@ -1488,4 +1535,93 @@ pub fn kaldi_get_mel_banks(
     // };
 
     Ok((bins_tensor, center_freqs))
+}
+
+pub fn spectrogram(
+    waveform: &Tensor,
+    window: &Tensor,
+    frame_length: usize,
+    hop_length: usize,
+    fft_length: usize,
+    power: Option<f32>,
+    center: bool,
+    preemphasis: f64,
+    mel_filters: Option<&Tensor>,
+    log_mel: Option<&str>,
+    mel_floor: f32,
+    remove_dc_offset: bool,
+) -> Result<Tensor> {
+    let waveform = if center {
+        let pad = frame_length / 2;
+        pad_reflect_last_dim(waveform, (pad, pad))?
+    } else {
+        waveform.clone()
+    };
+    let mut frames = extract_frames(&waveform, frame_length, hop_length)?;
+    if remove_dc_offset {
+        let row_means = frames.mean_keepdim(D::Minus1)?;
+        frames = frames.broadcast_sub(&row_means)?;
+    }
+
+    if preemphasis != 0.0 {
+        let buffer_0 = frames
+            .i((.., .., 0))?
+            .affine(1.0 - preemphasis, 0.0)?
+            .unsqueeze(D::Minus1)?;
+        let buffer_ = frames.i((.., .., 1..))?.sub(
+            &frames
+                .i((.., .., 0..frame_length - 1))?
+                .affine(preemphasis, 0.0)?,
+        )?;
+        frames = Tensor::cat(&[buffer_0, buffer_], D::Minus1)?;
+    }
+    let mut frames = frames.broadcast_mul(&window)?;
+    let pad_len = fft_length - frame_length;
+    if pad_len > 0 {
+        // (bs, nframes, frame_length) -> (bs, nframes, fft_length)
+        frames = frames.pad_with_zeros(D::Minus1, 0, pad_len)?;
+    }
+    let mut spectrogram = apply_stft(&frames)?; // stft已经做了pow(2.0)
+    spectrogram = spectrogram.transpose(D::Minus1, D::Minus2)?;
+    if let Some(mel_filters) = mel_filters {
+        let spect = mel_filters.t()?.broadcast_matmul(&spectrogram)?;
+        spectrogram = spect.maximum(
+            &Tensor::new(mel_floor, spect.device())?
+                .to_dtype(spect.dtype())?
+                .broadcast_as(spect.shape())?,
+        )?;
+    }
+    if let Some(_) = power
+        && let Some(log_mel) = log_mel
+    {
+        if log_mel == "log" {
+            spectrogram = spectrogram.log()?;
+        } else if log_mel == "log10" {
+            spectrogram = log10(&spectrogram)?;
+        } else {
+            return Err(anyhow!(
+                "dB not completed or Unknown log_mel option ".to_string()
+            ));
+        }
+    }
+    Ok(spectrogram)
+}
+
+pub fn split_audio_into_chunks(wav: &Tensor, sr: usize, max_chunk_sec: f32) -> Result<Vec<Tensor>> {
+    // wav: (1, len)
+    let total_len = wav.dim(1)?;
+    let total_sec = total_len as f32 / sr as f32;
+    let mut wavs = vec![];
+    if total_sec <= max_chunk_sec {
+        wavs.push(wav.clone());
+    } else {
+        let max_len = (max_chunk_sec * sr as f32).round() as usize;
+        let split_len = total_len / max_len;
+        let mut splits = vec![max_len; split_len];
+        let remain_len = total_len % max_len;
+        splits.push(remain_len);
+        let split_wav = split_tensor(wav, &splits, 1)?;
+        wavs.extend_from_slice(&split_wav);
+    }
+    Ok(wavs)
 }
