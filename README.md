@@ -3,14 +3,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jhqxxx/aha/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/jhqxxx/aha" alt="GitHub License">
-  </a>
   <a href="https://github.com/jhqxxx/aha/stargazers">
     <img src="https://img.shields.io/github/stars/jhqxxx/aha" alt="GitHub Stars">
   </a>
   <a href="https://github.com/jhqxxx/aha/issues">
     <img src="https://img.shields.io/github/issues/jhqxxx/aha" alt="GitHub Issues">
+  </a>
+  <a href="https://github.com/jhqxxx/aha/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/jhqxxx/aha" alt="GitHub License">
   </a>
 </p>
 
