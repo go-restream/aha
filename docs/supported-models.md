@@ -4,60 +4,53 @@ aha supports a growing collection of state-of-the-art AI models across multiple 
 
 ## Text Generation
 
-| Model | Parameters | Description | Use Case |
-|-------|-----------|-------------|----------|
-| **Qwen2.5-7B** | 7B | General-purpose LLM | Chat, reasoning, code |
-| **Qwen3** | Various | Latest generation | Advanced reasoning |
-| **MiniCPM4** | 4B | Efficient lightweight | Edge deployment |
+| Model | Parameters | Description | Use Case | License |
+|-------|-----------|-------------|----------|---------|
+| **Qwen2.5-VL-3B** | 3B | Multimodal LLM | Chat, reasoning, vision | [Qwen Research License](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE) |
+| **Qwen2.5-VL-7B** | 7B | Multimodal LLM | Chat, reasoning, vision | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-0.6B** | 0.6B | Latest generation | Advanced reasoning | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **MiniCPM4-0.5B** | 0.5B | Efficient lightweight | Edge deployment | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 ## Vision & Multimodal
 
-| Model | Type | Description | Resolution |
-|-------|------|-------------|------------|
-| **Qwen2.5-VL** | Vision-Language | Image understanding | Up to 1024x1024 |
-| **Qwen3-VL** | Vision-Language | Enhanced multimodal | Up to 1536x1536 |
-| **MiniCPM-V** | Vision-Language | Lightweight vision | Up to 768x768 |
+| Model | Parameters | Description | Resolution | License |
+|-------|-----------|-------------|------------|---------|
+| **Qwen2.5-VL-3B** | 3B | Image understanding | Up to 1024x1024 | [Qwen Research License](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE) |
+| **Qwen2.5-VL-7B** | 7B | Image understanding | Up to 1024x1024 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-VL-2B** | 2B | Enhanced multimodal | Up to 1536x1536 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-VL-4B** | 4B | Enhanced multimodal | Up to 1536x1536 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-VL-8B** | 8B | Enhanced multimodal | Up to 1536x1536 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-VL-32B** | 32B | Enhanced multimodal | Up to 1536x1536 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 ## Speech Recognition (ASR)
 
-| Model | Language | Real-time | Speed |
-|-------|----------|-----------|-------|
-| **FunASR-Nano** | Chinese/English | Yes | 16x realtime |
-| **GLM-ASR-Nano** | Chinese/English | Yes | 32x realtime |
+| Model | Parameters | Language | Real-time | Speed | License |
+|-------|-----------|----------|-----------|-------|---------|
+| **Fun-ASR-Nano-2512** | 2512M | Chinese/English | Yes | 16x realtime | Not Specified |
+| **GLM-ASR-Nano-2512** | 2512M | Chinese/English | Yes | 32x realtime | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
+| **Qwen3-ASR-0.6B** | 0.6B | Chinese/English | Yes | Fast | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-ASR-1.7B** | 1.7B | Chinese/English | Yes | Fast | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 ## OCR
 
-| Model | Languages | Type | Strength |
-|-------|-----------|------|----------|
-| **PaddleOCR-VL** | 80+ | Lightweight | General documents |
-| **Hunyuan-OCR** | Chinese | Deep learning | Complex layouts |
-| **DeepSeek-OCR** | Multi | Scene text | Natural images |
+| Model | Languages | Type | Strength | License |
+|-------|-----------|------|----------|---------|
+| **PaddleOCR-VL** | 80+ | Lightweight | General documents | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Hunyuan-OCR** | Chinese | Deep learning | Complex layouts | [Tencent Hunyuan Community License](https://huggingface.co/tencent/HunyuanOCR/blob/main/LICENSE) |
+| **DeepSeek-OCR** | Multi | Scene text | Natural images | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 
-## Audio Processing
+## Audio Generation
 
-| Model | Type | Description |
-|-------|------|-------------|
-| **VoxCPM** | Voice Codec | Neural audio codec |
-| **RMBG-2.0** | Background Removal | Voice isolation |
+| Model | Parameters | Type | Description | License |
+|-------|-----------|------|-------------|---------|
+| **VoxCPM-0.5B** | 0.5B | Voice Codec | Neural audio codec | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **VoxCPM1.5** | - | Voice Codec | Enhanced voice generation | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
-## Model Formats
+## Image Processing
 
-All models are served in optimized ONNX format for:
-
-- **Cross-platform compatibility** - Windows, macOS, Linux
-- **CPU acceleration** - AVX2, NEON, SIMD
-- **Edge deployment** - No GPU required
-- **Fast inference** - Optimized runtime
-
-## Model Selection
-
-aha automatically selects the best model for each task. To override:
-
-```bash
-aha chat "Hello" --model qwen2.5-7b
-aha vision --model qwen2.5-vl "Describe this" --image img.jpg
-aha asr --model fun-asr-nano audio.wav
-```
+| Model | Type | Description | License |
+|-------|------|-------------|---------|
+| **RMBG-2.0** | Background Removal | Remove image backgrounds | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.en) |
 
 ## Model Sources
 
@@ -65,19 +58,26 @@ Models are sourced from:
 
 - [Hugging Face](https://huggingface.co) - Primary model hub
 - [ModelScope](https://modelscope.cn) - Chinese model hub
-- [GitHub Releases](https://github.com) - Backup releases
 
 ## Adding New Models
 
 See [Development Guide](./development.md) for instructions on adding new model integrations.
 
+## License Compliance
+
+**Important**: Each model has its own license. Please review the model's license before use in production. Some key considerations:
+
+- **Apache 2.0**: Permissive, commercial-friendly
+- **MIT**: Permissive, commercial-friendly
+- **Qwen Research License**: Research use, may have restrictions
+- **Tencent Hunyuan Community License**: Custom license, review terms
+- **CC BY-NC 4.0**: Non-commercial only
+
+Always verify license terms before deployment in production environments.
+
 ## Model Updates
 
-Models are regularly updated. Check the [releases](https://github.com/yourusername/aha/releases) for the latest versions.
-
-## License
-
-Each model has its own license. Please review the model's license before use in production.
+Models are regularly updated. Check the [releases](https://github.com/jhqxxx/aha/releases) for the latest versions.
 
 ## Performance Benchmarks
 
@@ -85,8 +85,9 @@ Approximate inference speeds on CPU (M1 Pro):
 
 | Model | Task | Tokens/sec |
 |-------|------|------------|
-| Qwen2.5-7B | Text | 25-35 |
-| Qwen2.5-VL | Vision | 20-30 |
-| FunASR-Nano | ASR | 200-500x |
+| Qwen3-0.6B | Text | 40-50 |
+| Qwen2.5-VL-3B | Vision | 20-30 |
+| Qwen3-ASR-0.6B | ASR | 200-500x |
+| VoxCPM-0.5B | TTS | Real-time |
 
 *Benchmarks vary by hardware and input size.*
