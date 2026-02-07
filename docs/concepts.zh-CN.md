@@ -126,8 +126,6 @@ HTTP API 层提供 REST 端点：
 
 ```rust
 pub trait GenerateModel {
-    // 使用权重初始化模型
-    fn init(model_path: &str, config: Option<GenerationConfig>) -> Result<Self>;
 
     // 生成响应
     fn generate(&mut self, prompt: &str, params: GenerationParams) -> Result<String>;
@@ -167,8 +165,8 @@ pub trait GenerateModel {
 
 - `audio_utils.rs` - 音频处理（WAV、MP3）
 - `image_utils.rs` - 图像处理（调整大小、编码/解码）
-- `download.rs` - 带重试逻辑的模型下载
-- `common.rs` - 通用工具和常量
+- `tensor_utils.rs` - Tensor常用方法
+- `mod.rs` - 通用工具和常量
 
 ## 设计模式
 
@@ -269,7 +267,7 @@ Flash Attention 优化长序列处理：
 
 启用方式：
 ```bash
-cargo build --features "cuda,flash-attn"
+cargo build --features cuda,flash-attn
 ```
 
 ### 内存映射张量
@@ -294,7 +292,7 @@ cargo build --features "cuda,flash-attn"
 
 - 模型下载后无外部 API 调用
 - 无遥测或数据收集
-- 完全控制您的数据
+- 数据完全保留在本地
 
 ### 内存安全
 

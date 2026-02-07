@@ -13,7 +13,7 @@ aha list
 ### 2. 下载第一个模型
 
 ```bash
-# 下载一个小型文本模型开始
+# 从下载一个小型文本模型开始
 aha download -m qwen3-0.6b
 ```
 
@@ -37,7 +37,8 @@ curl http://127.0.0.1:10100/chat/completions \
     "model": "qwen3-0.6b",
     "messages": [
       {"role": "user", "content": "你好，AHA！"}
-    ]
+    ],
+    "stream": false
   }'
 ```
 
@@ -110,10 +111,11 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "详细描述这张图片。"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
         ]
       }
-    ]
+    ],
+    "stream": false
   }'
 ```
 
@@ -133,7 +135,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "提取这张图片中的所有文本。"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/document.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
         ]
       }
     ]
@@ -156,7 +158,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "转写这段音频。"},
-          {"type": "audio_url", "audio_url": {"url": "file:///path/to/audio.wav"}}
+          {"type": "audio", "audio_url": {"url": "file:///path/to/audio.wav"}}
         ]
       }
     ]
@@ -174,10 +176,16 @@ curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "voxcpm1.5",
-    "input": "你好，这是 AHA 在说话。",
-    "voice": "default"
-  }' \
-  --output speech.wav
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "你好，这是 AHA 在说话。"},
+          {"type": "audio", "audio_url": {"url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 ### 背景移除
@@ -191,9 +199,15 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "file:///path/to/photo.png"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 ### 直接推理（无需服务器）
@@ -201,8 +215,8 @@ curl http://127.0.0.1:10100/images/remove_background \
 ```bash
 # 直接运行推理，无需启动 HTTP 服务器
 aha run -m qwen3-0.6b \
-  -i "写一首关于 AI 的俳句" \
-  --weight-path ~/.aha/qwen3-0.6b
+  -i "写一首关于AI的俳句" \
+  --weight-path ~/.aha/Qwen/Qwen3-0.6B
 ```
 
 ## 配置选项
@@ -239,7 +253,7 @@ aha download -m qwen3vl-2b -s /data/models
 
 ## 流式响应
 
-对于实时响应，使用流式传输：
+对于chat/completions，无"stream"字段或"stream": true时使用流式传输，"stream": false为非流式：
 
 ```bash
 curl http://127.0.0.1:10100/chat/completions \
@@ -249,7 +263,7 @@ curl http://127.0.0.1:10100/chat/completions \
     "messages": [
       {"role": "user", "content": "给我讲个故事"}
     ],
-    "stream": true
+    "stream": false
   }'
 ```
 
@@ -308,7 +322,7 @@ aha download -m qwen3vl-2b
 
 稍后在没有网络的情况下使用：
 ```bash
-aha serv -m qwen3vl-2b --weight-path ~/.aha/qwen3vl-2b
+aha serv -m qwen3vl-2b --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 4. 管理磁盘空间
@@ -366,7 +380,7 @@ aha cli -m qwen3-0.6b
 
 ## 示例仓库
 
-更多示例，请查看仓库中的 [examples](../examples/) 目录。
+更多示例，请查看仓库中的 [tests](../tests/) 目录。
 
 ## 另见
 

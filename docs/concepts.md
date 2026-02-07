@@ -126,9 +126,7 @@ All models implement the `GenerateModel` trait:
 
 ```rust
 pub trait GenerateModel {
-    // Initialize model with weights
-    fn init(model_path: &str, config: Option<GenerationConfig>) -> Result<Self>;
-
+    
     // Generate response
     fn generate(&mut self, prompt: &str, params: GenerationParams) -> Result<String>;
 
@@ -167,8 +165,8 @@ This provides:
 
 - `audio_utils.rs` - Audio processing (WAV, MP3)
 - `image_utils.rs` - Image processing (resize, encode/decode)
-- `download.rs` - Model downloading with retry logic
-- `common.rs` - Common utilities and constants
+- `tensor_utils.rs` - Tensor utility methods
+- `mod.rs` - Common utilities and constants
 
 ## Design Patterns
 
@@ -269,7 +267,7 @@ Flash Attention optimizes long-sequence processing:
 
 Enable with:
 ```bash
-cargo build --features "cuda,flash-attn"
+cargo build --features cuda,flash-attn
 ```
 
 ### Memory-Mapped Tensors
@@ -294,7 +292,7 @@ Dynamic precision selection based on hardware:
 
 - No external API calls after model download
 - No telemetry or data collection
-- Full control over your data
+- Data remains entirely on the local system
 
 ### Memory Safety
 

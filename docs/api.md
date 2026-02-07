@@ -39,8 +39,6 @@ Success responses follow this structure:
   "data": { ... },
   "model": "model-name",
   "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 20,
     "total_tokens": 30
   }
 }
@@ -95,15 +93,15 @@ For vision/audio models, content can be an array:
   "role": "user",
   "content": [
     {"type": "text", "text": "Describe this image"},
-    {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+    {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
   ]
 }
 ```
 
 Supported content types:
 - `text` - Text content
-- `image_url` - Image file (file://, base64://, or http://)
-- `audio_url` - Audio file (file:// or base64://)
+- `image_url` - Image file (file://, base64://, https:// or http://)
+- `audio_url` - Audio file (file://, base64://, https:// or http://)
 
 #### Examples
 
@@ -148,7 +146,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "What is in this image?"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
         ]
       }
     ]
@@ -167,7 +165,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "Extract all text"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/document.png"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/document.png"}}
         ]
       }
     ]
@@ -186,7 +184,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "Transcribe this audio"},
-          {"type": "audio_url", "audio_url": {"url": "file:///path/to/audio.wav"}}
+          {"type": "audio", "audio_url": {"url": "file:///path/to/audio.wav"}}
         ]
       }
     ]
@@ -237,8 +235,6 @@ data: [DONE]
     }
   ],
   "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 9,
     "total_tokens": 19
   }
 }
@@ -265,8 +261,7 @@ POST /audio/speech
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `model` | string | Yes | Model identifier (e.g., "voxcpm1.5") |
-| `input` | string | Yes | Text to convert to speech |
-| `voice` | string | No | Voice selection (default: "default") |
+| `messages` | array | Yes | Array of message objects |
 
 #### Example
 
@@ -275,15 +270,21 @@ curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "voxcpm1.5",
-    "input": "你好，世界！",
-    "voice": "default"
-  }' \
-  --output speech.wav
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Hello, this is AHA speaking."},
+          {"type": "audio", "audio_url": {"url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 #### Response
 
-Returns audio data in WAV format.
+Returns audio data in base64 WAV format.
 
 #### Supported Models
 
@@ -303,7 +304,7 @@ POST /images/remove_background
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `model` | string | Yes | Model identifier (e.g., "rmbg2.0") |
-| `image` | string | Yes | Image file path (file://) or base64 data |
+| `messages` | array | Yes | Array of message objects |
 
 #### Example
 
@@ -314,9 +315,15 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "file:///path/to/photo.png"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 **From Base64:**
@@ -326,14 +333,20 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "base64://$(base64 -w 0 photo.png)"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "base64://$(base64 -w 0 photo.png)"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 #### Response
 
-Returns the processed image in PNG format.
+Returns the processed image in base64 PNG format.
 
 #### Supported Models
 
@@ -373,7 +386,7 @@ Currently, AHA does not implement rate limiting. The server can handle concurren
 
 ## OpenAI Compatibility
 
-AHA's API is designed to be compatible with OpenAI's API format. This means you can use existing OpenAI client libraries with minimal changes:
+AHA's text generation API is designed to be compatible with OpenAI's API format. Multimodal APIs are derived from the text generation API with minimal changes:
 
 ### Python Example
 

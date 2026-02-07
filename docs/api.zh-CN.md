@@ -39,8 +39,6 @@ Content-Type: application/json
   "data": { ... },
   "model": "model-name",
   "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 20,
     "total_tokens": 30
   }
 }
@@ -77,7 +75,7 @@ POST /chat/completions
 | `temperature` | number | 否 | 采样温度（0-2，默认：1） |
 | `top_p` | number | 否 | 核采样（0-1，默认：1） |
 | `max_tokens` | integer | 否 | 要生成的最大令牌数 |
-| `stream` | boolean | 否 | 启用流式传输（默认：false） |
+| `stream` | boolean | 否 | 启用流式传输（默认：true） |
 
 #### 消息对象
 
@@ -95,15 +93,15 @@ POST /chat/completions
   "role": "user",
   "content": [
     {"type": "text", "text": "描述这张图片"},
-    {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+    {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
   ]
 }
 ```
 
 支持的内容类型：
 - `text` - 文本内容
-- `image_url` - 图像文件（file://、base64:// 或 http://）
-- `audio_url` - 音频文件（file:// 或 base64://）
+- `image` - 图像文件（file://,base64://, https:// 或 http://）
+- `audio` - 音频文件（file://,base64://, https:// 或 http://）
 
 #### 示例
 
@@ -148,7 +146,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "这张图片里有什么？"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
         ]
       }
     ]
@@ -167,7 +165,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "提取所有文本"},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/document.png"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/document.png"}}
         ]
       }
     ]
@@ -186,7 +184,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "转写这段音频"},
-          {"type": "audio_url", "audio_url": {"url": "file:///path/to/audio.wav"}}
+          {"type": "audio", "audio_url": {"url": "file:///path/to/audio.wav"}}
         ]
       }
     ]
@@ -237,8 +235,6 @@ data: [DONE]
     }
   ],
   "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 9,
     "total_tokens": 19
   }
 }
@@ -265,8 +261,7 @@ POST /audio/speech
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
 | `model` | string | 是 | 模型标识符（如 "voxcpm1.5"） |
-| `input` | string | 是 | 要转换为语音的文本 |
-| `voice` | string | 否 | 语音选择（默认："default"） |
+| `messages` | array | 是 | 消息对象数组 |
 
 #### 示例
 
@@ -275,15 +270,21 @@ curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "voxcpm1.5",
-    "input": "你好，世界！",
-    "voice": "default"
-  }' \
-  --output speech.wav
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "你好，这是 AHA 在说话。"},
+          {"type": "audio", "audio_url": {"url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 #### 响应
 
-以 WAV 格式返回音频数据。
+以 base64 WAV 格式返回音频数据。
 
 #### 支持的模型
 
@@ -303,7 +304,7 @@ POST /images/remove_background
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
 | `model` | string | 是 | 模型标识符（如 "rmbg2.0"） |
-| `image` | string | 是 | 图像文件路径（file://）或 base64 数据 |
+| `messages` | array | 是 | 消息对象数组 |
 
 #### 示例
 
@@ -314,9 +315,15 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "file:///path/to/photo.png"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 **从 Base64：**
@@ -326,14 +333,20 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "base64://$(base64 -w 0 photo.png)"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "base64://$(base64 -w 0 photo.png)"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 #### 响应
 
-以 PNG 格式返回处理后的图像。
+以base64 PNG 格式返回处理后的图像。
 
 #### 支持的模型
 
@@ -373,7 +386,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 ## OpenAI 兼容性
 
-AHA 的 API 设计为与 OpenAI 的 API 格式兼容。这意味着您可以使用现有的 OpenAI 客户端库，只需最少的更改：
+AHA 的 文本生成 API 设计与 OpenAI 的 API 格式兼容。多模态 API 源自文本生成 API，仅做了少量改动：
 
 ### Python 示例
 

@@ -68,13 +68,10 @@ cargo build --release --features cuda
 cargo build --release --features metal
 
 # Flash Attention (faster inference)
-cargo build --release --features flash-attn
+cargo build --release --features cuda,flash-attn
 
 # FFmpeg (multimedia processing)
 cargo build --release --features ffmpeg
-
-# Combine multiple features
-cargo build --release --features "cuda,flash-attn"
 ```
 
 ### CLI Quick Reference
@@ -111,7 +108,8 @@ curl http://localhost:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3-0.6b",
-    "messages": [{"role": "user", "content": "Hello!"}]
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "stream": false
   }
 '
 ```
@@ -154,7 +152,7 @@ curl http://localhost:10100/chat/completions \
 ### Using aha as a Library
 > cargo add aha
 
-```bash
+```rust
 # VoxCPM example
 use aha::models::voxcpm::generate::VoxCPMGenerate;
 use aha::utils::audio_utils::save_wav;

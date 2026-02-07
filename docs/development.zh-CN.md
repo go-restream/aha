@@ -34,9 +34,9 @@ cargo build
 cargo build --release
 
 # 使用功能构建
-cargo build --features "cuda,flash-attn"
-cargo build --features "metal"
-cargo build --features "ffmpeg"
+cargo build --features cuda,flash-attn
+cargo build --features metal
+cargo build --features ffmpeg
 ```
 
 ### 开发工作流程
@@ -98,13 +98,12 @@ aha/
 │   └── utils/              # 工具函数
 │       ├── audio_utils.rs
 │       ├── image_utils.rs
-│       ├── download.rs
-│       └── common.rs
+│       ├── tensor_utils.rs
+│       └── mod.rs
 ├── tests/                  # 集成测试
 │   ├── test_qwen2_5vl.rs
 │   ├── test_qwen3vl.rs
 │   └── ...
-├── examples/               # 示例代码
 └── docs/                   # 文档
 ```
 
@@ -140,16 +139,6 @@ pub struct NewModelConfig {
     // ... 其他配置字段
 }
 
-impl Default for NewModelConfig {
-    fn default() -> Self {
-        Self {
-            vocab_size: 32000,
-            hidden_size: 2048,
-            num_hidden_layers: 24,
-            num_attention_heads: 32,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationConfig {
@@ -158,15 +147,6 @@ pub struct GenerationConfig {
     pub max_tokens: usize,
 }
 
-impl Default for GenerationConfig {
-    fn default() -> Self {
-        Self {
-            temperature: 1.0,
-            top_p: 1.0,
-            max_tokens: 100,
-        }
-    }
-}
 ```
 
 #### model.rs

@@ -70,7 +70,7 @@ cargo build --release --features cuda
 cargo build --release --features metal
 
 # 启用 Flash Attention
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 
 # 启用 FFmpeg 支持
 cargo build --release --features ffmpeg
@@ -212,7 +212,7 @@ cargo build --release --features metal
 启用 Flash Attention 以优化长序列处理。
 
 ```bash
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 ```
 
 **要求**：
@@ -249,13 +249,13 @@ cargo build --release --features ffmpeg
 
 ```bash
 # NVIDIA GPU 上的最佳性能
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 
 # 带音频支持的 Apple Silicon
-cargo build --release --features "metal,ffmpeg"
+cargo build --release --features metal,ffmpeg
 
 # 启用所有功能
-cargo build --release --features "cuda,flash-attn,ffmpeg"
+cargo build --release --features cuda,flash-attn,ffmpeg
 ```
 
 ## 验证安装

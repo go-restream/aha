@@ -70,7 +70,7 @@ cargo build --release --features cuda
 cargo build --release --features metal
 
 # With Flash Attention
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 
 # With FFmpeg support
 cargo build --release --features ffmpeg
@@ -213,7 +213,7 @@ cargo build --release --features metal
 Enables Flash Attention for optimized long-sequence processing.
 
 ```bash
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 ```
 
 **Requirements**:
@@ -250,13 +250,13 @@ You can combine multiple features:
 
 ```bash
 # Maximum performance on NVIDIA GPU
-cargo build --release --features "cuda,flash-attn"
+cargo build --release --features cuda,flash-attn
 
 # Apple Silicon with audio support
-cargo build --release --features "metal,ffmpeg"
+cargo build --release --features metal,ffmpeg
 
 # Everything enabled
-cargo build --release --features "cuda,flash-attn,ffmpeg"
+cargo build --release --features cuda,flash-attn,ffmpeg
 ```
 
 ## Verification

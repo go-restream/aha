@@ -34,9 +34,9 @@ cargo build
 cargo build --release
 
 # Build with features
-cargo build --features "cuda,flash-attn"
-cargo build --features "metal"
-cargo build --features "ffmpeg"
+cargo build --features cuda,flash-attn
+cargo build --features metal
+cargo build --features ffmpeg
 ```
 
 ### Development Workflow
@@ -98,13 +98,12 @@ aha/
 │   └── utils/              # Utility functions
 │       ├── audio_utils.rs
 │       ├── image_utils.rs
-│       ├── download.rs
-│       └── common.rs
+│       ├── tensor_utils.rs
+│       └── mod.rs
 ├── tests/                  # Integration tests
 │   ├── test_qwen2_5vl.rs
 │   ├── test_qwen3vl.rs
 │   └── ...
-├── examples/               # Example code
 └── docs/                   # Documentation
 ```
 
@@ -140,16 +139,6 @@ pub struct NewModelConfig {
     // ... other config fields
 }
 
-impl Default for NewModelConfig {
-    fn default() -> Self {
-        Self {
-            vocab_size: 32000,
-            hidden_size: 2048,
-            num_hidden_layers: 24,
-            num_attention_heads: 32,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationConfig {
@@ -158,15 +147,6 @@ pub struct GenerationConfig {
     pub max_tokens: usize,
 }
 
-impl Default for GenerationConfig {
-    fn default() -> Self {
-        Self {
-            temperature: 1.0,
-            top_p: 1.0,
-            max_tokens: 100,
-        }
-    }
-}
 ```
 
 #### model.rs

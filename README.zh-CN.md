@@ -22,7 +22,7 @@
 
 **轻量 AI 推理引擎 —— 文本、视觉、语音与 OCR 一站式解决方案**
 
-aha 是一款基于 Rust 和 Candle 框架构建的高性能跨平台 AI 推理引擎。将最先进的 AI 模型带到您的本地机器——无需 API 密钥，无需云依赖，纯粹、快速的 AI 直接在您的硬件上运行。
+aha 是一款基于 Rust 和 Candle 框架构建的高性能跨平台 AI 推理引擎。将最先进的 AI 模型带到您的本地机器——无需 API 密钥，无需云依赖，纯粹、快速的 AI，直接在您的硬件上运行。
 
 ## 更新日志
 
@@ -68,13 +68,10 @@ cargo build --release --features cuda
 cargo build --release --features metal
 
 # Flash Attention (更快推理)
-cargo build --release --features flash-attn
+cargo build --release --features cuda,flash-attn
 
 # FFmpeg (多媒体处理)
 cargo build --release --features ffmpeg
-
-# 组合多个特性
-cargo build --release --features "cuda,flash-attn"
 ```
 
 ### CLI 快速参考
@@ -111,7 +108,8 @@ curl http://localhost:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3-0.6b",
-    "messages": [{"role": "user", "content": "你好！"}]
+    "messages": [{"role": "user", "content": "你好！"}],
+    "stream": false
   }'
 ```
 
@@ -154,7 +152,7 @@ curl http://localhost:10100/chat/completions \
 ### aha 作为库使用
 > cargo add aha
 
-```bash
+```rust
 # VoxCPM示例
 use aha::models::voxcpm::generate::VoxCPMGenerate;
 use aha::utils::audio_utils::save_wav;

@@ -110,10 +110,11 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "Describe this image in detail."},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/image.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/image.jpg"}}
         ]
       }
-    ]
+    ],
+    "stream": false
   }'
 ```
 
@@ -133,7 +134,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "Extract all text from this image."},
-          {"type": "image_url", "image_url": {"url": "file:///path/to/document.jpg"}}
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
         ]
       }
     ]
@@ -156,7 +157,7 @@ curl http://127.0.0.1:10100/chat/completions \
         "role": "user",
         "content": [
           {"type": "text", "text": "Transcribe this audio."},
-          {"type": "audio_url", "audio_url": {"url": "file:///path/to/audio.wav"}}
+          {"type": "audio", "audio_url": {"url": "file:///path/to/audio.wav"}}
         ]
       }
     ]
@@ -174,10 +175,16 @@ curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "voxcpm1.5",
-    "input": "Hello, this is AHA speaking.",
-    "voice": "default"
-  }' \
-  --output speech.wav
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Hello, this is AHA speaking."},
+          {"type": "audio", "audio_url": {"url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 ### Background Removal
@@ -191,9 +198,15 @@ curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
     "model": "rmbg2.0",
-    "image": "file:///path/to/photo.png"
-  }' \
-  --output no-background.png
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "image", "image_url": {"url": "file:///path/to/document.jpg"}}
+        ]
+      }
+    ]
+  }'
 ```
 
 ### Direct Inference (Without Server)
@@ -202,7 +215,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 # Run inference directly without starting HTTP server
 aha run -m qwen3-0.6b \
   -i "Write a haiku about AI" \
-  --weight-path ~/.aha/qwen3-0.6b
+  --weight-path ~/.aha/Qwen/Qwen3-0.6B
 ```
 
 ## Configuration Options
@@ -239,7 +252,7 @@ aha download -m qwen3vl-2b -s /data/models
 
 ## Streaming Responses
 
-For real-time responses, use streaming:
+For chat/completions, using no "stream" field or "stream": true enables streaming, while "stream": false is for non-streaming responses:
 
 ```bash
 curl http://127.0.0.1:10100/chat/completions \
@@ -249,7 +262,7 @@ curl http://127.0.0.1:10100/chat/completions \
     "messages": [
       {"role": "user", "content": "Tell me a story"}
     ],
-    "stream": true
+    "stream": false
   }'
 ```
 
@@ -308,7 +321,7 @@ aha download -m qwen3vl-2b
 
 Then use them later without internet:
 ```bash
-aha serv -m qwen3vl-2b --weight-path ~/.aha/qwen3vl-2b
+aha serv -m qwen3vl-2b --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 4. Manage Disk Space
@@ -366,7 +379,7 @@ aha cli -m qwen3-0.6b
 
 ## Examples Repository
 
-For more examples, check out the [examples](../examples/) directory in the repository.
+For more examples, check out the [tests](../tests/) directory in the repository.
 
 ## See Also
 
