@@ -6,4 +6,4 @@ pub mod process;
 pub mod tokenizer;
 pub mod utils;
 
-pub use aha_openai_dive::v1::resources::chat::{ChatCompletionParameters, ChatCompletionResponse};
+pub use aha_openai_dive::v1::resources::chat;
