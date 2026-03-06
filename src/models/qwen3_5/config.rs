@@ -38,7 +38,7 @@ pub struct Qwen3_5TextConfig {
     pub num_hidden_layers: usize,
     pub num_key_value_heads: usize,
     pub rms_norm_eps: f64,
-    pub tie_word_embeddings: bool,
+    pub tie_word_embeddings: Option<bool>,
     pub use_cache: bool,
     pub vocab_size: usize,
     pub mamba_ssm_dtype: String,
