@@ -18,10 +18,12 @@ pub fn load_image_from_url(url: &str) -> Result<DynamicImage> {
     thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            let response = reqwest::get(url).await
+            let response = reqwest::get(url)
+                .await
                 .map_err(|e| anyhow!(format!("Failed to fetch image from url: {}", e)))?;
             let bytes = response
-                .bytes().await
+                .bytes()
+                .await
                 .map_err(|e| anyhow!(format!("Failed to get image bytes: {}", e)))?;
 
             let cursor = Cursor::new(bytes);
