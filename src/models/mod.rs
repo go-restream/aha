@@ -132,7 +132,10 @@ impl WhichModel {
             | WhichModel::Qwen3_5_4B
             | WhichModel::Qwen3_5_9B => "vlm",
             // OCR models
-            WhichModel::DeepSeekOCR | WhichModel::HunyuanOCR | WhichModel::GlmOCR | WhichModel::PaddleOCRVL => "ocr",
+            WhichModel::DeepSeekOCR
+            | WhichModel::HunyuanOCR
+            | WhichModel::GlmOCR
+            | WhichModel::PaddleOCRVL => "ocr",
             // ASR models
             WhichModel::Qwen3ASR0_6B
             | WhichModel::Qwen3ASR1_7B
@@ -173,7 +176,7 @@ pub enum ModelInstance<'a> {
     VoxCPM(Box<VoxCPMGenerate>),
     GlmASRNano(GlmAsrNanoGenerateModel<'a>),
     FunASRNano(FunAsrNanoGenerateModel),
-    GlmOCR(GlmOcrGenerateModel<'a>),
+    GlmOCR(GlmOcrGenerateModel),
 }
 
 impl<'a> GenerateModel for ModelInstance<'a> {

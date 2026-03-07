@@ -49,7 +49,7 @@ impl ExecModel for GlmOcrExec {
             }}"#,
             input_url
         );
-       
+
         let mes = serde_json::from_str(&message)?;
 
         let i_start = Instant::now();

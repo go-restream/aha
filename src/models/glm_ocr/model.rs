@@ -11,13 +11,11 @@ use crate::{
     models::{
         common::GateUpDownMLP,
         glm_ocr::config::{
-            GlmOcrConfig, GlmOcrProjectorConfig, GlmOcrTextConfig, GlmOcrVisionConfig,
+            GlmOcrConfig, GlmOcrTextConfig, GlmOcrVisionConfig,
         },
     },
     position_embed::rope::{apply_rotary_pos_emb_vision, glm_ocr_apply_rotary_pos_emb},
-    utils::{
-        tensor_utils::{prepare_causal_attention_mask, repeat_kv},
-    },
+    utils::tensor_utils::{prepare_causal_attention_mask, repeat_kv},
 };
 
 pub struct GlmOcrRMSNorm(RmsNorm);
@@ -87,7 +85,7 @@ fn eager_attention_forward(
             let k = key_states.transpose(1, 2)?.contiguous()?;
             let v = value_states.transpose(1, 2)?.contiguous()?;
             candle_flash_attn::flash_attn(&q, &k, &v, scaling as f32, attention_mask.is_some())?
-                // flash_attn returns [batch, q_len, heads, head_dim] — already in final layout
+            // flash_attn returns [batch, q_len, heads, head_dim] — already in final layout
         }
         #[cfg(not(feature = "flash-attn"))]
         {
@@ -101,7 +99,8 @@ fn eager_attention_forward(
             let k_t = key_states.transpose(D::Minus2, D::Minus1)?.contiguous()?;
 
             let raw = if q_len > CHUNK_SIZE {
-                let mut chunks: Vec<Tensor> = Vec::with_capacity((q_len + CHUNK_SIZE - 1) / CHUNK_SIZE);
+                let mut chunks: Vec<Tensor> =
+                    Vec::with_capacity((q_len + CHUNK_SIZE - 1) / CHUNK_SIZE);
                 let mut start = 0;
                 while start < q_len {
                     let len = CHUNK_SIZE.min(q_len - start);
@@ -109,9 +108,8 @@ fn eager_attention_forward(
                     let attn = (q_chunk.matmul(&k_t)? * scaling)?;
                     let attn = match attention_mask {
                         None => attn,
-                        Some(mask) => {
-                            attn.broadcast_add(&mask.narrow(2, start, len)?.to_dtype(attn.dtype())?)?
-                        }
+                        Some(mask) => attn
+                            .broadcast_add(&mask.narrow(2, start, len)?.to_dtype(attn.dtype())?)?,
                     };
                     // Softmax computation: Optimize dtype conversions for CPU (which uses F32)
                     let attn = if query_states.dtype() == DType::F32 {
@@ -282,8 +280,7 @@ impl GlmOcrVisionRotaryEmbedding {
             .step_by(2)
             .map(|i| 1.0 / theta.powf(i as f32 / dim as f32))
             .collect();
-        let inv_freq =
-            Tensor::from_vec(inv_freq, (dim / 2,), device)?.to_dtype(dtype)?;
+        let inv_freq = Tensor::from_vec(inv_freq, (dim / 2,), device)?.to_dtype(dtype)?;
         Ok(Self { inv_freq })
     }
 
@@ -316,7 +313,7 @@ impl GlmOcrVisionRotaryEmbedding {
                         let _si = hi % sms;
                         let _wb = wi / sms;
                         let _sj = wi % sms;
-                        
+
                         // After permute(0,2,1,3): position = (hb, wb, si, sj)
                         // Flatten: idx = hb * w_blocks * sms * sms + wb * sms * sms + si * sms + sj
                         // But we just need the h and w positions for rotary embedding
@@ -630,21 +627,9 @@ impl GlmOcrVisionPatchMerger {
         )?;
 
         let context_dim = config.out_hidden_size * config.in_channels;
-        let gate_proj = linear_no_bias(
-            config.out_hidden_size,
-            context_dim,
-            vb.pp("gate_proj"),
-        )?;
-        let up_proj = linear_no_bias(
-            config.out_hidden_size,
-            context_dim,
-            vb.pp("up_proj"),
-        )?;
-        let down_proj = linear_no_bias(
-            context_dim,
-            config.out_hidden_size,
-            vb.pp("down_proj"),
-        )?;
+        let gate_proj = linear_no_bias(config.out_hidden_size, context_dim, vb.pp("gate_proj"))?;
+        let up_proj = linear_no_bias(config.out_hidden_size, context_dim, vb.pp("up_proj"))?;
+        let down_proj = linear_no_bias(context_dim, config.out_hidden_size, vb.pp("down_proj"))?;
 
         Ok(Self {
             proj,
@@ -674,7 +659,8 @@ pub struct GlmOcrVisionPatchEmbed {
     patch_size: usize,
     temporal_patch_size: usize,
     in_channels: usize,
-    #[allow(dead_code)] embed_dim: usize,
+    #[allow(dead_code)]
+    embed_dim: usize,
     proj: Linear,
 }
 
@@ -711,7 +697,7 @@ impl GlmOcrVisionPatchEmbed {
 
     pub fn forward(&self, pixel_values: &Tensor) -> Result<Tensor> {
         let rank = pixel_values.rank();
-        
+
         if rank == 2 {
             let hidden_states = self.proj.forward(pixel_values)?;
             Ok(hidden_states)
@@ -767,8 +753,12 @@ impl GlmOcrVisionModel {
         let patch_embed = GlmOcrVisionPatchEmbed::new(vb.pp("patch_embed"), config)?;
 
         let head_dim = config.hidden_size / config.num_heads;
-        let rotary_pos_emb =
-            GlmOcrVisionRotaryEmbedding::new(head_dim / 2, config.rope_theta, vb.device(), vb.dtype())?;
+        let rotary_pos_emb = GlmOcrVisionRotaryEmbedding::new(
+            head_dim / 2,
+            config.rope_theta,
+            vb.device(),
+            vb.dtype(),
+        )?;
 
         let mut blocks = Vec::new();
         let depth = config.depth;
@@ -865,13 +855,13 @@ impl GlmOcrVisionModel {
 
         let sms = self.config.spatial_merge_size;
         let hidden_dim = hidden_states.dim(hidden_states.dims().len() - 1)?;
-        
-        let total_patches = hidden_states.dim(0)?;  // 2816
-        let merged_patches = total_patches / (sms * sms);  // 704
+
+        let total_patches = hidden_states.dim(0)?; // 2816
+        let merged_patches = total_patches / (sms * sms); // 704
         let hidden_states = hidden_states.reshape((merged_patches, sms, sms, hidden_dim))?;
-        let hidden_states = hidden_states.permute((0, 3, 1, 2))?;  // [704, 1024, 2, 2]
-        let hidden_states = self.downsample.forward(&hidden_states)?;  // [704, 1536, 1, 1]
-        let hidden_states = hidden_states.reshape((merged_patches, self.config.out_hidden_size))?;  // [704, 1536]
+        let hidden_states = hidden_states.permute((0, 3, 1, 2))?; // [704, 1024, 2, 2]
+        let hidden_states = self.downsample.forward(&hidden_states)?; // [704, 1536, 1, 1]
+        let hidden_states = hidden_states.reshape((merged_patches, self.config.out_hidden_size))?; // [704, 1536]
 
         let merged = self.merger.forward(&hidden_states)?;
 
@@ -880,46 +870,48 @@ impl GlmOcrVisionModel {
     }
 }
 
-pub struct GlmOcrProjector {
-    #[allow(dead_code)] query_embed: Option<Tensor>,
-    proj: Linear,
-    norm: LayerNorm,
-    #[allow(dead_code)] num_queries: usize,
-}
+// pub struct GlmOcrProjector {
+//     #[allow(dead_code)]
+//     query_embed: Option<Tensor>,
+//     proj: Linear,
+//     norm: LayerNorm,
+//     #[allow(dead_code)]
+//     num_queries: usize,
+// }
 
-impl GlmOcrProjector {
-    pub fn new(
-        vb: VarBuilder,
-        vision_config: &GlmOcrVisionConfig,
-        config: &GlmOcrProjectorConfig,
-    ) -> Result<Self> {
-        let query_embed = vb
-            .get(
-                (1, config.num_queries, vision_config.out_hidden_size),
-                "query_embed",
-            )
-            .ok();
+// impl GlmOcrProjector {
+//     pub fn new(
+//         vb: VarBuilder,
+//         vision_config: &GlmOcrVisionConfig,
+//         config: &GlmOcrProjectorConfig,
+//     ) -> Result<Self> {
+//         let query_embed = vb
+//             .get(
+//                 (1, config.num_queries, vision_config.out_hidden_size),
+//                 "query_embed",
+//             )
+//             .ok();
 
-        let proj = linear_no_bias(
-            vision_config.out_hidden_size,
-            config.hidden_size,
-            vb.pp("proj"),
-        )?;
-        let norm = layer_norm(config.hidden_size, 1e-5, vb.pp("norm"))?;
+//         let proj = linear_no_bias(
+//             vision_config.out_hidden_size,
+//             config.hidden_size,
+//             vb.pp("proj"),
+//         )?;
+//         let norm = layer_norm(config.hidden_size, 1e-5, vb.pp("norm"))?;
 
-        Ok(Self {
-            query_embed,
-            proj,
-            norm,
-            num_queries: config.num_queries,
-        })
-    }
+//         Ok(Self {
+//             query_embed,
+//             proj,
+//             norm,
+//             num_queries: config.num_queries,
+//         })
+//     }
 
-    pub fn forward(&self, image_features: &Tensor) -> Result<Tensor> {
-        let projected = self.proj.forward(image_features)?;
-        Ok(self.norm.forward(&projected)?)
-    }
-}
+//     pub fn forward(&self, image_features: &Tensor) -> Result<Tensor> {
+//         let projected = self.proj.forward(image_features)?;
+//         Ok(self.norm.forward(&projected)?)
+//     }
+// }
 
 pub struct GlmOcrTextRotaryEmbedding {
     inv_freq: Tensor,
@@ -932,17 +924,12 @@ impl GlmOcrTextRotaryEmbedding {
         device: &candle_core::Device,
         dtype: DType,
     ) -> Result<Self> {
-        let rope_theta = config.rope_theta;
+        let rope_theta = config.rope_parameters.rope_theta;
         let head_dim = config.head_dim.unwrap_or_else(|| {
             // Integer division, panics if num_attention_heads is 0 (like Python)
             config.hidden_size / config.num_attention_heads
         });
-        let partial_rotary_factor = if config.partial_rotary_factor == 0.0 {
-            1.0
-        } else {
-            config.partial_rotary_factor
-        };
-        let dim = (head_dim as f32 * partial_rotary_factor) as usize;
+        let dim = (head_dim as f32 * config.rope_parameters.partial_rotary_factor) as usize;
 
         let inv_freq: Vec<f32> = (0..dim)
             .step_by(2)
@@ -951,15 +938,9 @@ impl GlmOcrTextRotaryEmbedding {
         let inv_freq =
             Tensor::from_slice(&inv_freq, (1, inv_freq.len()), device)?.to_dtype(dtype)?;
 
-        let mrope_section = if config.mrope_section.is_empty() {
-            vec![8, 12, 12]
-        } else {
-            config.mrope_section.clone()
-        };
-
         Ok(Self {
             inv_freq,
-            mrope_section,
+            mrope_section: config.rope_parameters.mrope_section.clone(),
         })
     }
 
@@ -982,10 +963,10 @@ impl GlmOcrTextRotaryEmbedding {
         }
         Ok(Tensor::cat(&result_parts, D::Minus1)?)
     }
-    
-     pub fn forward_with_position_ids(&self, position_ids: &Tensor) -> Result<(Tensor, Tensor)> {
+
+    pub fn forward_with_position_ids(&self, position_ids: &Tensor) -> Result<(Tensor, Tensor)> {
         let (_, bs, _seq_len) = position_ids.dims3()?;
-        let inv_freq_len = self.inv_freq.dim(1)?; 
+        let inv_freq_len = self.inv_freq.dim(1)?;
 
         // inv_freq: (1, inv_freq_len) -> broadcast to (3, bs, inv_freq_len, 1)
         let inv_freq = self.inv_freq.unsqueeze(0)?.unsqueeze(D::Minus1)?; // (1, 1, hd/2, 1)
@@ -1064,7 +1045,7 @@ pub struct GlmOcrTextModel {
     norm: GlmOcrRMSNorm,
     lm_head: Linear,
     rotary_emb: GlmOcrTextRotaryEmbedding,
-    config: GlmOcrTextConfig,
+    // config: GlmOcrTextConfig,
     spatial_merge_size: usize,
     /// max_mrope_position + 1 after prefill (stored for decode-pass position computation)
     next_mrope_pos: usize,
@@ -1073,7 +1054,11 @@ pub struct GlmOcrTextModel {
 }
 
 impl GlmOcrTextModel {
-    pub fn new(vb: VarBuilder, config: GlmOcrTextConfig, spatial_merge_size: usize) -> Result<Self> {
+    pub fn new(
+        vb: VarBuilder,
+        config: GlmOcrTextConfig,
+        spatial_merge_size: usize,
+    ) -> Result<Self> {
         let embed_tokens = embedding(config.vocab_size, config.hidden_size, vb.pp("embed_tokens"))?;
 
         let mut layers = Vec::new();
@@ -1095,7 +1080,7 @@ impl GlmOcrTextModel {
             norm,
             lm_head,
             rotary_emb,
-            config,
+            // config,
             spatial_merge_size,
             next_mrope_pos: 0,
             prefill_seq_len: 0,
@@ -1121,7 +1106,10 @@ impl GlmOcrTextModel {
         let num_image_tokens = llm_grid_t * llm_grid_h * llm_grid_w;
 
         // Image mask as bool vec (shape (1, seq_len) -> (seq_len,))
-        let mask_vec = image_mask.squeeze(0)?.to_dtype(DType::U8)?.to_vec1::<u8>()?;
+        let mask_vec = image_mask
+            .squeeze(0)?
+            .to_dtype(DType::U8)?
+            .to_vec1::<u8>()?;
 
         let mut t_ids: Vec<i64> = Vec::with_capacity(seq_len);
         let mut h_ids: Vec<i64> = Vec::with_capacity(seq_len);
@@ -1215,14 +1203,15 @@ impl GlmOcrTextModel {
             let embeds_flat = inputs_embeds.squeeze(0)?; // (seq_len, hidden_size)
             let mut embeds_vec: Vec<Tensor> = Vec::new();
 
-            let mut feat_idx = 0;
+            // let mut feat_idx = 0;
             let mut pos = 0;
-            for &img_pos in image_indices.iter().take(num_to_replace) {
+            // for &img_pos in image_indices.iter().take(num_to_replace) {
+            for (feat_idx, &img_pos) in image_indices.iter().take(num_to_replace).enumerate() {
                 if img_pos > pos {
                     embeds_vec.push(embeds_flat.narrow(0, pos, img_pos - pos)?);
                 }
                 embeds_vec.push(img_feats.i((0, feat_idx, ..))?.unsqueeze(0)?);
-                feat_idx += 1;
+                // feat_idx += 1;
                 pos = img_pos + 1;
             }
             if pos < seq_len {
@@ -1247,7 +1236,8 @@ impl GlmOcrTextModel {
         let (cos, sin) = if seqlen_offset == 0 {
             if let (Some(mask), Some(thw)) = (image_mask, image_grid_thw) {
                 // Prefill with image: compute 3D M-RoPE position IDs
-                let pos_ids = self.compute_mrope_position_ids(mask, thw, seq_len, input_ids.device())?;
+                let pos_ids =
+                    self.compute_mrope_position_ids(mask, thw, seq_len, input_ids.device())?;
                 self.prefill_seq_len = seq_len;
                 self.rotary_emb.forward_with_position_ids(&pos_ids)?
             } else {
@@ -1316,7 +1306,7 @@ impl GlmOcrModel {
                 Tensor::new(
                     &[
                         1u32,
-                        (pixels.dim(0)? / 44) as u32,  // Approximate
+                        (pixels.dim(0)? / 44) as u32, // Approximate
                         (pixels.dim(1)? / 44) as u32,
                     ],
                     input_ids.device(),
@@ -1330,15 +1320,13 @@ impl GlmOcrModel {
             None
         };
 
-        let result = self.language_model.forward(
+        self.language_model.forward(
             input_ids,
             image_features.as_ref(),
             image_mask,
             image_grid_thw,
             seqlen_offset,
-        );
-
-        result
+        )
     }
 
     pub fn clear_kv_cache(&mut self) {

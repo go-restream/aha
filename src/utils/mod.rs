@@ -719,16 +719,20 @@ where
 pub fn extract_user_text(mes: &ChatCompletionParameters) -> Result<String> {
     let mut ret = "".to_string();
     for chat_mes in mes.messages.clone() {
-        if let ChatMessage::User { content, .. } = chat_mes.clone()
-            && let ChatMessageContent::ContentPart(part_vec) = content
-        {
-            for part in part_vec {
-                if let ChatMessageContentPart::Text(text_part) = part {
-                    let text = text_part.text;
-                    if text.chars().count() > 0 {
-                        ret = ret + &text + "\n"
+        if let ChatMessage::User { content, .. } = chat_mes.clone() {
+            match content {
+                ChatMessageContent::Text(text) => ret = ret + &text + "\n",
+                ChatMessageContent::ContentPart(part_vec) => {
+                    for part in part_vec {
+                        if let ChatMessageContentPart::Text(text_part) = part {
+                            let text = text_part.text;
+                            if text.chars().count() > 0 {
+                                ret = ret + &text + "\n"
+                            }
+                        }
                     }
-                }
+                },
+                _ => {}
             }
         }
     }

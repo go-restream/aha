@@ -5,6 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+## [0.2.2] (2026-03-07)
+- 新增 GLM-OCR 模型
+
 ## [0.2.1] - (2026-03-05)
 - 新增Qwen3.5 模型
 

@@ -180,7 +180,7 @@ fn rotate_half_llm(x: &Tensor) -> Result<Tensor> {
     let x_pairs = x.reshape(pair_shape)?; // (..., half, 2)
     // col 0 = even elements [x0, x2, ...], col 1 = odd elements [x1, x3, ...]
     let x_even = x_pairs.narrow(D::Minus1, 0, 1)?; // (..., half, 1)
-    let x_odd = x_pairs.narrow(D::Minus1, 1, 1)?;  // (..., half, 1)
+    let x_odd = x_pairs.narrow(D::Minus1, 1, 1)?; // (..., half, 1)
     let neg_x_odd = x_odd.affine(-1.0, 0.0)?;
     // Concatenate [-x_odd, x_even] → [[-x1,x0], [-x3,x2], ...]
     let result_pairs = Tensor::cat(&[&neg_x_odd, &x_even], D::Minus1)?; // (..., half, 2)
