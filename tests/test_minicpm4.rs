@@ -8,7 +8,7 @@ use rocket::futures::StreamExt;
 #[test]
 fn minicpm_generate() -> Result<()> {
     // test with cpu :(太慢了, : RUST_BACKTRACE=1 cargo test minicpm_generate -r -- --nocapture
-    // test with cuda: RUST_BACKTRACE=1 cargo test -F cuda minicpm_generate -r -- --nocapture
+    // test with cuda: RUST_BACKTRACE=1 cargo test -F cuda --test test_minicpm4 minicpm_generate -r -- --nocapture
     // test with cuda+flash-attn: RUST_BACKTRACE=1 cargo test -F cuda,flash-attn minicpm_generate -r -- --nocapture
 
     let save_dir =

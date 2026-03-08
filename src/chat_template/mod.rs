@@ -13,7 +13,7 @@ pub fn get_template(path: String) -> Result<String> {
         let chat_template = tokenizer_config["chat_template"]
             .as_str()
             .map(|s| s.to_string());
-        match chat_template {
+        let chat_template = match chat_template {
             Some(tem) => Some(tem),
             None => {
                 let chat_template_file = path.clone() + "/chat_template.json";
@@ -24,6 +24,19 @@ pub fn get_template(path: String) -> Result<String> {
                     chat_template_config["chat_template"]
                         .as_str()
                         .map(|s| s.to_string())
+                } else {
+                    None
+                }
+            }
+        };
+        match chat_template {
+            Some(tem) => Some(tem),
+            None => {
+                let jinja_path = path + "/chat_template.jinja";
+                if std::path::Path::new(&jinja_path).exists() {
+                    let temp = std::fs::read_to_string(&jinja_path)
+                        .map_err(|e| anyhow!("Failed to read chat_template.jinja: {}", e))?;
+                    Some(temp)
                 } else {
                     None
                 }
@@ -72,19 +85,20 @@ impl<'a> ChatTemplate<'a> {
         if !std::path::Path::new(&path).exists() {
             return Err(anyhow!("model path not found"));
         }
-        let template = match get_template(path.clone()) {
-            Ok(template) => template,
-            Err(e) => {
-                let jinja_path = path + "/chat_template.jinja";
-                if !std::path::Path::new(&jinja_path).exists() {
-                    return Err(anyhow!(
-                        "get_template err {e} and chat_template.jinja not found"
-                    ));
-                }
-                std::fs::read_to_string(&jinja_path)
-                    .map_err(|e| anyhow!("Failed to read chat_template.jinja: {}", e))?
-            }
-        };
+        let template = get_template(path.clone())?;
+        // let template = match get_template(path.clone()) {
+        //     Ok(template) => template,
+        //     Err(e) => {
+        //         let jinja_path = path + "/chat_template.jinja";
+        //         if !std::path::Path::new(&jinja_path).exists() {
+        //             return Err(anyhow!(
+        //                 "get_template err {e} and chat_template.jinja not found"
+        //             ));
+        //         }
+        //         std::fs::read_to_string(&jinja_path)
+        //             .map_err(|e| anyhow!("Failed to read chat_template.jinja: {}", e))?
+        //     }
+        // };
         let template = string_to_static_str(template);
         // 加载jinjaenv处理chat_template
         let mut env = Environment::new();
