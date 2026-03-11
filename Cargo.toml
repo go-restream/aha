@@ -42,6 +42,7 @@ zip = "7.2.0"
 half = "2.7.1"
 byteorder = "1.5.0"
 sentencepiece = "0.13.1"
+ahash = "0.8.12"
 
 [features]
 flash-attn = ["candle-flash-attn"]

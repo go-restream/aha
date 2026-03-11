@@ -66,11 +66,12 @@ impl<'a> GenerateModel for Qwen3GenerateModel<'a> {
         let seed = mes.seed.unwrap_or(34562) as u64;
         let mut logit_processor =
             get_logit_processor(Some(temperature), Some(top_p), Some(top_k), seed);
-        let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
-        // let mes_render = self.chat_template.apply_chat_template(&mes)?;
-        let mes_render = self
-            .chat_template
-            .apply_chat_temp_think(&mes, enable_thinking)?;
+        
+        let mes_render = self.chat_template.apply_chat_template(&mes)?;
+        // let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
+        // let mes_render = self
+        //     .chat_template
+        //     .apply_chat_temp_think(&mes, enable_thinking)?;
         let mut input_ids = self.tokenizer.text_encode(mes_render, &self.device)?;
         let mut seq_len = input_ids.dim(1)?;
         let prompt_tokens = seq_len as u32;
@@ -115,10 +116,11 @@ impl<'a> GenerateModel for Qwen3GenerateModel<'a> {
         let seed = mes.seed.unwrap_or(34562) as u64;
         let mut logit_processor =
             get_logit_processor(Some(temperature), Some(top_p), Some(top_k), seed);
-        let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
-        let mes_render = self
-            .chat_template
-            .apply_chat_temp_think(&mes, enable_thinking)?;
+        let mes_render = self.chat_template.apply_chat_template(&mes)?;
+        // let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
+        // let mes_render = self
+        //     .chat_template
+        //     .apply_chat_temp_think(&mes, enable_thinking)?;
         let mut input_ids = self.tokenizer.text_encode(mes_render, &self.device)?;
         let mut seq_len = input_ids.dim(1)?;
         let mut seqlen_offset = 0;

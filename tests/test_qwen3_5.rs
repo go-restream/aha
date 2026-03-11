@@ -19,22 +19,14 @@ fn qwen3_5_generate() -> Result<()> {
         "messages": [
             {
                 "role": "user",
-                "content": [ 
-                    {
-                        "type": "image",
-                        "image_url": 
-                        {
-                            "url": "https://www.lifeberrys.com/img/article/tourist-attraction-3-1644590220-lb.jpg"
-                        }
-                    },             
+                "content": [        
                     {
                         "type": "text", 
-                        "text": "描述这张图片."
+                        "text": "你好啊"
                     }
                 ]
             }
-        ],
-        "metadata": {"enable_thinking": "true"}
+        ]
     }
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;

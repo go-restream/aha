@@ -33,6 +33,7 @@ name = "aha"
 version = "0.2.2"
 dependencies = [
  "aha_openai_dive",
+ "ahash",
  "anyhow",
  "base64 0.22.1",
  "byteorder",
