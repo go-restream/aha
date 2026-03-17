@@ -26,6 +26,7 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 
 ## Changelog
 ### 2026-03-17
+- add PaddleOCR-VL1.5 model
 - fix qwen3.5 position_ids create bug
 - cli param add 
   - gguf_path: Local GGUF model weight path (required for loading models with GGUF)

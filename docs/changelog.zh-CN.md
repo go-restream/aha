@@ -6,6 +6,7 @@
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
 ### 2026-03-17
+- 新增 PaddleOCR-VL1.5 模型
 - 修复 qwen3.5 position_ids 创建错误
 - cli 参数增加 
   - gguf_path: 本地 GGUF 模型权重路径（加载 GGUF 模型时需要）
