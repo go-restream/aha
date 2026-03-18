@@ -18,10 +18,11 @@ pub struct DeepseekOCRProcessor {
     image_token_id: u32,
     patch_size: u32,
     downsample_ratio: u32,
+    version: usize,
 }
 
 impl DeepseekOCRProcessor {
-    pub fn new(device: &Device, dtype: DType) -> Result<Self> {
+    pub fn new(device: &Device, dtype: DType, version: usize) -> Result<Self> {
         Ok(Self {
             device: device.clone(),
             dtype,
@@ -29,6 +30,7 @@ impl DeepseekOCRProcessor {
             image_token_id: 128815,
             patch_size: 16,
             downsample_ratio: 4,
+            version,
         })
     }
 
@@ -70,6 +72,8 @@ impl DeepseekOCRProcessor {
         let mut images_seq_mask = vec![0u32];
         let mut tokenized_id = vec![0u32];
         let mut images_spatial_crop = Vec::new();
+        let min_img_size = if self.version == 2 { 768 } else { 640 };
+        let max_num = if self.version == 2 { 6 } else { 9 };
         for (text_seq, image) in text_splits.iter().zip(imgs) {
             if !text_seq.is_empty() {
                 let token_ids = tokenizer.text_encode_vec(text_seq.to_string(), false)?;
@@ -79,10 +83,12 @@ impl DeepseekOCRProcessor {
             }
             if crop_mode {
                 let mut images_crop_raw = Vec::new();
-                let crop_ratio = if image.height() <= 640 && image.width() <= 640 {
+                let crop_ratio = if image.height() <= min_img_size && image.width() <= min_img_size
+                {
                     (1u32, 1u32)
                 } else {
-                    let (img_crop, ratio) = dynamic_preprocess(&image, image_size, false)?;
+                    let (img_crop, ratio) =
+                        dynamic_preprocess(&image, 2, max_num, min_img_size, false)?;
                     images_crop_raw = img_crop.clone();
                     ratio
                 };
@@ -106,16 +112,25 @@ impl DeepseekOCRProcessor {
 
                 let num_queries = image_size / self.patch_size / self.downsample_ratio;
                 let num_queries_base = base_size / self.patch_size / self.downsample_ratio;
-                let mut token_repeat = num_queries_base.pow(2) + num_queries_base + 1;
+                let mut token_repeat = if self.version == 1 {
+                    num_queries_base.pow(2) + num_queries_base + 1
+                } else {
+                    num_queries_base.pow(2) + 1
+                };
                 if crop_ratio.0 > 1 || crop_ratio.1 > 1 {
-                    token_repeat += (num_queries * crop_ratio.0 + 1) * (num_queries * crop_ratio.1);
+                    let add_num = if self.version == 1 {
+                        (num_queries * crop_ratio.0 + 1) * (num_queries * crop_ratio.1)
+                    } else {
+                        (num_queries * crop_ratio.0) * (num_queries * crop_ratio.1)
+                    };
+                    token_repeat += add_num;
                 }
                 let tokenized_image = vec![self.image_token_id; token_repeat as usize];
                 tokenized_id.extend_from_slice(&tokenized_image);
                 let seq_mask = vec![1u32; tokenized_image.len()];
                 images_seq_mask.extend_from_slice(&seq_mask);
             } else {
-                let global_view = if image_size <= 640 {
+                let global_view = if image_size <= min_img_size {
                     image.resize_exact(
                         image_size,
                         image_size,
@@ -130,7 +145,11 @@ impl DeepseekOCRProcessor {
 
                 images_spatial_crop.push(vec![1, 1]);
                 let num_queries = image_size / self.patch_size / self.downsample_ratio;
-                let token_repeat = num_queries.pow(2) + num_queries + 1;
+                let token_repeat = if self.version == 1 {
+                    num_queries.pow(2) + num_queries + 1
+                } else {
+                    num_queries.pow(2) + 1
+                };
                 let tokenized_image = vec![self.image_token_id; token_repeat as usize];
                 tokenized_id.extend_from_slice(&tokenized_image);
                 let seq_mask = vec![1u32; tokenized_image.len()];

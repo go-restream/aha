@@ -258,6 +258,7 @@ fn run_list(args: ListArgs) -> anyhow::Result<()> {
         WhichModel::Qwen3vl8B,
         WhichModel::Qwen3vl32B,
         WhichModel::DeepSeekOCR,
+        WhichModel::DeepSeekOCR2,
         WhichModel::HunyuanOCR,
         WhichModel::PaddleOCRVL,
         WhichModel::PaddleOCRVL1_5,
@@ -517,6 +518,10 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
             Qwen3vlExec::run(&input, output.as_deref(), &weight_path)?;
         }
         WhichModel::DeepSeekOCR => {
+            use aha::exec::deepseek_ocr::DeepSeekORExec;
+            DeepSeekORExec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::DeepSeekOCR2 => {
             use aha::exec::deepseek_ocr::DeepSeekORExec;
             DeepSeekORExec::run(&input, output.as_deref(), &weight_path)?;
         }

@@ -243,3 +243,25 @@ fn index_tts2_weight() -> Result<()> {
     // }
     Ok(())
 }
+
+#[test]
+fn deepseekocrv2_weight() -> Result<()> {
+    // cargo test -F cuda --test weight_test deepseekocrv2_weight -r -- --nocapture
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/deepseek-ai/DeepSeek-OCR-2/", save_dir);
+    let model_list = find_type_files(&model_path, "safetensors")?;
+
+    let device = Device::Cpu;
+    for m in &model_list {
+        let weights = safetensors::load(m, &device)?;
+        for (key, tensor) in weights.iter() {
+            if key.contains("qwen2_model") {
+                println!("=== {} === {:?}", key, tensor.shape());
+            }
+            // println!("=== {} === {:?}", key, tensor.shape());
+        }
+    }
+    println!("model_list: {:?}", model_list);
+    Ok(())
+}

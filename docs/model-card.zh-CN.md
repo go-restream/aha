@@ -7,6 +7,10 @@
 "OCR:" | "Table Recognition:" | "Formula Recognition:" | "Chart Recognition:" | "Spotting:" | "Seal Recognition:"
 
 ## DeepSeekOCR
+#### 主要提示词
+1. 文档: <image>\n<|grounding|>Convert the document to markdown.
+2. 无布局信息: <image>\nFree OCR.
+
 #### Metadata
 * base_size: 512 | 640 | 1024 | 1280
 * image_size: 512 | 640 | 1024 | 1280
@@ -24,6 +28,14 @@
 | Base | 1024 | 1024 | false | 
 | Large | 1280 | 1280 | false | 
 | Gundam | 1024 | 640 | true | 
+
+## DeepSeekOCR2
+#### 主要提示词
+1. 文档: <image>\n<|grounding|>Convert the document to markdown.
+2. 无布局信息: <image>\nFree OCR.
+
+#### Metadata
+* crop_mode: false | true
 
 ## GLM-OCR
 #### 限定提示词

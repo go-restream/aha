@@ -1,4 +1,6 @@
-use anyhow::Result;
+use core::f32;
+
+use anyhow::{Result, anyhow};
 use candle_core::{D, IndexOp, Tensor};
 use candle_nn::{
     Activation, Conv2d, Embedding, Init, LayerNorm, Linear, Module, RmsNorm, VarBuilder, embedding,
@@ -15,12 +17,15 @@ use crate::{
             get_layer_norm,
         },
         deepseek_ocr::config::{DeepseekOCRConfig, DeepseekV2Config},
+        qwen2::{Qwen2Config, Qwen2Decoder},
     },
     position_embed::rope::RoPE,
-    utils::interpolate::{interpolate_bicubic, interpolate_linear_1d},
-    utils::tensor_utils::{
-        index_select_2d, masked_scatter_dim0, nonzero, onehot, prepare_causal_attention_mask,
-        quick_gelu, topk,
+    utils::{
+        interpolate::{interpolate_bicubic, interpolate_linear_1d},
+        tensor_utils::{
+            attn_masked_fill, index_select_2d, masked_scatter_dim0, nonzero, onehot,
+            prepare_causal_attention_mask, quick_gelu, topk,
+        },
     },
 };
 
@@ -417,6 +422,7 @@ impl ImageEncoderViT {
         // rel_pos_zero_init: bool,
         window_size: usize,
         global_attn_indexes: Vec<usize>,
+        version: usize,
     ) -> Result<Self> {
         let patch_embed = PatchEmbed::new(
             vb.pp("patch_embed"),
@@ -463,7 +469,8 @@ impl ImageEncoderViT {
         let neck = Neck::new(vb.pp("neck"), embed_dim, out_chans)?;
 
         let net_2 = get_conv2d(vb.pp("net_2"), 256, 512, 3, 1, 2, 1, 1, false)?;
-        let net_3 = get_conv2d(vb.pp("net_3"), 512, 1024, 3, 1, 2, 1, 1, false)?;
+        let net_3_out_c = if version == 2 { 896 } else { 1024 };
+        let net_3 = get_conv2d(vb.pp("net_3"), 512, net_3_out_c, 3, 1, 2, 1, 1, false)?;
         Ok(Self {
             // img_size,
             patch_embed,
@@ -559,7 +566,6 @@ impl CLIPVisionEmbeddings {
     }
 
     fn get_abs_pos(&self, tgt_size: usize) -> Result<Tensor> {
-        // println!("self.pos_embeds: {:?}", self.pos_embeds);
         let abs_pos_new = self.pos_embeds.clone();
         let (len, dim) = abs_pos_new.dims2()?;
         let src_size = ((len - 1) as f32).sqrt() as usize;
@@ -1107,19 +1113,101 @@ impl DeepseekV2Model {
     }
 }
 
+pub struct Qwen2Decoder2Encoder {
+    model: Qwen2Decoder,
+    query_768: Embedding,
+    query_1024: Embedding,
+}
+
+impl Qwen2Decoder2Encoder {
+    pub fn new(vb: VarBuilder) -> Result<Self> {
+        let qwen2_config = Qwen2Config {
+            vocab_size: 151936,
+            hidden_size: 896,
+            intermediate_size: 4864,
+            num_hidden_layers: 24,
+            num_attention_heads: 14,
+            num_key_value_heads: 2,
+            max_position_embeddings: 131072,
+            sliding_window: 32768,
+            max_window_layers: 21,
+            tie_word_embeddings: true,
+            rope_theta: 1000000.0,
+            rms_norm_eps: 1e-06,
+            use_sliding_window: false,
+            hidden_act: Activation::Silu,
+        };
+        let model = Qwen2Decoder::new(vb.pp("model.model"), &qwen2_config)?;
+        let query_768 = embedding(144, qwen2_config.hidden_size, vb.pp("query_768"))?;
+        let query_1024 = embedding(256, qwen2_config.hidden_size, vb.pp("query_1024"))?;
+
+        Ok(Self {
+            model,
+            query_768,
+            query_1024,
+        })
+    }
+
+    pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        let xs = xs.flatten_from(2)?.transpose(1, 2)?;
+        let (bs, n_query, _) = xs.dims3()?;
+        let param_img = if n_query == 144 {
+            self.query_768.embeddings()
+        } else if n_query == 256 {
+            self.query_1024.embeddings()
+        } else {
+            return Err(anyhow!(
+                "Only support 144/256 seq_len, data {n_query} illigal"
+            ));
+        };
+        let brach_query_imgs = param_img.unsqueeze(0)?.repeat((bs, 1, 1))?;
+        let x_combined = Tensor::cat(&[&xs, &brach_query_imgs], 1)?;
+        let token_type_ids = Tensor::cat(
+            &[
+                Tensor::ones(n_query, candle_core::DType::U32, xs.device())?,
+                Tensor::zeros(n_query, candle_core::DType::U32, xs.device())?,
+            ],
+            0,
+        )?
+        .unsqueeze(0)?; // (n_query*2, 1)
+        let mask_up = token_type_ids.repeat((n_query, 1))?; //(n_query, n_query*2)
+        let mask_down_1 = Tensor::ones((n_query, n_query), candle_core::DType::U32, xs.device())?;
+        let mask_down_2 = Tensor::tril2(n_query, candle_core::DType::U32, xs.device())?;
+        let mask_down = Tensor::cat(&[mask_down_1, mask_down_2], 1)?;
+        let mask = Tensor::cat(&[mask_up, mask_down], 0)?;
+        let on_true = mask
+            .zeros_like()?
+            .unsqueeze(0)?
+            .unsqueeze(0)?
+            .to_dtype(candle_core::DType::F32)?; // (1, 1, n_query*2, n_query*2)
+        let attn_mask = attn_masked_fill(&on_true, &mask, f32::NEG_INFINITY)?;
+        let xs = self
+            .model
+            .forward_no_cache(&x_combined, Some(&attn_mask), 0)?;
+        let xs = xs.narrow(1, n_query, n_query)?;
+        Ok(xs)
+    }
+}
+
+pub enum VisionModel {
+    Vit(VitModel),               // vb_name: vision_model
+    Qwen2(Qwen2Decoder2Encoder), // vb_name: qwen2_model.model.
+}
+
 pub struct DeepseekOCRModel {
     // config: DeepseekOCRConfig,
     sam_model: ImageEncoderViT,
-    vision_model: VitModel,
+    // vision_model: VitModel,
+    vision_model: VisionModel,
     projector: Linear,
     language_model: DeepseekV2Model,
-    image_newline: Tensor,
+    image_newline: Option<Tensor>,
     view_seperator: Tensor,
     lm_head: Linear,
 }
 
 impl DeepseekOCRModel {
-    pub fn new(vb: VarBuilder, config: DeepseekOCRConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: DeepseekOCRConfig, version: usize) -> Result<Self> {
         let vb_m = vb.pp("model");
         let sam_model = ImageEncoderViT::new(
             vb_m.pp("sam_model"),
@@ -1143,24 +1231,34 @@ impl DeepseekOCRModel {
                 .sam_vit_b
                 .global_attn_indexes
                 .clone(),
+            version,
         )?;
-        let vision_model = VitModel::new(
-            vb_m.pp("vision_model"),
-            224,
-            14,
-            3,
-            24,
-            1024,
-            16,
-            4096,
-            1e-5,
-        )?;
+        let (vision_model, image_newline) = if version == 2 {
+            // v2
+            let qwen2 = Qwen2Decoder2Encoder::new(vb_m.pp("qwen2_model"))?;
+            (VisionModel::Qwen2(qwen2), None)
+        } else {
+            let vision_model = VitModel::new(
+                vb_m.pp("vision_model"),
+                224,
+                14,
+                3,
+                24,
+                1024,
+                16,
+                4096,
+                1e-5,
+            )?;
+            let image_newline = vb_m.get_with_hints(1280, "image_newline", Init::Const(0.))?;
+            (VisionModel::Vit(vision_model), Some(image_newline))
+        };
+
         let projector = linear(
             config.projector_config.input_dim,
             config.projector_config.n_embed,
             vb_m.pp("projector.layers"),
         )?;
-        let image_newline = vb_m.get_with_hints(1280, "image_newline", Init::Const(0.))?;
+
         let view_seperator = vb_m.get_with_hints(1280, "view_seperator", Init::Const(0.))?;
         let language_model = DeepseekV2Model::new(vb_m, config.language_config.clone())?;
         let lm_head = linear_no_bias(config.hidden_size, config.vocab_size, vb.pp("lm_head"))?;
@@ -1210,41 +1308,88 @@ impl DeepseekOCRModel {
                     let image_crop_i = image_crop.i(last_crop_num..last_crop_num + crop_num)?;
                     last_crop_num += crop_num;
                     let local_feature_1 = self.sam_model.forward(&image_crop_i)?;
-                    let local_feature_2 = self
-                        .vision_model
-                        .forward(&image_crop_i, Some(&local_feature_1))?;
-                    let local_feature_1 = local_feature_1.flatten(2, 3)?.permute((0, 2, 1))?;
-                    let local_feature_2 = local_feature_2.i((.., 1..))?;
-                    let local_features =
-                        Tensor::cat(&[local_feature_2, local_feature_1], D::Minus1)?
-                            .contiguous()?;
+                    let local_features = match &self.vision_model {
+                        VisionModel::Vit(vit) => {
+                            let local_feature_2 =
+                                vit.forward(&image_crop_i, Some(&local_feature_1))?;
+                            let local_feature_1 =
+                                local_feature_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                            let local_feature_2 = local_feature_2.i((.., 1..))?;
+                            Tensor::cat(&[local_feature_2, local_feature_1], D::Minus1)?
+                                .contiguous()?
+                        }
+                        VisionModel::Qwen2(qwen2) => qwen2.forward(&local_feature_1)?,
+                    };
+                    // let local_feature_2 = self
+                    //     .vision_model
+                    //     .forward(&image_crop_i, Some(&local_feature_1))?;
+                    // let local_feature_1 = local_feature_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                    // let local_feature_2 = local_feature_2.i((.., 1..))?;
+                    // let local_features =
+                    //     Tensor::cat(&[local_feature_2, local_feature_1], D::Minus1)?
+                    //         .contiguous()?;
                     let local_features = self.projector.forward(&local_features)?;
                     let global_features_1 = self.sam_model.forward(&image_ori_i)?;
-                    let global_features_2 = self
-                        .vision_model
-                        .forward(&image_ori_i, Some(&global_features_1))?;
-                    let global_features_1 = global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
-                    let global_features_2 = global_features_2.i((.., 1..))?;
-                    let global_features =
-                        Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?;
+                    let global_features = match &self.vision_model {
+                        VisionModel::Vit(vit) => {
+                            let global_features_2 =
+                                vit.forward(&image_ori_i, Some(&global_features_1))?;
+                            let global_features_1 =
+                                global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                            let global_features_2 = global_features_2.i((.., 1..))?;
+                            Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?
+                        }
+                        VisionModel::Qwen2(qwen2) => qwen2.forward(&global_features_1)?,
+                    };
+                    // let global_features_2 = self
+                    //     .vision_model
+                    //     .forward(&image_ori_i, Some(&global_features_1))?;
+                    // let global_features_1 = global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                    // let global_features_2 = global_features_2.i((.., 1..))?;
+                    // let global_features =
+                    //     Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?;
                     let global_features = self.projector.forward(&global_features)?;
                     let (_, hw, n_dim) = global_features.dims3()?;
-                    let h = (hw as f32).sqrt() as usize;
-                    let w = h;
                     let (_, hw2, n_dim2) = local_features.dims3()?;
-                    let h2 = (hw2 as f32).sqrt() as usize;
-                    let w2 = h2;
-                    let global_features = global_features.reshape((h, w, n_dim))?;
-                    let image_newline = self.image_newline.unsqueeze(0)?.unsqueeze(0)?;
-                    let global_cat = image_newline.expand((h, 1, n_dim))?;
-                    let global_features = Tensor::cat(&[&global_features, &global_cat], 1)?;
+                    let (global_features, local_features) = if let Some(image_newline) =
+                        &self.image_newline
+                    {
+                        let h = (hw as f32).sqrt() as usize;
+                        let w = h;
+                        let h2 = (hw2 as f32).sqrt() as usize;
+                        let w2 = h2;
+                        let global_features = global_features.reshape((h, w, n_dim))?;
+                        let image_newline = image_newline.unsqueeze(0)?.unsqueeze(0)?;
+                        let global_cat = image_newline.expand((h, 1, n_dim))?;
+                        let global_features = Tensor::cat(&[&global_features, &global_cat], 1)?;
+                        let local_features = local_features
+                            .reshape((height_crop_num, width_crop_num, h2, w2, n_dim2))?
+                            .permute((0, 2, 1, 3, 4))?
+                            .reshape((height_crop_num * h2, width_crop_num * w2, n_dim2))?;
+                        let local_cat = image_newline.expand((height_crop_num * h2, 1, n_dim2))?;
+                        let local_features = Tensor::cat(&[&local_features, &local_cat], 1)?;
+                        (global_features, local_features)
+                    } else {
+                        (global_features, local_features)
+                    };
+
+                    // let h = (hw as f32).sqrt() as usize;
+                    // let w = h;
+                    // let (_, hw2, n_dim2) = local_features.dims3()?;
+                    // let h2 = (hw2 as f32).sqrt() as usize;
+                    // let w2 = h2;
+                    // let global_features = global_features.reshape((h, w, n_dim))?;
+                    // let image_newline = self.image_newline.unsqueeze(0)?.unsqueeze(0)?;
+                    // let global_cat = image_newline.expand((h, 1, n_dim))?;
+                    // let global_features = Tensor::cat(&[&global_features, &global_cat], 1)?;
+                    // let global_features = global_features.reshape(((), n_dim))?;
+                    // let local_features = local_features
+                    //     .reshape((height_crop_num, width_crop_num, h2, w2, n_dim2))?
+                    //     .permute((0, 2, 1, 3, 4))?
+                    //     .reshape((height_crop_num * h2, width_crop_num * w2, n_dim2))?;
+                    // let local_cat = image_newline.expand((height_crop_num * h2, 1, n_dim2))?;
+                    // let local_features = Tensor::cat(&[&local_features, &local_cat], 1)?;
                     let global_features = global_features.reshape(((), n_dim))?;
-                    let local_features = local_features
-                        .reshape((height_crop_num, width_crop_num, h2, w2, n_dim2))?
-                        .permute((0, 2, 1, 3, 4))?
-                        .reshape((height_crop_num * h2, width_crop_num * w2, n_dim2))?;
-                    let local_cat = image_newline.expand((height_crop_num * h2, 1, n_dim2))?;
-                    let local_features = Tensor::cat(&[&local_features, &local_cat], 1)?;
                     let local_features = local_features.reshape(((), n_dim2))?;
                     Tensor::cat(
                         &[
@@ -1256,21 +1401,44 @@ impl DeepseekOCRModel {
                     )?
                 } else {
                     let global_features_1 = self.sam_model.forward(&image_ori_i)?;
-                    let global_features_2 = self
-                        .vision_model
-                        .forward(&image_ori_i, Some(&global_features_1))?;
-                    let global_features_1 = global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
-                    let global_features_2 = global_features_2.i((.., 1..))?;
-                    let global_features =
-                        Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?;
+                    let global_features = match &self.vision_model {
+                        VisionModel::Vit(vit) => {
+                            let global_features_2 =
+                                vit.forward(&image_ori_i, Some(&global_features_1))?;
+                            let global_features_1 =
+                                global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                            let global_features_2 = global_features_2.i((.., 1..))?;
+                            Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?
+                        }
+                        VisionModel::Qwen2(qwen2) => qwen2.forward(&global_features_1)?,
+                    };
+                    // let global_features_2 = self
+                    //     .vision_model
+                    //     .forward(&image_ori_i, Some(&global_features_1))?;
+                    // let global_features_1 = global_features_1.flatten(2, 3)?.permute((0, 2, 1))?;
+                    // let global_features_2 = global_features_2.i((.., 1..))?;
+                    // let global_features =
+                    //     Tensor::cat(&[global_features_2, global_features_1], D::Minus1)?;
                     let global_features = self.projector.forward(&global_features)?;
                     let (_, hw, n_dim) = global_features.dims3()?;
-                    let h = (hw as f32).sqrt() as usize;
-                    let w = h;
-                    let global_features = global_features.reshape((h, w, n_dim))?;
-                    let image_newline = self.image_newline.unsqueeze(0)?.unsqueeze(0)?;
-                    let global_cat = image_newline.expand((h, 1, n_dim))?;
-                    let global_features = Tensor::cat(&[&global_features, &global_cat], 1)?;
+                    let global_features = if let Some(image_newline) = &self.image_newline {
+                        let h = (hw as f32).sqrt() as usize;
+                        let w = h;
+                        let global_features = global_features.reshape((h, w, n_dim))?;
+                        let image_newline = image_newline.unsqueeze(0)?.unsqueeze(0)?;
+                        let global_cat = image_newline.expand((h, 1, n_dim))?;
+                        Tensor::cat(&[&global_features, &global_cat], 1)?
+                    } else {
+                        global_features
+                    };
+                    // let (_, hw, n_dim) = global_features.dims3()?;
+                    // let h = (hw as f32).sqrt() as usize;
+                    // let w = h;
+                    // let global_features = global_features.reshape((h, w, n_dim))?;
+                    // let image_newline = self.image_newline.unsqueeze(0)?.unsqueeze(0)?;
+                    // let global_cat = image_newline.expand((h, 1, n_dim))?;
+                    // let global_features = Tensor::cat(&[&global_features, &global_cat], 1)?;
+
                     let global_features = global_features.reshape(((), n_dim))?;
                     Tensor::cat(&[global_features, self.view_seperator.unsqueeze(0)?], 0)?
                 };

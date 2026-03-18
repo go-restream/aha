@@ -162,6 +162,8 @@ pub fn find_closest_aspect_ratio(
 
 pub fn dynamic_preprocess(
     image: &DynamicImage,
+    min_num: u32,
+    max_num: u32,
     image_size: u32,
     use_thumbnail: bool,
 ) -> Result<(Vec<DynamicImage>, (u32, u32))> {
@@ -169,7 +171,7 @@ pub fn dynamic_preprocess(
     let orig_height = image.height();
     let aspect_ratio = orig_width as f64 / orig_height as f64;
     // 控制分块数量在2-9之间
-    let target_ratios = generate_target_ratios_sorted(2, 9);
+    let target_ratios = generate_target_ratios_sorted(min_num, max_num);
     let target_aspect_ratio = find_closest_aspect_ratio(
         aspect_ratio,
         &target_ratios,

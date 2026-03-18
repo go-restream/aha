@@ -262,6 +262,7 @@ fn which_model_to_id(which_model: WhichModel) -> &'static str {
         WhichModel::Qwen3vl8B => "qwen3vl-8b",
         WhichModel::Qwen3vl32B => "qwen3vl-32b",
         WhichModel::DeepSeekOCR => "deepseek-ocr",
+        WhichModel::DeepSeekOCR2 => "deepseek-ocr2",
         WhichModel::HunyuanOCR => "hunyuan-ocr",
         WhichModel::PaddleOCRVL => "paddleocr-vl",
         WhichModel::PaddleOCRVL1_5 => "paddleocr-vl1.5",
@@ -289,7 +290,7 @@ fn which_model_to_owner(which_model: WhichModel) -> &'static str {
         | WhichModel::Qwen3_5_2B
         | WhichModel::Qwen3_5_4B
         | WhichModel::Qwen3_5_9B => "Qwen",
-        WhichModel::DeepSeekOCR => "deepseek-ai",
+        WhichModel::DeepSeekOCR | WhichModel::DeepSeekOCR2 => "deepseek-ai",
         WhichModel::HunyuanOCR => "Tencent-Hunyuan",
         WhichModel::PaddleOCRVL | WhichModel::PaddleOCRVL1_5 => "PaddlePaddle",
         WhichModel::RMBG2_0 => "AI-ModelScope",

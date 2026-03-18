@@ -10,6 +10,7 @@ pub mod hunyuan_ocr;
 pub mod mask_gct;
 pub mod minicpm4;
 pub mod paddleocr_vl;
+pub mod qwen2;
 pub mod qwen2_5vl;
 pub mod qwen3;
 pub mod qwen3_5;
@@ -70,6 +71,8 @@ pub enum WhichModel {
     Qwen3vl32B,
     #[value(name = "deepseek-ocr", hide = true)]
     DeepSeekOCR,
+    #[value(name = "deepseek-ocr2", hide = true)]
+    DeepSeekOCR2,
     #[value(name = "hunyuan-ocr", hide = true)]
     HunyuanOCR,
     #[value(name = "paddleocr-vl", hide = true)]
@@ -110,6 +113,7 @@ impl WhichModel {
             WhichModel::Qwen3vl8B => "Qwen/Qwen3-VL-8B-Instruct",
             WhichModel::Qwen3vl32B => "Qwen/Qwen3-VL-32B-Instruct",
             WhichModel::DeepSeekOCR => "deepseek-ai/DeepSeek-OCR",
+            WhichModel::DeepSeekOCR2 => "deepseek-ai/DeepSeek-OCR-2",
             WhichModel::HunyuanOCR => "Tencent-Hunyuan/HunyuanOCR",
             WhichModel::PaddleOCRVL => "PaddlePaddle/PaddleOCR-VL",
             WhichModel::PaddleOCRVL1_5 => "PaddlePaddle/PaddleOCR-VL-1.5",
@@ -140,6 +144,7 @@ impl WhichModel {
             | WhichModel::Qwen3_5Gguf => "vlm",
             // OCR models
             WhichModel::DeepSeekOCR
+            | WhichModel::DeepSeekOCR2
             | WhichModel::HunyuanOCR
             | WhichModel::GlmOCR
             | WhichModel::PaddleOCRVL
@@ -309,6 +314,10 @@ pub fn load_model<'a>(
             ModelInstance::Qwen3VL(Box::new(model))
         }
         WhichModel::DeepSeekOCR => {
+            let model = DeepseekOCRGenerateModel::init(path, None, None)?;
+            ModelInstance::DeepSeekOCR(model)
+        }
+        WhichModel::DeepSeekOCR2 => {
             let model = DeepseekOCRGenerateModel::init(path, None, None)?;
             ModelInstance::DeepSeekOCR(model)
         }

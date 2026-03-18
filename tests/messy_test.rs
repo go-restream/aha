@@ -9,7 +9,7 @@
 // use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use anyhow::Result;
 // use byteorder::{LittleEndian, ReadBytesExt};
-use candle_core::Tensor;
+// use candle_core::Tensor;
 use modelscope::{DownloadOptions, ModelScope};
 // use sentencepiece::SentencePieceProcessor;
 // use zip::ZipArchive;
@@ -35,12 +35,19 @@ async fn download_test() -> Result<()> {
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test messy_test messy_test -r -- --nocapture
-
-    let device = &candle_core::Device::Cpu;
-    let t1 = Tensor::randn(0.0, 1.0, (16, 9, 64, 128), device)?;
-    let t2 = Tensor::randn(0.0, 1.0, (16, 9, 128, 64), device)?;
-    let out = t1.matmul(&t2)?;
-    println!("out shape: {:?}", out);
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/deepseek-ai/DeepSeek-OCR-2/", save_dir);
+    let stem = std::path::Path::new(&model_path)
+        .file_stem() // 获取文件名主干（不含扩展名）
+        .and_then(|s| s.to_str())
+        .unwrap_or("qwen3.5");
+    println!("stem: {:?}", stem);
+    // let device = &candle_core::Device::Cpu;
+    // let t1 = Tensor::randn(0.0, 1.0, (16, 9, 64, 128), device)?;
+    // let t2 = Tensor::randn(0.0, 1.0, (16, 9, 128, 64), device)?;
+    // let out = t1.matmul(&t2)?;
+    // println!("out shape: {:?}", out);
 
     // let input = Tensor::arange(0.0f32, 25.0f32, device)?.reshape((5, 5))?;
     // println!("input: {}", input);

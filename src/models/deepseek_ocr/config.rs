@@ -91,9 +91,16 @@ pub struct SamVitB {
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
+pub struct Qwen2_0_5B {
+    dim: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Width {
     #[serde(rename = "clip-l-14-224")]
-    pub clip_l_14_224: ClipL14_224,
+    pub clip_l_14_224: Option<ClipL14_224>,
+    #[serde(rename = "qwen2-0-5b")]
+    pub qwen2_0_5b: Option<Qwen2_0_5B>,
     pub sam_vit_b: SamVitB,
 }
 
