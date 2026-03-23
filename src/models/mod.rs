@@ -19,6 +19,7 @@ pub mod qwen3vl;
 pub mod rmbg2_0;
 pub mod voxcpm;
 pub mod w2v_bert_2_0;
+pub mod lfm2;
 
 use aha_openai_dive::v1::resources::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
@@ -27,18 +28,15 @@ use anyhow::{Result, anyhow};
 use rocket::futures::Stream;
 
 use crate::models::{
-    deepseek_ocr::generate::DeepseekOCRGenerateModel,
-    fun_asr_nano::generate::FunAsrNanoGenerateModel,
-    glm_asr_nano::generate::GlmAsrNanoGenerateModel, glm_ocr::generate::GlmOcrGenerateModel,
-    hunyuan_ocr::generate::HunyuanOCRGenerateModel, minicpm4::generate::MiniCPMGenerateModel,
-    paddleocr_vl::generate::PaddleOCRVLGenerateModel, qwen2_5vl::generate::Qwen2_5VLGenerateModel,
-    qwen3::generate::Qwen3GenerateModel, qwen3_5::generate::Qwen3_5GenerateModel,
-    qwen3_asr::generate::Qwen3AsrGenerateModel, qwen3vl::generate::Qwen3VLGenerateModel,
-    rmbg2_0::generate::RMBG2_0Model, voxcpm::generate::VoxCPMGenerate,
+    deepseek_ocr::generate::DeepseekOCRGenerateModel, fun_asr_nano::generate::FunAsrNanoGenerateModel, glm_asr_nano::generate::GlmAsrNanoGenerateModel, glm_ocr::generate::GlmOcrGenerateModel, hunyuan_ocr::generate::HunyuanOCRGenerateModel, lfm2::generate::Lfm2GenerateModel, minicpm4::generate::MiniCPMGenerateModel, paddleocr_vl::generate::PaddleOCRVLGenerateModel, qwen2_5vl::generate::Qwen2_5VLGenerateModel, qwen3::generate::Qwen3GenerateModel, qwen3_5::generate::Qwen3_5GenerateModel, qwen3_asr::generate::Qwen3AsrGenerateModel, qwen3vl::generate::Qwen3VLGenerateModel, rmbg2_0::generate::RMBG2_0Model, voxcpm::generate::VoxCPMGenerate
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum WhichModel {
+    #[value(name = "lfm2-1.2b", hide = true)]
+    LFM2_1_2B,
+    #[value(name = "lfm2.5-1.2b-instruct", hide = true)]
+    LFM2_5_1_2BInstruct,
     #[value(name = "minicpm4-0.5b", hide = true)]
     MiniCPM4_0_5B,
     #[value(name = "qwen2.5vl-3b", hide = true)]
@@ -97,6 +95,8 @@ impl WhichModel {
     /// Get the ModelScope model ID for this model variant
     pub fn model_id(self) -> &'static str {
         match self {
+            WhichModel::LFM2_1_2B => "LiquidAI/LFM2-1.2B",
+            WhichModel::LFM2_5_1_2BInstruct => "LiquidAI/LFM2.5-1.2B-Instruct",
             WhichModel::MiniCPM4_0_5B => "OpenBMB/MiniCPM4-0.5B",
             WhichModel::Qwen2_5vl3B => "Qwen/Qwen2.5-VL-3B-Instruct",
             WhichModel::Qwen2_5vl7B => "Qwen/Qwen2.5-VL-7B-Instruct",
@@ -130,7 +130,9 @@ impl WhichModel {
     pub fn model_type(self) -> &'static str {
         match self {
             // LLM models
-            WhichModel::MiniCPM4_0_5B | WhichModel::Qwen3_0_6B => "llm",
+            WhichModel::MiniCPM4_0_5B | WhichModel::Qwen3_0_6B
+            | WhichModel::LFM2_1_2B
+            | WhichModel::LFM2_5_1_2BInstruct => "llm",
             WhichModel::Qwen2_5vl3B
             | WhichModel::Qwen2_5vl7B
             | WhichModel::Qwen3vl2B
@@ -177,6 +179,7 @@ pub trait GenerateModel {
 
 pub enum ModelInstance<'a> {
     MiniCPM4(MiniCPMGenerateModel<'a>),
+    Lfm2(Lfm2GenerateModel<'a>),
     Qwen2_5VL(Qwen2_5VLGenerateModel<'a>),
     Qwen3(Qwen3GenerateModel<'a>),
     Qwen3_5(Qwen3_5GenerateModel<'a>),
@@ -196,6 +199,7 @@ impl<'a> GenerateModel for ModelInstance<'a> {
     fn generate(&mut self, mes: ChatCompletionParameters) -> Result<ChatCompletionResponse> {
         match self {
             ModelInstance::MiniCPM4(model) => model.generate(mes),
+            ModelInstance::Lfm2(model) => model.generate(mes),
             ModelInstance::Qwen2_5VL(model) => model.generate(mes),
             ModelInstance::Qwen3(model) => model.generate(mes),
             ModelInstance::Qwen3_5(model) => model.generate(mes),
@@ -225,6 +229,7 @@ impl<'a> GenerateModel for ModelInstance<'a> {
     > {
         match self {
             ModelInstance::MiniCPM4(model) => model.generate_stream(mes),
+            ModelInstance::Lfm2(model) => model.generate_stream(mes),
             ModelInstance::Qwen2_5VL(model) => model.generate_stream(mes),
             ModelInstance::Qwen3(model) => model.generate_stream(mes),
             ModelInstance::Qwen3_5(model) => model.generate_stream(mes),
@@ -252,6 +257,14 @@ pub fn load_model<'a>(
         WhichModel::MiniCPM4_0_5B => {
             let model = MiniCPMGenerateModel::init(path, None, None)?;
             ModelInstance::MiniCPM4(model)
+        }
+        WhichModel::LFM2_1_2B => {
+            let model = Lfm2GenerateModel::init(path, None, None)?;
+            ModelInstance::Lfm2(model)
+        }
+        WhichModel::LFM2_5_1_2BInstruct => {
+            let model = Lfm2GenerateModel::init(path, None, None)?;
+            ModelInstance::Lfm2(model)
         }
         WhichModel::Qwen2_5vl3B => {
             let model = Qwen2_5VLGenerateModel::init(path, None, None)?;

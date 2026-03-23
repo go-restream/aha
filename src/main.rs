@@ -244,6 +244,8 @@ struct ModelInfo {
 fn run_list(args: ListArgs) -> anyhow::Result<()> {
     let models = [
         WhichModel::MiniCPM4_0_5B,
+        WhichModel::LFM2_1_2B,
+        WhichModel::LFM2_5_1_2BInstruct,
         WhichModel::Qwen2_5vl3B,
         WhichModel::Qwen2_5vl7B,
         WhichModel::Qwen3_0_6B,
@@ -460,6 +462,14 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
         WhichModel::MiniCPM4_0_5B => {
             use aha::exec::minicpm4::MiniCPM4Exec;
             MiniCPM4Exec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::LFM2_1_2B => {
+            use aha::exec::lfm2::Lfm2Exec;
+            Lfm2Exec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::LFM2_5_1_2BInstruct => {
+            use aha::exec::lfm2::Lfm2Exec;
+            Lfm2Exec::run(&input, output.as_deref(), &weight_path)?;
         }
         WhichModel::Qwen2_5vl3B => {
             use aha::exec::qwen2_5vl::Qwen2_5vlExec;

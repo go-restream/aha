@@ -6,7 +6,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, eager_attention_forward},
+        common::{GateUpDownMLP, QKNormAttention, eager_attention_forward},
         qwen3::config::Qwen3Config,
     },
     position_embed::rope::{RoPE, apply_rotary_pos_emb},
@@ -135,7 +135,8 @@ impl Qwen3Attention {
 }
 
 pub struct Qwen3DecoderLayer {
-    self_attn: Qwen3Attention,
+    // self_attn: Qwen3Attention,
+    self_attn: QKNormAttention,
     mlp: GateUpDownMLP,
     input_layernorm: RmsNorm,
     post_attention_layernorm: RmsNorm,
@@ -143,7 +144,22 @@ pub struct Qwen3DecoderLayer {
 
 impl Qwen3DecoderLayer {
     pub fn new(config: &Qwen3Config, vb: VarBuilder) -> Result<Self> {
-        let self_attn = Qwen3Attention::new(config, vb.pp("self_attn"))?;
+        // let self_attn = Qwen3Attention::new(config, vb.pp("self_attn"))?;
+        let self_attn = QKNormAttention::new(
+            vb.pp("self_attn"),
+            config.hidden_size,
+            config.num_attention_heads,
+            Some(config.head_dim),
+            Some(config.num_key_value_heads),
+            config.attention_bias,
+            config.rms_norm_eps,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )?;
         let mlp = GateUpDownMLP::new(
             vb.pp("mlp"),
             config.hidden_size,

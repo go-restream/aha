@@ -25,6 +25,10 @@
 aha 是一款基于 Rust 和 Candle 框架构建的高性能跨平台 AI 推理引擎。将最先进的 AI 模型带到您的本地机器——无需 API 密钥，无需云依赖，纯粹、快速的 AI，直接在您的硬件上运行。
 
 ## 更新日志
+### v0.2.4 (2026-03-23)
+- 新增 LFM2.5-1.2B-Instruct
+- 新增 LFM2-1.2B
+
 ### v0.2.3 (2026-03-18)
 - 新增 DeepSeek-OCR-2
 
@@ -124,9 +128,9 @@ curl http://localhost:10100/chat/completions \
 
 | 类别 | 模型 |
 |------|------|
-| **文本** | Qwen3, MiniCPM4 |
+| **文本** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
 | **视觉** | Qwen2.5-VL, Qwen3-VL |
-| **OCR** | DeepSeek-OCR, Hunyuan-OCR, PaddleOCR-VL |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> Hunyuan-OCR, PaddleOCR-VL, PaddleOCR-VL1.5 |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano,Qwen3-ASR |
 | **音频** | VoxCPM, VoxCPM1.5 |
 | **图像** | RMBG-2.0 (背景移除) |

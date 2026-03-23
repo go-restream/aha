@@ -36,10 +36,9 @@ pub struct Qwen3_5GenerateModel<'a> {
 
 impl<'a> Qwen3_5GenerateModel<'a> {
     pub fn init(path: &str, device: Option<&Device>, dtype: Option<DType>) -> Result<Self> {
-        let model_name = path
-            .split("/")
-            .collect::<Vec<&str>>()
-            .pop()
+        let model_name = std::path::Path::new(path)
+            .file_name()
+            .and_then(|s| s.to_str())
             .unwrap_or("qwen3.5");
         let chat_template = ChatTemplate::init(path)?;
         let tokenizer = TokenizerModel::init(path)?;

@@ -25,6 +25,10 @@
 aha is a high-performance, cross-platform AI inference engine built with Rust and the Candle framework. It brings state-of-the-art AI models to your local machine—no API keys, no cloud dependencies, just pure, fast AI running directly on your hardware.
 
 ## Changelog
+### v0.2.4 (2026-03-23)
+- add LFM2.5-1.2B-Instruct
+- add LFM2-1.2B
+
 ### v0.2.3 (2026-03-18)
 - add DeepSeek-OCR-2
 
@@ -48,9 +52,6 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 
 ### v0.2.1 (2026-03-05)
 - Added Qwen3.5 model
-
-### 2026-03-01
-- update interpolate.rs
 
 
 **[View full changelog](docs/changelog.md)** →
@@ -125,9 +126,9 @@ curl http://localhost:10100/chat/completions \
 
 | Category | Models |
 |----------|--------|
-| **Text** | Qwen3, MiniCPM4 |
-| **Vision** | Qwen2.5-VL, Qwen3-VL |
-| **OCR** | DeepSeek-OCR, Hunyuan-OCR, PaddleOCR-VL |
+| **Text** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
+| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> Hunyuan-OCR, PaddleOCR-VL, PaddleOCR-VL1.5 |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
 | **Audio** | VoxCPM, VoxCPM1.5 |
 | **Image** | RMBG-2.0 (background removal) |

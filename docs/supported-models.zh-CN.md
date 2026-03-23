@@ -8,6 +8,8 @@ aha 支持多个领域的最先进 AI 模型集合。
 |------|--------|------|----------|---------|
 | **Qwen3-0.6B** | 0.6B | 最新一代 | 高级推理 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 | **MiniCPM4-0.5B** | 0.5B | 高效轻量级 | 边缘部署 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **LFM2-1.2B** | 1.2B | 高效轻量级 | 边缘部署 | [lfm1.0](https://huggingface.co/LiquidAI/LFM2-1.2B/blob/main/LICENSE) |
+| **LFM2.5-1.2B-Instruct** | 1.2B | 高效轻量级 | 边缘部署 | [lfm1.0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE) |
 
 ## 视觉与多模态
 

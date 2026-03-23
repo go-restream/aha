@@ -247,6 +247,8 @@ struct ErrorResponse {
 fn which_model_to_id(which_model: WhichModel) -> &'static str {
     match which_model {
         WhichModel::MiniCPM4_0_5B => "minicpm4-0.5b",
+        WhichModel::LFM2_1_2B => "lfm2-1.2b",
+        WhichModel::LFM2_5_1_2BInstruct => "lfm2.5-1.2b-instruct",
         WhichModel::Qwen2_5vl3B => "qwen2.5vl-3b",
         WhichModel::Qwen2_5vl7B => "qwen2.5vl-7b",
         WhichModel::Qwen3_0_6B => "qwen3-0.6b",
@@ -297,6 +299,7 @@ fn which_model_to_owner(which_model: WhichModel) -> &'static str {
         WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "OpenBMB",
         WhichModel::GlmASRNano2512 | WhichModel::GlmOCR => "ZhipuAI",
         WhichModel::FunASRNano2512 => "FunAudioLLM",
+        WhichModel::LFM2_1_2B | WhichModel::LFM2_5_1_2BInstruct => "LiquidAI",
     }
 }
 

@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+### v0.2.4 (2026-03-23)
+- 新增 LFM2.5-1.2B-Instruct
+- 新增 LFM2-1.2B
+
 ### v0.2.3 (2026-03-18)
 - 新增 DeepSeek-OCR-2
 
