@@ -63,6 +63,8 @@ aha supports a growing collection of state-of-the-art AI models across multiple 
 | **DeepSeek-OCR** | Multi | Scene text | Natural images | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 | **GLM-OCR** | 8 | Scene text | complex document | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 
+GLM-OCR local artifacts: `safetensors`, `gguf`, `onnx`
+
 ## Speech Recognition (ASR)
 
 | Model | Parameters | Language | Real-time | Speed | License |

@@ -33,6 +33,11 @@ pub fn supported_artifacts(model: WhichModel) -> &'static [ArtifactKind] {
             ArtifactKind::Gguf,
             ArtifactKind::Onnx,
         ],
+        WhichModel::GlmOCR => &[
+            ArtifactKind::Safetensors,
+            ArtifactKind::Gguf,
+            ArtifactKind::Onnx,
+        ],
         WhichModel::Qwen3_0_6B => &[
             ArtifactKind::Safetensors,
             ArtifactKind::Gguf,

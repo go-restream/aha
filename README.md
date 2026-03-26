@@ -27,6 +27,7 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 ## Changelog
 ### v0.2.3 (2026-03-18)
 - add DeepSeek-OCR-2
+- add GLM-OCR gguf and onnx local loading
 
 ### 2026-03-17
 - add PaddleOCR-VL1.5 model
@@ -105,6 +106,12 @@ aha run -m all-minilm-l6-v2 -i "Rust embedding test" --artifact-format gguf --gg
 
 # Run local all-MiniLM-L6-v2 embedding (ONNX)
 aha run -m all-minilm-l6-v2 -i "Rust embedding test" --artifact-format onnx --onnx-path D:\model_download\all-MiniLM-L6-v2\onnx --tokenizer-dir D:\model_download\all-MiniLM-L6-v2
+
+# Run local GLM-OCR (GGUF)
+aha run -m glm-ocr -i .\assets\img\ocr_test1.png --artifact-format gguf --gguf-path D:\model_download\GLM-OCR-GGUF
+
+# Run local GLM-OCR (ONNX)
+aha run -m glm-ocr -i .\assets\img\ocr_test1.png --artifact-format onnx --onnx-path D:\model_download\GLM-OCR-ONNX --tokenizer-dir D:\model_download\GLM-OCR-ONNX
 
 # Start service only (model already downloaded)
 aha serv -m qwen3asr-0.6b -p 10100

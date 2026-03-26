@@ -63,6 +63,8 @@ aha 支持多个领域的最先进 AI 模型集合。
 | **DeepSeek-OCR** | 多语言 | 场景文字 | 自然图像 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 | **GLM-OCR** | 8 | 场景文字 | 复杂文档 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 
+GLM-OCR 本地制品格式：`safetensors`、`gguf`、`onnx`
+
 ## 语音识别 (ASR)
 
 | 模型 | 参数量 | 语言 | 实时 | 速度 | 开源协议 |

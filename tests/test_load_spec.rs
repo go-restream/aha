@@ -49,6 +49,35 @@ fn load_spec_all_minilm_accepts_gguf() {
 }
 
 #[test]
+fn load_spec_glm_ocr_accepts_gguf() {
+    let spec = LoadSpec {
+        model: WhichModel::GlmOCR,
+        artifact: ArtifactKind::Gguf,
+        paths: ModelPaths {
+            gguf_path: Some("D:/model_download/GLM-OCR-GGUF".to_string()),
+            ..Default::default()
+        },
+    };
+
+    assert!(spec.validate().is_ok());
+}
+
+#[test]
+fn load_spec_glm_ocr_accepts_onnx() {
+    let spec = LoadSpec {
+        model: WhichModel::GlmOCR,
+        artifact: ArtifactKind::Onnx,
+        paths: ModelPaths {
+            onnx_path: Some("D:/model_download/GLM-OCR-ONNX".to_string()),
+            tokenizer_dir: Some("D:/model_download/GLM-OCR-ONNX".to_string()),
+            ..Default::default()
+        },
+    };
+
+    assert!(spec.validate().is_ok());
+}
+
+#[test]
 fn load_spec_gguf_requires_gguf_path() {
     let spec = LoadSpec {
         model: WhichModel::Qwen3_5Gguf,

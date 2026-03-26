@@ -1,9 +1,10 @@
 use anyhow::Result;
 
 use crate::models::{
-    ModelInstance, WhichModel, all_minilm_l6_v2::generate::AllMiniLML6V2Model, load_model_legacy,
-    qwen3::generate::Qwen3GenerateModel, qwen3_5::generate::Qwen3_5GenerateModel,
-    qwen3_embedding::generate::Qwen3EmbeddingModel, qwen3_reranker::generate::Qwen3RerankerModel,
+    ModelInstance, WhichModel, all_minilm_l6_v2::generate::AllMiniLML6V2Model,
+    glm_ocr::generate::GlmOcrGenerateModel, load_model_legacy, qwen3::generate::Qwen3GenerateModel,
+    qwen3_5::generate::Qwen3_5GenerateModel, qwen3_embedding::generate::Qwen3EmbeddingModel,
+    qwen3_reranker::generate::Qwen3RerankerModel,
 };
 
 use super::artifact::LoadSpec;
@@ -11,6 +12,7 @@ use super::artifact::LoadSpec;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ModelLoaderFamily {
     AllMiniLML6V2,
+    GlmOCR,
     Qwen3,
     Qwen3Embedding,
     Qwen3Reranker,
@@ -21,6 +23,7 @@ enum ModelLoaderFamily {
 fn resolve_model_loader_family(model: WhichModel) -> ModelLoaderFamily {
     match model {
         WhichModel::AllMiniLML6V2 => ModelLoaderFamily::AllMiniLML6V2,
+        WhichModel::GlmOCR => ModelLoaderFamily::GlmOCR,
         WhichModel::Qwen3_0_6B => ModelLoaderFamily::Qwen3,
         WhichModel::Qwen3Embedding0_6B
         | WhichModel::Qwen3Embedding4B
@@ -48,6 +51,9 @@ pub fn load_model_from_spec<'a>(spec: &LoadSpec) -> Result<ModelInstance<'a>> {
     let model = match resolve_model_loader_family(spec.model) {
         ModelLoaderFamily::AllMiniLML6V2 => {
             ModelInstance::AllMiniLML6V2(AllMiniLML6V2Model::init_from_spec(spec, None, None)?)
+        }
+        ModelLoaderFamily::GlmOCR => {
+            ModelInstance::GlmOCR(GlmOcrGenerateModel::init_from_spec(spec, None, None)?)
         }
         ModelLoaderFamily::Qwen3 => {
             ModelInstance::Qwen3(Qwen3GenerateModel::init_from_spec(spec, None, None)?)
@@ -85,6 +91,10 @@ mod tests {
         assert_eq!(
             resolve_model_loader_family(WhichModel::Qwen3_0_6B),
             ModelLoaderFamily::Qwen3
+        );
+        assert_eq!(
+            resolve_model_loader_family(WhichModel::GlmOCR),
+            ModelLoaderFamily::GlmOCR
         );
         assert_eq!(
             resolve_model_loader_family(WhichModel::Qwen3Embedding0_6B),

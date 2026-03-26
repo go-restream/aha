@@ -86,6 +86,10 @@ impl<R: Read + Seek> Gguf<R> {
         &self.ct.metadata
     }
 
+    pub fn has_tensor(&self, name: &str) -> bool {
+        self.ct.tensor_infos.contains_key(name)
+    }
+
     pub fn tensor(&mut self, name: &str) -> Result<QTensor> {
         Ok(self.ct.tensor(&mut self.reader, name, &self.device)?)
     }

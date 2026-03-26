@@ -236,6 +236,10 @@ struct RunArgs {
     #[arg(short, long)]
     output: Option<String>,
 
+    /// Maximum number of tokens to generate
+    #[arg(long)]
+    max_tokens: Option<u32>,
+
     /// Local model weight path (defaults to ~/.aha/{model_id} if not specified)
     #[arg(long)]
     weight_path: Option<String>,
@@ -465,6 +469,11 @@ fn run_target_model_with_spec(args: &RunArgs, spec: &LoadSpec) -> anyhow::Result
         | WhichModel::Qwen3_5_4BLmstudioGguf => {
             use aha::exec::qwen3_5::Qwen3_5Exec;
             Qwen3_5Exec::run_with_spec(&args.input, args.output.as_deref(), spec)?;
+            Ok(true)
+        }
+        WhichModel::GlmOCR => {
+            use aha::exec::glm_ocr::GlmOcrExec;
+            GlmOcrExec::run_with_spec(&args.input, args.output.as_deref(), spec, args.max_tokens)?;
             Ok(true)
         }
         _ => Ok(false),
@@ -1014,6 +1023,69 @@ mod tests {
         assert_eq!(
             args.tokenizer_dir.as_deref(),
             Some("D:\\model_download\\all-MiniLM-L6-v2")
+        );
+    }
+
+    #[test]
+    fn parse_glm_ocr_run_gguf_flags() {
+        let cli = Cli::try_parse_from([
+            "aha",
+            "run",
+            "--model",
+            "glm-ocr",
+            "--input",
+            "ocr.png",
+            "--artifact-format",
+            "gguf",
+            "--gguf-path",
+            "D:\\model_download\\GLM-OCR-GGUF",
+            "--max-tokens",
+            "8",
+        ])
+        .expect("run args should parse");
+
+        let Some(Commands::Run(args)) = cli.command else {
+            panic!("expected run subcommand");
+        };
+        assert!(matches!(args.artifact_format, Some(ArtifactArg::Gguf)));
+        assert_eq!(args.model, WhichModel::GlmOCR);
+        assert_eq!(
+            args.gguf_path.as_deref(),
+            Some("D:\\model_download\\GLM-OCR-GGUF")
+        );
+        assert_eq!(args.max_tokens, Some(8));
+    }
+
+    #[test]
+    fn parse_glm_ocr_run_onnx_flags() {
+        let cli = Cli::try_parse_from([
+            "aha",
+            "run",
+            "--model",
+            "glm-ocr",
+            "--input",
+            "ocr.png",
+            "--artifact-format",
+            "onnx",
+            "--onnx-path",
+            "D:\\model_download\\GLM-OCR-ONNX",
+            "--tokenizer-dir",
+            "D:\\model_download\\GLM-OCR-ONNX",
+        ])
+        .expect("run args should parse");
+
+        let Some(Commands::Run(args)) = cli.command else {
+            panic!("expected run subcommand");
+        };
+        assert!(matches!(args.artifact_format, Some(ArtifactArg::Onnx)));
+        assert_eq!(args.model, WhichModel::GlmOCR);
+        assert_eq!(
+            args.onnx_path.as_deref(),
+            Some("D:\\model_download\\GLM-OCR-ONNX")
+        );
+        assert_eq!(
+            args.tokenizer_dir.as_deref(),
+            Some("D:\\model_download\\GLM-OCR-ONNX")
         );
     }
 
