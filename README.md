@@ -25,6 +25,10 @@
 aha is a high-performance, cross-platform AI inference engine built with Rust and the Candle framework. It brings state-of-the-art AI models to your local machine—no API keys, no cloud dependencies, just pure, fast AI running directly on your hardware.
 
 ## Changelog
+### v0.2.5 (2026-03-30)
+- add LFM2.5VL-1.6B
+- add LFM2VL-1.6B
+
 ### v0.2.4 (2026-03-23)
 - add LFM2.5-1.2B-Instruct
 - add LFM2-1.2B
@@ -42,17 +46,6 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 
 ### 2026-03-16
 - Added Qwen3.5 mmproj
-
-### 2026-03-14
-- update rust version 
-- Added Qwen3.5 gguf support, but the 4B model still has issues; to be resolved.
-
-### v0.2.2 (2026-03-07)
-- Added GLM-OCR model
-
-### v0.2.1 (2026-03-05)
-- Added Qwen3.5 model
-
 
 **[View full changelog](docs/changelog.md)** →
 
@@ -127,8 +120,8 @@ curl http://localhost:10100/chat/completions \
 | Category | Models |
 |----------|--------|
 | **Text** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
-| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> , PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
+| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL-1.6B, LFM2-VL-1.6B |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
 | **Audio** | VoxCPM, VoxCPM1.5 |
 | **Image** | RMBG-2.0 (background removal) |
