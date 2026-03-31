@@ -24,37 +24,25 @@
 
 aha 是一款基于 Rust 和 Candle 框架构建的高性能跨平台 AI 推理引擎。将最先进的 AI 模型带到您的本地机器——无需 API 密钥，无需云依赖，纯粹、快速的 AI，直接在您的硬件上运行。
 
-## 更新日志
+### 支持的模型
 
-### 2026-03-31
-- aha模型名称使用 modelscope id 替换
-- 更新 WhichModel 枚举
-- Usage 增加时间信息
-- 删除 aha_openai_dive, chrono 依赖
+| 类别 | 模型 |
+|------|------|
+| **文本** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
+| **视觉** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 <br> LFM2.5-VL, LFM2-VL |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
+| **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
+| **音频** | VoxCPM, VoxCPM1.5 |
+| **图像** | RMBG-2.0 (背景移除) |
 
-### v0.2.5 (2026-03-30)
-- 新增 LFM2.5VL-1.6B
-- 新增 LFM2VL-1.6B
-
-### v0.2.4 (2026-03-23)
-- 新增 LFM2.5-1.2B-Instruct
-- 新增 LFM2-1.2B
-
-### v0.2.3 (2026-03-18)
-- 新增 DeepSeek-OCR-2
-
-### 2026-03-17
-- 新增 PaddleOCR-VL1.5 模型
-- 修复 qwen3.5 position_ids 创建错误
-- cli 参数增加 
-  - gguf_path: 本地 GGUF 模型权重路径（加载 GGUF 模型时需要）
-  - mmproj_path: 本地 mmproj GGUF 权重路径（加载多模态 GGUF 时需要）
-- WhichModel 增加 qwen3.5-gguf
-
-### 2026-03-16
-- 增加 Qwen3.5 mmproj
-
-**[查看完整更新日志](docs/changelog.zh-CN.md)** →
+## 为什么选择 aha？
+- **🚀 高性能推理** - 基于 Candle 框架，提供高效的张量计算和模型推理
+- **🔧 统一接口** — 一个工具搞定文本、视觉、语音和 OCR
+- **📦 本地优先** — 所有处理在本地运行，数据不离境
+- **🎯 跨平台** — 支持 Linux、macOS 和 Windows
+- **⚡ GPU 加速** — 可选 CUDA 支持以获得更快推理
+- **🛡️ 内存安全** — Rust 构建，稳定可靠
+- **🧠 注意力优化** - 可选 Flash Attention 支持，优化长序列处理
 
 ## 快速开始
 
@@ -112,7 +100,7 @@ aha serv -m Qwen/Qwen3-0.6B -p 10100
 然后使用统一(兼容 OpenAI)的 API：
 
 ```bash
-curl http://localhost:10100/chat/completions \
+curl http://localhost:10100/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "Qwen/Qwen3-0.6B",
@@ -121,18 +109,37 @@ curl http://localhost:10100/chat/completions \
   }'
 ```
 
+## 更新日志
 
-### 支持的模型
+### 2026-03-31
+- aha模型名称使用 modelscope id 替换
+- 更新 WhichModel 枚举
+- Usage 增加时间信息
+- 删除 aha_openai_dive, chrono 依赖
 
-| 类别 | 模型 |
-|------|------|
-| **文本** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
-| **视觉** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 <br> LFM2.5-VL, LFM2-VL |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
-| **ASR** | GLM-ASR-Nano, Fun-ASR-Nano,Qwen3-ASR |
-| **音频** | VoxCPM, VoxCPM1.5 |
-| **图像** | RMBG-2.0 (背景移除) |
+### v0.2.5 (2026-03-30)
+- 新增 LFM2.5VL-1.6B
+- 新增 LFM2VL-1.6B
 
+### v0.2.4 (2026-03-23)
+- 新增 LFM2.5-1.2B-Instruct
+- 新增 LFM2-1.2B
+
+### v0.2.3 (2026-03-18)
+- 新增 DeepSeek-OCR-2
+
+### 2026-03-17
+- 新增 PaddleOCR-VL1.5 模型
+- 修复 qwen3.5 position_ids 创建错误
+- cli 参数增加 
+  - gguf_path: 本地 GGUF 模型权重路径（加载 GGUF 模型时需要）
+  - mmproj_path: 本地 mmproj GGUF 权重路径（加载多模态 GGUF 时需要）
+- WhichModel 增加 qwen3.5-gguf
+
+### 2026-03-16
+- 增加 Qwen3.5 mmproj
+
+**[查看完整更新日志](docs/changelog.zh-CN.md)** →
 
 ## 文档
 
@@ -146,15 +153,6 @@ curl http://localhost:10100/chat/completions \
 | [核心概念](docs/concepts.zh-CN.md) | 架构与设计 |
 | [开发指南](docs/development.zh-CN.md) | 贡献指南 |
 | [更新日志](docs/changelog.zh-CN.md) | 版本历史 |
-
-## 为什么选择 aha？
-- **🚀 高性能推理** - 基于 Candle 框架，提供高效的张量计算和模型推理
-- **🔧 统一接口** — 一个工具搞定文本、视觉、语音和 OCR
-- **📦 本地优先** — 所有处理在本地运行，数据不离境
-- **🎯 跨平台** — 支持 Linux、macOS 和 Windows
-- **⚡ GPU 加速** — 可选 CUDA 支持以获得更快推理
-- **🛡️ 内存安全** — Rust 构建，稳定可靠
-- **🧠 注意力优化** - 可选 Flash Attention 支持，优化长序列处理
 
 ## 开发
 

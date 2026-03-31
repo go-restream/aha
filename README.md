@@ -24,36 +24,26 @@
 
 aha is a high-performance, cross-platform AI inference engine built with Rust and the Candle framework. It brings state-of-the-art AI models to your local machine—no API keys, no cloud dependencies, just pure, fast AI running directly on your hardware.
 
-## Changelog
-### 2026-03-31
-- aha model name use modelscope id replace 
-- update WhichModel 
-- Usage add time info
-- dependencies delete aha_openai_dive,chrono
 
-### v0.2.5 (2026-03-30)
-- add LFM2.5VL-1.6B
-- add LFM2VL-1.6B
+### Supported Models
 
-### v0.2.4 (2026-03-23)
-- add LFM2.5-1.2B-Instruct
-- add LFM2-1.2B
+| Category | Models |
+|----------|--------|
+| **Text** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
+| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL, LFM2-VL |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
+| **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
+| **Audio** | VoxCPM, VoxCPM1.5 |
+| **Image** | RMBG-2.0 (background removal) |
 
-### v0.2.3 (2026-03-18)
-- add DeepSeek-OCR-2
-
-### 2026-03-17
-- add PaddleOCR-VL1.5 model
-- fix qwen3.5 position_ids create bug
-- cli param add 
-  - gguf_path: Local GGUF model weight path (required for loading models with GGUF)
-  - mmproj_path: Local path to mmproj GGUF weights (required for multimodal GGUF loading)
-- WhichModel add qwen3.5-gguf
-
-### 2026-03-16
-- Added Qwen3.5 mmproj
-
-**[View full changelog](docs/changelog.md)** →
+## Why aha?
+- **🚀 High-Performance Inference** - Powered by Candle framework for efficient tensor computation and model inference
+- **🔧 Unified Interface** — One tool for text, vision, speech, and OCR
+- **📦 Local-First** — All processing runs locally, no data leaves your machine
+- **🎯 Cross-Platform** — Works on Linux, macOS, and Windows
+- **⚡ GPU Accelerated** — Optional CUDA support for faster inference
+- **🛡️ Memory Safe** — Built with Rust for reliability
+- **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Quick Start
 
@@ -111,7 +101,7 @@ aha serv -m Qwen/Qwen3-0.6B -p 10100
 Then use the unified (OpenAI-compatible) API:
 
 ```bash
-curl http://localhost:10100/chat/completions \
+curl http://localhost:10100/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "Qwen/Qwen3-0.6B",
@@ -121,16 +111,38 @@ curl http://localhost:10100/chat/completions \
 '
 ```
 
-### Supported Models
+## Changelog
 
-| Category | Models |
-|----------|--------|
-| **Text** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
-| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL, LFM2-VL |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
-| **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
-| **Audio** | VoxCPM, VoxCPM1.5 |
-| **Image** | RMBG-2.0 (background removal) |
+### 2026-03-31
+- aha model name use modelscope id replace 
+- update WhichModel 
+- Usage add time info
+- dependencies delete aha_openai_dive,chrono
+
+### v0.2.5 (2026-03-30)
+- add LFM2.5VL-1.6B
+- add LFM2VL-1.6B
+
+### v0.2.4 (2026-03-23)
+- add LFM2.5-1.2B-Instruct
+- add LFM2-1.2B
+
+### v0.2.3 (2026-03-18)
+- add DeepSeek-OCR-2
+
+### 2026-03-17
+- add PaddleOCR-VL1.5 model
+- fix qwen3.5 position_ids create bug
+- cli param add 
+  - gguf_path: Local GGUF model weight path (required for loading models with GGUF)
+  - mmproj_path: Local path to mmproj GGUF weights (required for multimodal GGUF loading)
+- WhichModel add qwen3.5-gguf
+
+### 2026-03-16
+- Added Qwen3.5 mmproj
+
+**[View full changelog](docs/changelog.md)** →
+
 
 ## Documentation
 
@@ -145,14 +157,6 @@ curl http://localhost:10100/chat/completions \
 | [Development](docs/development.md) | Contributing guide |
 | [Changelog](docs/changelog.md) | Version history |
 
-## Why aha?
-- **🚀 High-Performance Inference** - Powered by Candle framework for efficient tensor computation and model inference
-- **🔧 Unified Interface** — One tool for text, vision, speech, and OCR
-- **📦 Local-First** — All processing runs locally, no data leaves your machine
-- **🎯 Cross-Platform** — Works on Linux, macOS, and Windows
-- **⚡ GPU Accelerated** — Optional CUDA support for faster inference
-- **🛡️ Memory Safe** — Built with Rust for reliability
-- **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Development
 

@@ -243,35 +243,6 @@ struct ErrorResponse {
     error: String,
 }
 
-// /// Get the owner/organization name for a model
-// fn which_model_to_owner(which_model: WhichModel) -> &'static str {
-//     match which_model {
-//         WhichModel::MiniCPM4_0_5B => "OpenBMB",
-//         WhichModel::Qwen2_5VL3B | WhichModel::Qwen2_5VL7B => "Qwen",
-//         WhichModel::Qwen3_0_6B | WhichModel::Qwen3ASR0_6B | WhichModel::Qwen3ASR1_7B => "Qwen",
-//         WhichModel::Qwen3VL2B
-//         | WhichModel::Qwen3VL4B
-//         | WhichModel::Qwen3VL8B
-//         | WhichModel::Qwen3VL32B
-//         | WhichModel::Qwen3_5Gguf => "Qwen",
-//         WhichModel::Qwen3_5_0_8B
-//         | WhichModel::Qwen3_5_2B
-//         | WhichModel::Qwen3_5_4B
-//         | WhichModel::Qwen3_5_9B => "Qwen",
-//         WhichModel::DeepSeekOCR | WhichModel::DeepSeekOCR2 => "deepseek-ai",
-//         WhichModel::HunyuanOCR => "Tencent-Hunyuan",
-//         WhichModel::PaddleOCRVL | WhichModel::PaddleOCRVL1_5 => "PaddlePaddle",
-//         WhichModel::RMBG2_0 => "AI-ModelScope",
-//         WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "OpenBMB",
-//         WhichModel::GlmASRNano2512 | WhichModel::GlmOCR => "ZhipuAI",
-//         WhichModel::FunASRNano2512 => "FunAudioLLM",
-//         WhichModel::LFM2_1_2B
-//         | WhichModel::LFM2_5_1_2BInstruct
-//         | WhichModel::LFM2_5VL1_6B
-//         | WhichModel::LFM2VL1_6B => "LiquidAI",
-//     }
-// }
-
 #[get("/models")]
 pub(crate) async fn models() -> (Status, (ContentType, Json<serde_json::Value>)) {
     if let Some(model_ref) = MODEL.get() {

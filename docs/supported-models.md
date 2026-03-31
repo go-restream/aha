@@ -2,6 +2,43 @@
 
 aha supports a growing collection of state-of-the-art AI models across multiple domains.
 
+```shell
+Available models:
+
+Model ID                                 Owner                type       Download  
+--------------------------------------------------------------------------------
+LiquidAI/LFM2-1.2B                       LiquidAI             llm          ✔       
+LiquidAI/LFM2.5-1.2B-Instruct            LiquidAI             llm          ✔       
+LiquidAI/LFM2.5-VL-1.6B                  LiquidAI             vlm          ✔       
+LiquidAI/LFM2-VL-1.6B                    LiquidAI             vlm          ✔       
+OpenBMB/MiniCPM4-0.5B                    OpenBMB              llm          ✔       
+Qwen/Qwen2.5-VL-3B-Instruct              Qwen                 vlm          ✔       
+Qwen/Qwen2.5-VL-7B-Instruct              Qwen                 vlm                  
+Qwen/Qwen3-0.6B                          Qwen                 llm          ✔       
+Qwen/Qwen3.5-0.8B                        Qwen                 vlm          ✔       
+Qwen/Qwen3.5-2B                          Qwen                 vlm                  
+Qwen/Qwen3.5-4B                          Qwen                 vlm                  
+Qwen/Qwen3.5-9B                          Qwen                 vlm                  
+qwen3.5-gguf                             none                 vlm                  
+Qwen/Qwen3-ASR-0.6B                      Qwen                 asr          ✔       
+Qwen/Qwen3-ASR-1.7B                      Qwen                 asr                  
+Qwen/Qwen3-VL-2B-Instruct                Qwen                 vlm          ✔       
+Qwen/Qwen3-VL-4B-Instruct                Qwen                 vlm                  
+Qwen/Qwen3-VL-8B-Instruct                Qwen                 vlm                  
+Qwen/Qwen3-VL-32B-Instruct               Qwen                 vlm                  
+deepseek-ai/DeepSeek-OCR                 deepseek-ai          ocr          ✔       
+deepseek-ai/DeepSeek-OCR-2               deepseek-ai          ocr                  
+Tencent-Hunyuan/HunyuanOCR               Tencent-Hunyuan      ocr          ✔       
+PaddlePaddle/PaddleOCR-VL                PaddlePaddle         ocr          ✔       
+PaddlePaddle/PaddleOCR-VL-1.5            PaddlePaddle         ocr                  
+AI-ModelScope/RMBG-2.0                   AI-ModelScope        image        ✔       
+OpenBMB/VoxCPM-0.5B                      OpenBMB              tts          ✔       
+OpenBMB/VoxCPM1.5                        OpenBMB              tts          ✔       
+ZhipuAI/GLM-ASR-Nano-2512                ZhipuAI              asr          ✔       
+FunAudioLLM/Fun-ASR-Nano-2512            FunAudioLLM          asr          ✔       
+ZhipuAI/GLM-OCR                          ZhipuAI              ocr          ✔
+```
+
 ## Language Model
 
 | Model | Parameters | Model Id | License |
