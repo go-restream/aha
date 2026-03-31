@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aha_openai_dive::v1::resources::chat::{
+use crate::params::chat::{
     ChatCompletionParameters, ChatMessage, ChatMessageContent, ChatMessageContentPart,
 };
 use anyhow::Result;

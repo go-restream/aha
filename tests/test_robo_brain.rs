@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use aha::models::{GenerateModel, qwen2_5vl::generate::Qwen2_5VLGenerateModel};
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use aha::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 
 #[test]

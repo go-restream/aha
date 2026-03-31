@@ -1,4 +1,4 @@
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use crate::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 use candle_core::{DType, Device, IndexOp, Shape, Tensor};
 use image::DynamicImage;

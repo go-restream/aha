@@ -2,7 +2,7 @@ use std::io::Cursor;
 use std::thread;
 use std::{collections::HashSet, path::PathBuf};
 
-use aha_openai_dive::v1::resources::chat::{
+use crate::params::chat::{
     ChatCompletionParameters, ChatMessage, ChatMessageContent, ChatMessageContentPart,
 };
 use anyhow::{Result, anyhow};

@@ -22,7 +22,7 @@ pub mod rmbg2_0;
 pub mod voxcpm;
 pub mod w2v_bert_2_0;
 
-use aha_openai_dive::v1::resources::chat::{
+use crate::params::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
 };
 use anyhow::{Result, anyhow};

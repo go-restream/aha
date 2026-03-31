@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use aha::{
-    chat::ChatCompletionParameters,
+    params::chat::ChatCompletionParameters,
     models::{GenerateModel, qwen3_5::generate::Qwen3_5GenerateModel},
 };
 use anyhow::Result;

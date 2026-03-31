@@ -21,9 +21,9 @@ base64 = "0.22.1"
 num = "0.4.3"
 minijinja = "2.12.0"
 tokenizers = "0.22.1"
-aha_openai_dive = { version = "1.4", features = ["stream"] }
+# aha_openai_dive = { version = "1.4", features = ["stream"] }
 uuid = { version = "1.18.1", features = ["v4"] }
-chrono = "0.4"
+# chrono = "0.4"
 rocket = { version = "0.5.1", features = ["serde_json", "json"] }
 tokio = "1.47.1"
 hound = "3.5.1"
@@ -43,6 +43,7 @@ half = "2.7.1"
 byteorder = "1.5.0"
 sentencepiece = "0.13.1"
 ahash = "0.8.12"
+derive_builder = "0.20.2"
 
 [features]
 flash-attn = ["candle-flash-attn"]

@@ -1,3 +1,4 @@
+use crate::params::chat::{ChatCompletionParameters, ChatCompletionResponse};
 use crate::utils::build_completion_chunk_response;
 use crate::{
     chat_template::ChatTemplate,
@@ -13,7 +14,6 @@ use crate::{
         build_completion_response, find_type_files, get_device, get_dtype, get_logit_processor,
     },
 };
-use aha_openai_dive::v1::resources::chat::{ChatCompletionParameters, ChatCompletionResponse};
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
@@ -109,10 +109,7 @@ impl<'a> GenerateModel for Lfm2GenerateModel<'a> {
     ) -> Result<
         Box<
             dyn rocket::futures::Stream<
-                    Item = Result<
-                        aha_openai_dive::v1::resources::chat::ChatCompletionChunkResponse,
-                        anyhow::Error,
-                    >,
+                    Item = Result<crate::params::chat::ChatCompletionChunkResponse, anyhow::Error>,
                 > + Send
                 + Unpin
                 + '_,

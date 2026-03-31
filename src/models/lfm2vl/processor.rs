@@ -1,3 +1,4 @@
+use crate::params::chat::ChatCompletionParameters;
 use crate::{
     models::lfm2vl::config::{Lfm2ImageConfig, Lfm2ProcessorConfig},
     utils::{
@@ -8,7 +9,6 @@ use crate::{
         round_by_factor,
     },
 };
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
 use image::DynamicImage;

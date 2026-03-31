@@ -1,4 +1,4 @@
-use aha_openai_dive::v1::resources::chat::{ChatCompletionParameters, ChatCompletionResponse};
+use crate::params::chat::{ChatCompletionParameters, ChatCompletionResponse};
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
@@ -119,10 +119,7 @@ impl<'a> GenerateModel for Lfm2VLGenerateModel<'a> {
     ) -> Result<
         Box<
             dyn rocket::futures::Stream<
-                    Item = Result<
-                        aha_openai_dive::v1::resources::chat::ChatCompletionChunkResponse,
-                        anyhow::Error,
-                    >,
+                    Item = Result<crate::params::chat::ChatCompletionChunkResponse, anyhow::Error>,
                 > + Send
                 + Unpin
                 + '_,

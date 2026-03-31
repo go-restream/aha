@@ -6,9 +6,10 @@ pub mod video_utils;
 
 use std::fs::File;
 use std::io::{Cursor, Read};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::HashMap, fs, path::PathBuf, process::Command, time::Duration};
 
-use aha_openai_dive::v1::resources::{
+use crate::params::{
     chat::{
         AudioUrlType, ChatCompletionChoice, ChatCompletionChunkChoice, ChatCompletionChunkResponse,
         ChatCompletionParameters, ChatCompletionResponse, ChatMessage, ChatMessageAudioContentPart,
@@ -377,6 +378,23 @@ pub fn read_pth_tensor_info_cycle<P: AsRef<std::path::Path>>(
     Ok(dict_to_hashmap)
 }
 
+// 获取秒级时间戳
+pub fn timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+// 获取毫秒级时间戳
+pub fn timestamp_millis() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+}
+
+
 pub fn round_by_factor(num: u32, factor: u32) -> u32 {
     let round = (num as f32 / factor as f32).round() as u32;
     round * factor
@@ -400,7 +418,8 @@ pub fn build_img_completion_response(
     let mut response = ChatCompletionResponse {
         id: Some(id),
         choices: vec![],
-        created: chrono::Utc::now().timestamp() as u32,
+        // created: chrono::Utc::now().timestamp() as u32,
+        created: timestamp() as u32,
         model: model_name.to_string(),
         service_tier: None,
         system_fingerprint: None,
@@ -444,7 +463,7 @@ pub fn build_audio_completion_response(
     let mut response = ChatCompletionResponse {
         id: Some(id),
         choices: vec![],
-        created: chrono::Utc::now().timestamp() as u32,
+        created: timestamp() as u32,
         model: model_name.to_string(),
         service_tier: None,
         system_fingerprint: None,
@@ -498,7 +517,7 @@ pub fn build_completion_response(
     let mut response = ChatCompletionResponse {
         id: Some(id),
         choices: vec![],
-        created: chrono::Utc::now().timestamp() as u32,
+        created: timestamp() as u32,
         model: model_name.to_string(),
         service_tier: None,
         system_fingerprint: None,
@@ -580,7 +599,7 @@ pub fn build_completion_chunk_response(
     let mut response = ChatCompletionChunkResponse {
         id: Some(id),
         choices: vec![],
-        created: chrono::Utc::now().timestamp() as u32,
+        created: timestamp() as u32,
         model: model_name.to_string(),
         system_fingerprint: None,
         object: "chat.completion.chunk".to_string(),

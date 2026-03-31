@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use aha::models::rmbg2_0::generate::RMBG2_0Model;
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use aha::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 
 #[test]

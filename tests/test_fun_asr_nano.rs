@@ -1,7 +1,7 @@
 use std::{pin::pin, time::Instant};
 
 use aha::models::{GenerateModel, fun_asr_nano::generate::FunAsrNanoGenerateModel};
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use aha::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 use rocket::futures::StreamExt;
 #[test]

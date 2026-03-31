@@ -287,7 +287,6 @@ impl Lfm2VLModel {
             && let Some(shapes) = spatial_shapes
         {
             let image_embeds = self.vision_tower.forward(pixel, mask, shapes)?;
-            println!("image_embeds: {}", image_embeds);
             let bs = image_embeds.dim(0)?;
             let img_featrure_length = mask.sum(1)?.to_vec1::<u32>()?;
             let mut image_features = vec![];
@@ -306,7 +305,6 @@ impl Lfm2VLModel {
                 image_features.push(img_embedding);
             }
             let image_embeds = Tensor::cat(&image_features, 0)?;
-            println!("image_embeds: {}", image_embeds);
             let image_mask = get_equal_mask(input_ids, self.img_id)?;
             inputs_embeds = masked_scatter_dim0(&inputs_embeds, &image_embeds, &image_mask)?;
         }

@@ -1,5 +1,5 @@
 use aha::{
-    chat::ChatCompletionParameters,
+    params::chat::ChatCompletionParameters,
     models::{GenerateModel, lfm2::generate::Lfm2GenerateModel},
 };
 use anyhow::Result;

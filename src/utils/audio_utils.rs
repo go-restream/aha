@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::thread;
 use std::{f64::consts::PI, io::Cursor};
 
-use aha_openai_dive::v1::resources::chat::{
+use crate::params::chat::{
     ChatCompletionParameters, ChatCompletionResponse, ChatMessage, ChatMessageContent,
     ChatMessageContentPart,
 };

@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use aha::params::chat::ChatCompletionParameters;
 use aha::{
     models::{
         GenerateModel,
@@ -7,7 +8,6 @@ use aha::{
     },
     utils::audio_utils::{extract_and_save_audio_from_response, save_wav},
 };
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use anyhow::{Ok, Result};
 
 #[test]

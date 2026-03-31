@@ -1,7 +1,7 @@
 use std::{pin::pin, time::Instant};
 
 use aha::models::{GenerateModel, qwen3_5::generate::Qwen3_5GenerateModel};
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use aha::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 use rocket::futures::StreamExt;
 

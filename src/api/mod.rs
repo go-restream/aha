@@ -2,10 +2,10 @@ use std::pin::pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 
+use aha::params::chat::ChatCompletionParameters;
 use aha::models::{GenerateModel, ModelInstance, WhichModel, load_model};
 use aha::process::cleanup_pid_file;
 use aha::utils::string_to_static_str;
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
 use rocket::futures::StreamExt;
 use rocket::serde::{Serialize, json::Json};
 use rocket::{

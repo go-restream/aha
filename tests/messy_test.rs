@@ -5,8 +5,9 @@
 // use std::io::{Read, Seek};
 // use std::{io::Cursor, time::Instant};
 
+use aha::utils::{timestamp, timestamp_millis};
 // use aha::utils::tensor_utils::repeat_interleave;
-// use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+// use crate::params::chat::ChatCompletionParameters;
 use anyhow::Result;
 // use byteorder::{LittleEndian, ReadBytesExt};
 // use candle_core::Tensor;
@@ -35,6 +36,9 @@ async fn download_test() -> Result<()> {
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test messy_test messy_test -r -- --nocapture
+    println!("当前秒级时间戳: {}", timestamp());
+    println!("当前毫秒级时间戳: {}", timestamp_millis());
+    
     // let t1 = Tensor::randn(0.0, 1.0, (1, 2, 6), device)?;
     // println!(" t1: {}", t1);
     // let t2 = t1.pad_with_zeros(D::Minus1, -3, 0)?;

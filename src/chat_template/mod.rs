@@ -1,4 +1,4 @@
-use aha_openai_dive::v1::resources::chat::ChatCompletionParameters;
+use crate::params::chat::ChatCompletionParameters;
 use anyhow::{Result, anyhow};
 use minijinja::{Environment, Value as MiniJinjaValue, context};
 

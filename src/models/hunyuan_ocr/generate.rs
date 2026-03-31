@@ -1,4 +1,4 @@
-use aha_openai_dive::v1::resources::chat::{
+use crate::params::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
 };
 use anyhow::{Result, anyhow};

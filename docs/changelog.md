@@ -5,6 +5,9 @@ All notable changes to aha will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 2026-03-31
+- dependencies delete aha_openai_dive,chrono
+
 ### v0.2.5 (2026-03-30)
 - add LFM2.5VL-1.6B
 - add LFM2VL-1.6B
