@@ -4,60 +4,52 @@ aha 支持多个领域的最先进 AI 模型集合。
 
 ## 文本生成
 
-| 模型 | 参数量 | 描述 | 使用场景 | 开源协议 |
-|------|--------|------|----------|---------|
-| **Qwen3-0.6B** | 0.6B | 最新一代 | 高级推理 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **MiniCPM4-0.5B** | 0.5B | 高效轻量级 | 边缘部署 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **LFM2-1.2B** | 1.2B | 高效轻量级 | 边缘部署 | [lfm1.0](https://huggingface.co/LiquidAI/LFM2-1.2B/blob/main/LICENSE) |
-| **LFM2.5-1.2B-Instruct** | 1.2B | 高效轻量级 | 边缘部署 | [lfm1.0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE) |
+| 模型 | 参数量 | 模型id | 开源协议 |
+|------|--------|------|---------|
+| **Qwen3-0.6B** | 0.6B | Qwen/Qwen3-0.6B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **MiniCPM4-0.5B** | 0.5B | OpenBMB/MiniCPM4-0.5B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **LFM2-1.2B** | 1.2B | LiquidAI/LFM2-1.2B | [lfm1.0](https://huggingface.co/LiquidAI/LFM2-1.2B/blob/main/LICENSE) |
+| **LFM2.5-1.2B-Instruct** | 1.2B | LiquidAI/LFM2.5-1.2B-Instruct | [lfm1.0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE) |
 
 ## 视觉与多模态
 
-| 模型 | 参数量 | 描述 | 开源协议 |
-|------|--------|------|--------|---------|
-| **Qwen2.5-VL-3B** | 3B | 图像理解 | [Qwen 研究许可协议](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE) |
-| **Qwen2.5-VL-7B** | 7B | 图像理解 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-VL-2B** | 2B | 增强多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-VL-4B** | 4B | 增强多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-VL-8B** | 8B | 增强多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-VL-32B** | 32B | 增强多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3.5-0.8B** | 0.8B | 原生多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3.5-2B** | 2B | 原生多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3.5-4B** | 4B | 原生多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3.5-9B** | 9B | 原生多模态 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| 模型 | 参数量 | 模型id | 开源协议 |
+|------|--------|------|---------|
+| **Qwen2.5-VL** | 3B <br> 7B | Qwen/Qwen2.5-VL-3B-Instruct <br> Qwen/Qwen2.5-VL-7B-Instruct | [Qwen 研究许可协议](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE) <br> [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-VL** | 2B <br> 4B <br> 8B <br> 32B | Qwen/Qwen3-VL-2B-Instruct <br> Qwen/Qwen3-VL-4B-Instruct <br> Qwen/Qwen3-VL-8B-Instruct <br> Qwen/Qwen3-VL-32B-Instruct | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3.5** | 0.8B <br> 2B <br> 4B <br> 9B | Qwen/Qwen3.5-0.8B <br> Qwen/Qwen3.5-2B <br> Qwen/Qwen3.5-4B <br> Qwen/Qwen3.5-9B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **LFM2.5-VL-1.6B** | 1.6B | LiquidAI/LFM2.5-VL-1.6B | [lfm1.0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE) |
+| **LFM2-VL-1.6B** | 1.6B | LiquidAI/LFM2-VL-1.6B | [lfm1.0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE) |
 
 ## OCR
 
-| 模型 | 语言 | 类型 | 优势 | 开源协议 |
-|------|------|------|------|---------|
-| **PaddleOCR-VL** | 多语言 | 轻量级 | 通用文档 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **PaddleOCR-VL1.5** | 多语言 | 轻量级 | 通用文档 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Hunyuan-OCR** | 中文 | 深度学习 | 复杂布局 | [腾讯混元社区许可协议](https://huggingface.co/tencent/HunyuanOCR/blob/main/LICENSE) |
-| **DeepSeek-OCR** | 多语言 | 场景文字 | 自然图像 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
-| **GLM-OCR** | 8 | 场景文字 | 复杂文档 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
+| 模型 | 语言 | 模型id | 开源协议 |
+|------|------|------|---------|
+| **PaddleOCR-VL** | 多语言 | PaddlePaddle/PaddleOCR-VL <br> PaddlePaddle/PaddleOCR-VL-1.5 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Hunyuan-OCR** | 中文 | Tencent-Hunyuan/HunyuanOCR | [腾讯混元社区许可协议](https://huggingface.co/tencent/HunyuanOCR/blob/main/LICENSE) |
+| **DeepSeek-OCR** | 多语言 | deepseek-ai/DeepSeek-OCR <br> deepseek-ai/DeepSeek-OCR-2 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
+| **GLM-OCR** | 8 | ZhipuAI/GLM-OCR | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 
 ## 语音识别 (ASR)
 
-| 模型 | 参数量 | 语言 | 实时 | 速度 | 开源协议 |
-|------|--------|------|------|------|---------|
-| **Fun-ASR-Nano-2512** | 2512M | 中/英 | 是 | 快速 | 未标明 |
-| **GLM-ASR-Nano-2512** | 2512M | 中/英 | 是 | 快速 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
-| **Qwen3-ASR-0.6B** | 0.6B | 中/英 | 是 | 快速 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-ASR-1.7B** | 1.7B | 中/英 | 是 | 快速 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| 模型 | 参数量 | 语言 | 模型id | 开源协议 |
+|------|--------|------|-----|---------|
+| **Fun-ASR-Nano-2512** | - | 中/英 | FunAudioLLM/Fun-ASR-Nano-2512 | 未标明 |
+| **GLM-ASR-Nano-2512** | - | 中/英 | ZhipuAI/GLM-ASR-Nano-2512 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
+| **Qwen3-ASR** | 0.6B <br> 1.7B | 中/英 | Qwen/Qwen3-ASR-0.6B <br> Qwen/Qwen3-ASR-1.7B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 
 ## 语音生成
 
-| 模型 | 参数量 | 类型 | 描述 | 开源协议 |
-|------|--------|------|------|---------|
-| **VoxCPM-0.5B** | 0.5B | 语音编解码器 | 神经音频编解码 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **VoxCPM1.5** | - | 语音编解码器 | 增强语音生成 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| 模型 | 版本 | 模型id | 开源协议 |
+|------|--------|------|------|
+| **VoxCPM** | 1<br>1.5 | OpenBMB/VoxCPM-0.5B <br> OpenBMB/VoxCPM1.5 | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 ## 图像处理
 
-| 模型 | 类型 | 描述 | 开源协议 |
-|------|------|------|---------|
-| **RMBG-2.0** | 背景移除 | 移除图像背景 | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hans) |
+| 模型 | 类型 | 模型id | 开源协议 |
+|------|------|-----|---------|
+| **RMBG-2.0** | 背景移除 | AI-ModelScope/RMBG-2.0 | [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hans) |
 
 ## 模型来源
 

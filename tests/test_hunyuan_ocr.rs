@@ -10,7 +10,7 @@ fn hunyuan_ocr_generate() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test test_hunyuan_ocr hunyuan_ocr_generate -r -- --nocapture
     let message = r#"
     {
-        "model": "hunyuan-ocr",
+        "model": "Tencent-Hunyuan/HunyuanOCR",
         "messages": [
             {
                 "role": "user",
@@ -60,7 +60,7 @@ async fn hunyuan_ocr_stream() -> Result<()> {
 
     let message = r#"
     {
-        "model": "hunyuan-ocr",
+        "model": "Tencent-Hunyuan/HunyuanOCR",
         "messages": [
             {
                 "role": "user",

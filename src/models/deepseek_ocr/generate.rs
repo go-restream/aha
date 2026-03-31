@@ -44,7 +44,7 @@ impl DeepseekOCRGenerateModel {
         let model_name = std::path::Path::new(path)
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or("deepseek-ocr")
+            .unwrap_or("deepseek-ai/DeepSeek-OCR")
             .to_string();
         let version = if model_name.contains("2") || cfg.vision_config.width.qwen2_0_5b.is_some() {
             2usize

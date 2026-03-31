@@ -283,24 +283,24 @@ aha list
 
 Model Name                     ModelScope ID
 -----------------------------------------------------------
-minicpm4-0.5b                  OpenBMB/MiniCPM4-0.5B
-qwen2.5vl-3b                   Qwen/Qwen2.5-VL-3B-Instruct
-qwen2.5vl-7b                   Qwen/Qwen2.5-VL-7B-Instruct
-qwen3-0.6b                     Qwen/Qwen3-0.6B
-qwen3asr-0.6b                  Qwen/Qwen3-ASR-0.6B
-qwen3asr-1.7b                  Qwen/Qwen3-ASR-1.7B
-qwen3vl-4b                     Qwen/Qwen3-VL-2B-Instruct
-qwen3vl-4b                     Qwen/Qwen3-VL-4B-Instruct
-qwen3vl-8b                     Qwen/Qwen3-VL-8B-Instruct
-qwen3vl-32b                    Qwen/Qwen3-VL-32B-Instruct
-deepseek-ocr                   deepseek-ai/DeepSeek-OCR
-hunyuan-ocr                    Tencent-Hunyuan/HunyuanOCR
-paddleocr-vl                   PaddlePaddle/PaddleOCR-VL
-rmbg2.0                        AI-ModelScope/RMBG-2.0
+OpenBMB/MiniCPM4-0.5B                  OpenBMB/MiniCPM4-0.5B
+Qwen/Qwen2.5-VL-3B-Instruct                   Qwen/Qwen2.5-VL-3B-Instruct
+Qwen/Qwen2.5-VL-7B-Instruct                   Qwen/Qwen2.5-VL-7B-Instruct
+Qwen/Qwen3-0.6B                     Qwen/Qwen3-0.6B
+Qwen/Qwen3-ASR-0.6B                  Qwen/Qwen3-ASR-0.6B
+Qwen/Qwen3-ASR-1.7B                  Qwen/Qwen3-ASR-1.7B
+Qwen/Qwen3-VL-4B-Instruct                     Qwen/Qwen3-VL-2B-Instruct
+Qwen/Qwen3-VL-4B-Instruct                     Qwen/Qwen3-VL-4B-Instruct
+Qwen/Qwen3-VL-8B-Instruct                     Qwen/Qwen3-VL-8B-Instruct
+Qwen/Qwen3-VL-32B-Instruct                    Qwen/Qwen3-VL-32B-Instruct
+deepseek-ai/DeepSeek-OCR                   deepseek-ai/DeepSeek-OCR
+Tencent-Hunyuan/HunyuanOCR                    Tencent-Hunyuan/HunyuanOCR
+PaddlePaddle/PaddleOCR-VL                   PaddlePaddle/PaddleOCR-VL
+AI-ModelScope/RMBG-2.0                        AI-ModelScope/RMBG-2.0
 voxcpm                         OpenBMB/VoxCPM-0.5B
-voxcpm1.5                      OpenBMB/VoxCPM1.5
-glm-asr-nano-2512              ZhipuAI/GLM-ASR-Nano-2512
-fun-asr-nano-2512              FunAudioLLM/Fun-ASR-Nano-2512
+OpenBMB/VoxCPM1.5                      OpenBMB/VoxCPM1.5
+ZhipuAI/GLM-ASR-Nano-2512              ZhipuAI/GLM-ASR-Nano-2512
+FunAudioLLM/Fun-ASR-Nano-2512              FunAudioLLM/Fun-ASR-Nano-2512
 
 ```
 
@@ -397,18 +397,18 @@ fun-asr-nano-2512              FunAudioLLM/Fun-ASR-Nano-2512
 
 | 模型 | 大小 | RAM 使用 |
 |------|------|----------|
-| qwen3-0.6b | ~1.2 GB | ~2 GB |
-| qwen3vl-2b | ~4 GB | ~6 GB |
-| qwen3vl-8b | ~16 GB | ~20 GB |
-| qwen3vl-32b | ~64 GB | ~70 GB |
+| Qwen/Qwen3-0.6B | ~1.2 GB | ~2 GB |
+| Qwen/Qwen3-VL-2B-Instruct | ~4 GB | ~6 GB |
+| Qwen/Qwen3-VL-8B-Instruct | ~16 GB | ~20 GB |
+| Qwen/Qwen3-VL-32B-Instruct | ~64 GB | ~70 GB |
 
 ## 后续步骤
 
 成功安装后：
 
 1. 阅读[快速入门指南](./getting-started.zh-CN.md)
-2. 下载您的第一个模型：`aha download -m qwen3-0.6b`
-3. 启动服务：`aha cli -m qwen3-0.6b`
+2. 下载您的第一个模型：`aha download -m Qwen/Qwen3-0.6B`
+3. 启动服务：`aha cli -m Qwen/Qwen3-0.6B`
 4. 探索 [API 参考](./api.zh-CN.md)
 
 ## 另见

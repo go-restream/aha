@@ -10,7 +10,7 @@ fn glm_ocr_generate() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test test_glm_ocr glm_ocr_generate -r -- --nocapture
     let message = r#"
     {
-        "model": "glm-ocr",
+        "model": "ZhipuAI/GLM-OCR",
         "messages": [
             {
                 "role": "user",
@@ -60,7 +60,7 @@ async fn glm_ocr_stream() -> Result<()> {
 
     let message = r#"
     {
-        "model": "glm-ocr",
+        "model": "ZhipuAI/GLM-OCR",
         "messages": [
             {
                 "role": "user",

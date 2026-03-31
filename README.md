@@ -26,6 +26,9 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 
 ## Changelog
 ### 2026-03-31
+- aha model name use modelscope id replace 
+- update WhichModel 
+- Usage add time info
 - dependencies delete aha_openai_dive,chrono
 
 ### v0.2.5 (2026-03-30)
@@ -86,23 +89,23 @@ cargo build --release --features ffmpeg
 aha list
 
 # Download model only
-aha download -m qwen3asr-0.6b
+aha download -m Qwen/Qwen3-ASR-0.6B
 
 # Download model and start service
-aha -m qwen3asr-0.6b
+aha -m Qwen/Qwen3-ASR-0.6B
 
 # Run inference directly (without starting service)
-aha run -m qwen3asr-0.6b -i "audio.wav"
+aha run -m Qwen/Qwen3-ASR-0.6B -i "audio.wav"
 
 # Start service only (model already downloaded)
-aha serv -m qwen3asr-0.6b -p 10100
+aha serv -m Qwen/Qwen3-ASR-0.6B -p 10100
 
 ```
 
 ### Chat
 
 ```bash
-aha serv -m qwen3-0.6b -p 10100
+aha serv -m Qwen/Qwen3-0.6B -p 10100
 ```
 
 Then use the unified (OpenAI-compatible) API:
@@ -111,7 +114,7 @@ Then use the unified (OpenAI-compatible) API:
 curl http://localhost:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [{"role": "user", "content": "Hello!"}],
     "stream": false
   }
@@ -122,8 +125,8 @@ curl http://localhost:10100/chat/completions \
 
 | Category | Models |
 |----------|--------|
-| **Text** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
-| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL-1.6B, LFM2-VL-1.6B |
+| **Text** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
+| **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL, LFM2-VL |
 | **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
 | **Audio** | VoxCPM, VoxCPM1.5 |

@@ -1,4 +1,4 @@
-use aha::models::WhichModel;
+use aha::models::common::model_mapping::WhichModel;
 
 // Import helper functions from api module - these will need to be made public
 // or tested through integration testing

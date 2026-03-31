@@ -28,7 +28,7 @@ impl ExecModel for DeepSeekORExec {
 
         let message = format!(
             r#"{{
-            "model": "deepseek-ocr",
+            "model": "deepseek-ai/DeepSeek-OCR",
             "messages": [
                 {{
                     "role": "user",

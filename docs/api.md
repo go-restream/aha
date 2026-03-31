@@ -15,7 +15,7 @@ http://127.0.0.1:10100
 
 You can customize this when starting the service:
 ```bash
-aha cli -m qwen3-0.6b -a 0.0.0.0 -p 8080
+aha cli -m Qwen/Qwen3-0.6B -a 0.0.0.0 -p 8080
 ```
 
 ### Authentication
@@ -109,7 +109,7 @@ GET /models
   "object": "list",
   "data": [
     {
-      "id": "qwen3-0.6b",
+      "id": "Qwen/Qwen3-0.6B",
       "object": "model",
       "created": null,
       "owned_by": "Qwen"
@@ -132,7 +132,7 @@ GET /models
 |-------|------|-------------|
 | `object` | string | Fixed value: "list" |
 | `data` | array | Array of model objects (currently contains one loaded model) |
-| `id` | string | Model identifier in kebab-case (e.g., "qwen3-0.6b") |
+| `id` | string | Model identifier in kebab-case (e.g., "Qwen/Qwen3-0.6B") |
 | `object` | string | Fixed value: "model" |
 | `created` | integer\|null | Unix timestamp (currently null) |
 | `owned_by` | string | Model owner/organization name |
@@ -156,7 +156,7 @@ POST /chat/completions
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `model` | string | Yes | Model identifier (e.g., "qwen3-0.6b") |
+| `model` | string | Yes | Model identifier (e.g., "Qwen/Qwen3-0.6B") |
 | `messages` | array | Yes | Array of message objects |
 | `temperature` | number | No | Sampling temperature (0-2, default: 1) |
 | `top_p` | number | No | Nucleus sampling (0-1, default: 1) |
@@ -197,7 +197,7 @@ Supported content types:
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "Hello!"}
     ]
@@ -210,7 +210,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Explain Rust in one sentence."}
@@ -226,7 +226,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3vl-2b",
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
     "messages": [
       {
         "role": "user",
@@ -245,7 +245,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "deepseek-ocr",
+    "model": "deepseek-ai/DeepSeek-OCR",
     "messages": [
       {
         "role": "user",
@@ -264,7 +264,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "glm-asr-nano-2512",
+    "model": "ZhipuAI/GLM-ASR-Nano-2512",
     "messages": [
       {
         "role": "user",
@@ -286,7 +286,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "Tell me a story"}
     ],
@@ -312,7 +312,7 @@ data: [DONE]
   "id": "chatcmpl-123",
   "object": "chat.completion",
   "created": 1677652288,
-  "model": "qwen3-0.6b",
+  "model": "Qwen/Qwen3-0.6B",
   "choices": [
     {
       "index": 0,
@@ -329,13 +329,6 @@ data: [DONE]
 }
 ```
 
-#### Supported Models
-
-- Text: `qwen3-0.6b`, `minicpm4-0.5b`
-- Vision: `qwen2.5vl-3b`, `qwen2.5vl-7b`, `qwen3vl-2b`, `qwen3vl-4b`, `qwen3vl-8b`, `qwen3vl-32b`
-- OCR: `deepseek-ocr`, `hunyuan-ocr`, `paddleocr-vl`
-- ASR: `glm-asr-nano-2512`, `fun-asr-nano-2512`, `qwen3asr-0.6b`, `qwen3asr-1.7b`
-
 ### Audio Speech
 
 Generate speech from text (Text-to-Speech).
@@ -349,7 +342,7 @@ POST /audio/speech
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `model` | string | Yes | Model identifier (e.g., "voxcpm1.5") |
+| `model` | string | Yes | Model identifier (e.g., "OpenBMB/VoxCPM-1.5") |
 | `messages` | array | Yes | Array of message objects |
 
 #### Example
@@ -358,7 +351,7 @@ POST /audio/speech
 curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "voxcpm1.5",
+    "model": "OpenBMB/VoxCPM-1.5",
     "messages": [
       {
         "role": "user",
@@ -374,10 +367,6 @@ curl http://127.0.0.1:10100/audio/speech \
 #### Response
 
 Returns audio data in base64 WAV format.
-
-#### Supported Models
-
-- `voxcpm`, `voxcpm1.5`
 
 ### Audio Transcriptions
 
@@ -433,7 +422,7 @@ Both endpoints use the same handler and return identical responses. The `/v1/aud
 curl -X POST http://127.0.0.1:10100/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./audio.wav" \
-  -F model="qwen3asr-0.6b"
+  -F model="Qwen/Qwen3-ASR-0.6B"
 ```
 
 **With language specification:**
@@ -442,7 +431,7 @@ curl -X POST http://127.0.0.1:10100/audio/transcriptions \
 curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./chinese_audio.wav" \
-  -F model="qwen3asr-0.6b" \
+  -F model="Qwen/Qwen3-ASR-0.6B" \
   -F language="zh"
 ```
 
@@ -452,7 +441,7 @@ curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
 curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./audio.wav" \
-  -F model="qwen3asr-0.6b" \
+  -F model="Qwen/Qwen3-ASR-0.6B" \
   -F temperature="0.0"
 ```
 
@@ -490,13 +479,6 @@ curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
 }
 ```
 
-#### Supported Models
-
-- `qwen3asr-0.6b`
-- `qwen3asr-1.7b`
-- `glm-asr-nano-2512`
-- `fun-asr-nano-2512`
-
 #### File Upload Limit
 
 Maximum audio file size: 100 MB
@@ -514,7 +496,7 @@ POST /images/remove_background
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `model` | string | Yes | Model identifier (e.g., "rmbg2.0") |
+| `model` | string | Yes | Model identifier (e.g., "AI-ModelScope/RMBG-2.0") |
 | `messages` | array | Yes | Array of message objects |
 
 #### Example
@@ -525,7 +507,7 @@ POST /images/remove_background
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -543,7 +525,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -558,10 +540,6 @@ curl http://127.0.0.1:10100/images/remove_background \
 #### Response
 
 Returns the processed image in base64 PNG format.
-
-#### Supported Models
-
-- `rmbg2.0`
 
 ### Graceful Shutdown
 
@@ -605,7 +583,7 @@ When remote shutdown is not allowed:
 By default, the shutdown endpoint only allows requests from localhost (127.0.0.1). To enable remote shutdown, start the server with the `--allow-remote-shutdown` flag:
 
 ```bash
-aha serv -m qwen3-0.6b --allow-remote-shutdown
+aha serv -m Qwen/Qwen3-0.6B --allow-remote-shutdown
 ```
 
 **Warning:** Enabling remote shutdown is not recommended for production use unless properly secured.
@@ -671,7 +649,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="qwen3-0.6b",
+    model="Qwen/Qwen3-0.6B",
     messages=[
         {"role": "user", "content": "Hello!"}
     ]
@@ -691,7 +669,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: 'qwen3-0.6b',
+  model: 'Qwen/Qwen3-0.6B',
   messages: [{ role: 'user', content: 'Hello!' }]
 });
 

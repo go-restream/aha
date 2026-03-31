@@ -51,16 +51,16 @@ aha cli [OPTIONS] --model <MODEL>
 
 ```bash
 # 下载模型并启动服务（默认端口 10100）
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # 指定端口和保存目录
-aha cli -m qwen3vl-2b -p 8080 --save-dir /data/models
+aha cli -m Qwen/Qwen3-VL-2B-Instruct -p 8080 --save-dir /data/models
 
 # 使用本地模型（不下载）
-aha cli -m qwen3vl-2b --weight-path /path/to/model
+aha cli -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 
 # 向后兼容方式（等同于 cli 子命令）
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 
 # 指定gguf-path和mmproj-path
 aha cli -m qwen3.5-gguf --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
@@ -90,34 +90,34 @@ aha run [OPTIONS] --model <MODEL> --input <INPUT> [--input <INPUT2>] [--weight-p
 
 ```bash
 # VoxCPM1.5 文字转语音（单个输入）
-aha run -m voxcpm1.5 -i "太阳当空照" -o output.wav --weight-path /path/to/model
+aha run -m OpenBMB/VoxCPM1.5 -i "太阳当空照" -o output.wav --weight-path /path/to/model
 
 # VoxCPM1.5 从文件读取输入（单个输入）
-aha run -m voxcpm1.5 -i "file://./input.txt" --weight-path /path/to/model
+aha run -m OpenBMB/VoxCPM1.5 -i "file://./input.txt" --weight-path /path/to/model
 
 # MiniCPM4 文本生成（单个输入）
-aha run -m minicpm4-0.5b -i "你好" --weight-path /path/to/model
+aha run -m OpenBMB/MiniCPM4-0.5B -i "你好" --weight-path /path/to/model
 
 # DeepSeek OCR 图片识别（单个输入）
-aha run -m deepseek-ocr -i "image.jpg" --weight-path /path/to/model
+aha run -m deepseek-ai/DeepSeek-OCR -i "image.jpg" --weight-path /path/to/model
 
 # RMBG2.0 背景移除（单个输入）
-aha run -m RMBG2.0 -i "photo.png" -o "no_bg.png" --weight-path /path/to/model
+aha run -m AI-ModelScope/RMBG-2.0 -i "photo.png" -o "no_bg.png" --weight-path /path/to/model
 
 # GLM-ASR 语音识别（两个输入：提示文本 + 音频文件）
-aha run -m glm-asr-nano-2512 -i "请转写这段音频" -i "audio.wav" --weight-path /path/to/model
+aha run -m ZhipuAI/GLM-ASR-Nano-2512 -i "请转写这段音频" -i "audio.wav" --weight-path /path/to/model
 
 # Fun-ASR 语音识别（两个输入：提示文本 + 音频文件）
-aha run -m fun-asr-nano-2512 -i "语音转写：" -i "audio.wav" --weight-path /path/to/model
+aha run -m FunAudioLLM/Fun-ASR-Nano-2512 -i "语音转写：" -i "audio.wav" --weight-path /path/to/model
 
 # qwen3 文本生成（单个输入）
-aha run -m qwen3-0.6b -i "你好" --weight-path /path/to/model
+aha run -m Qwen/Qwen3-0.6B -i "你好" --weight-path /path/to/model
 
 # qwen2.5vl 图像理解（两个输入：提示文本 + 图片文件）
-aha run -m qwen2.5vl-3b -i "请分析图片并提取所有可见文本内容，按从左到右、从上到下的布局，返回纯文本" -i "image.jpg" --weight-path /path/to/model
+aha run -m Qwen/Qwen2.5-VL-3B-Instruct -i "请分析图片并提取所有可见文本内容，按从左到右、从上到下的布局，返回纯文本" -i "image.jpg" --weight-path /path/to/model
 
 # Qwen3-ASR 语音识别（单个输入：音频文件）
-aha run -m qwen3asr-0.6b -i "audio.wav" --weight-path /path/to/model
+aha run -m Qwen/Qwen3-ASR-0.6B -i "audio.wav" --weight-path /path/to/model
 
 # Qwen3.5-GGUF 无mmproj (单个输入：提示文本)
 aha run -m qwen3.5-gguf -i 你如何看待AI --gguf-path /path/to/xxx.gguf
@@ -152,19 +152,19 @@ aha serv [OPTIONS] --model <MODEL> [--weight-path <WEIGHT_PATH>] [--gguf-path <G
 
 ```bash
 # 使用默认模型路径启动服务 (~/.aha/{model_id})
-aha serv -m qwen3vl-2b
+aha serv -m Qwen/Qwen3-VL-2B-Instruct
 
 # 使用本地模型启动服务
-aha serv -m qwen3vl-2b --weight-path /path/to/model
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 
 # 指定端口启动
-aha serv -m qwen3vl-2b -p 8080
+aha serv -m Qwen/Qwen3-VL-2B-Instruct -p 8080
 
 # 指定监听地址
-aha serv -m qwen3vl-2b -a 0.0.0.0
+aha serv -m Qwen/Qwen3-VL-2B-Instruct -a 0.0.0.0
 
 # 启用远程关机（不推荐用于生产环境）
-aha serv -m qwen3vl-2b --allow-remote-shutdown
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --allow-remote-shutdown
 ```
 
 ### ps - 列出运行中的服务
@@ -229,16 +229,16 @@ aha download [OPTIONS] --model <MODEL>
 
 ```bash
 # 下载模型到默认目录
-aha download -m qwen3vl-2b
+aha download -m Qwen/Qwen3-VL-2B-Instruct
 
 # 指定保存目录
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 
 # 指定下载重试次数
-aha download -m qwen3vl-2b --download-retries 5
+aha download -m Qwen/Qwen3-VL-2B-Instruct --download-retries 5
 
 # 下载 MiniCPM4-0.5B 模型
-aha download -m minicpm4-0.5b -s models
+aha download -m OpenBMB/MiniCPM4-0.5B -s models
 ```
 
 ### delete - 删除已下载的模型
@@ -260,10 +260,10 @@ aha delete [OPTIONS] --model <MODEL>
 
 ```bash
 # 删除 RMBG2.0 模型
-aha delete -m rmbg2.0
+aha delete -m AI-ModelScope/RMBG-2.0
 
 # 删除 Qwen3-VL-2B 模型
-aha delete --model qwen3vl-2b
+aha delete --model Qwen/Qwen3-VL-2B-Instruct
 ```
 
 **行为说明：**
@@ -311,12 +311,12 @@ aha list -j
 ```json
 [
   {
-    "name": "qwen3vl-2b",
+    "name": "Qwen/Qwen3-VL-2B-Instruct",
     "model_id": "Qwen/Qwen3-VL-2B-Instruct",
     "type": "llm"
   },
   {
-    "name": "deepseek-ocr",
+    "name": "deepseek-ai/DeepSeek-OCR",
     "model_id": "deepseek-ai/DeepSeek-OCR",
     "type": "ocr"
   }
@@ -328,27 +328,7 @@ aha list -j
 - `ocr`：光学字符识别模型
 - `asr`：自动语音识别模型
 - `image`：图像处理模型
-
-## 支持的模型
-
-| 模型标识 | 模型名称 | 说明 |
-|---------|---------|------|
-| `minicpm4-0.5b` | OpenBMB/MiniCPM4-0.5B | 面壁智能 MiniCPM4 0.5B 模型 |
-| `qwen2.5vl-3b` | Qwen/Qwen2.5-VL-3B-Instruct | 通义千问 2.5 VL 3B 模型 |
-| `qwen2.5vl-7b` | Qwen/Qwen2.5-VL-7B-Instruct | 通义千问 2.5 VL 7B 模型 |
-| `qwen3-0.6b` | Qwen/Qwen3-0.6B | 通义千问 3 0.6B 模型 |
-| `qwen3vl-2b` | Qwen/Qwen3-VL-2B-Instruct | 通义千问 3 VL 2B 模型 |
-| `qwen3vl-4b` | Qwen/Qwen3-VL-4B-Instruct | 通义千问 3 VL 4B 模型 |
-| `qwen3vl-8b` | Qwen/Qwen3-VL-8B-Instruct | 通义千问 3 VL 8B 模型 |
-| `qwen3vl-32b` | Qwen/Qwen3-VL-32B-Instruct | 通义千问 3 VL 32B 模型 |
-| `deepseek-ocr` | deepseek-ai/DeepSeek-OCR | DeepSeek OCR 模型 |
-| `hunyuan-ocr` | Tencent-Hunyuan/HunyuanOCR | 腾讯混元 OCR 模型 |
-| `paddleocr-vl` | PaddlePaddle/PaddleOCR-VL | 百度飞桨 OCR VL 模型 |
-| `RMBG2.0` | AI-ModelScope/RMBG-2.0 | RMBG 2.0 背景移除模型 |
-| `voxcpm` | OpenBMB/VoxCPM-0.5B | 面壁智能 VoxCPM 0.5B 语音生成模型 |
-| `voxcpm1.5` | OpenBMB/VoxCPM1.5 | 面壁智能 VoxCPM 1.5 语音生成模型 |
-| `glm-asr-nano-2512` | ZhipuAI/GLM-ASR-Nano-2512 | 智谱 AI ASR Nano 2512 语音识别模型 |
-| `fun-asr-nano-2512` | FunAudioLLM/Fun-ASR-Nano-2512 | 通义百聆 ASR Nano 2512 语音识别模型 |
+- `tts`：语音生成
 
 ## 常见使用场景
 
@@ -356,31 +336,31 @@ aha list -j
 
 ```bash
 # 一条命令下载并启动服务
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 场景 2：使用已有模型启动服务
 
 ```bash
 # 假设模型已下载到 /data/models/Qwen/Qwen3-VL-2B-Instruct
-aha serv -m qwen3vl-2b --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 场景 3：预先下载模型
 
 ```bash
 # 下载模型到指定目录，稍后使用
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 
 # 后续启动时直接使用
-aha serv -m qwen3vl-2b --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 场景 4：自定义服务端口和地址
 
 ```bash
 # 在 0.0.0.0:8080 启动服务，允许外部访问
-aha -m qwen3vl-2b -a 0.0.0.0 -p 8080
+aha -m Qwen/Qwen3-VL-2B-Instruct -a 0.0.0.0 -p 8080
 ```
 
 ## API 接口
@@ -420,10 +400,10 @@ aha -m qwen3vl-2b -a 0.0.0.0 -p 8080
 
 ```bash
 # 新方式（推荐）
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # 旧方式（向后兼容）
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ## 注意事项

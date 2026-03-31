@@ -28,7 +28,7 @@ impl ExecModel for HunyuanORExec {
 
         let message = format!(
             r#"{{
-            "model": "hunyuan-ocr",
+            "model": "Tencent-Hunyuan/HunyuanOCR",
             "messages": [
                 {{
                     "role": "user",

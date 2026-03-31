@@ -28,7 +28,7 @@ impl ExecModel for PaddleOVLExec {
 
         let message = format!(
             r#"{{
-            "model": "paddleocr-vl",
+            "model": "PaddlePaddle/PaddleOCR-VL",
             "messages": [
                 {{
                     "role": "user",

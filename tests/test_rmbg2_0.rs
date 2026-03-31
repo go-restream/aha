@@ -14,7 +14,7 @@ fn rmbg2_0_generate() -> Result<()> {
 
     let message = r#"
     {
-        "model": "rmbg2.0",
+        "model": "AI-ModelScope/RMBG-2.0",
         "messages": [
             {
                 "role": "user",

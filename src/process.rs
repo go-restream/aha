@@ -258,7 +258,7 @@ mod tests {
         let service = ServiceInfo {
             service_id: "12345@10100".to_string(),
             pid: 12345,
-            model: Some("qwen3-0.6b".to_string()),
+            model: Some("Qwen/Qwen3-0.6B".to_string()),
             port: 10100,
             address: "127.0.0.1".to_string(),
             status: ServiceStatus::Running,
@@ -266,7 +266,7 @@ mod tests {
         let service_clone = service.clone();
         assert_eq!(service_clone.service_id, "12345@10100");
         assert_eq!(service_clone.pid, 12345);
-        assert_eq!(service_clone.model, Some("qwen3-0.6b".to_string()));
+        assert_eq!(service_clone.model, Some("Qwen/Qwen3-0.6B".to_string()));
         assert_eq!(service_clone.port, 10100);
     }
 

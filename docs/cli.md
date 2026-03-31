@@ -51,16 +51,16 @@ aha cli [OPTIONS] --model <MODEL>
 
 ```bash
 # Download model and start service (default port 10100)
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # Specify port and save directory
-aha cli -m qwen3vl-2b -p 8080 --save-dir /data/models
+aha cli -m Qwen/Qwen3-VL-2B-Instruct -p 8080 --save-dir /data/models
 
 # Use local model (skip download)
-aha cli -m qwen3vl-2b --weight-path /path/to/model
+aha cli -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 
 # Backward compatible way (equivalent to cli subcommand)
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 
 # use gguf-path and mmproj-path
 aha cli -m qwen3.5-gguf --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
@@ -89,34 +89,34 @@ aha run [OPTIONS] --model <MODEL> --input <INPUT> [--input <INPUT2>] [--weight-p
 
 ```bash
 # VoxCPM1.5 text-to-speech (single input)
-aha run -m voxcpm1.5 -i "太阳当空照" -o output.wav --weight-path /path/to/model
+aha run -m OpenBMB/VoxCPM1.5 -i "太阳当空照" -o output.wav --weight-path /path/to/model
 
 # VoxCPM1.5 read input from file (single input)
-aha run -m voxcpm1.5 -i "file://./input.txt" --weight-path /path/to/model
+aha run -m OpenBMB/VoxCPM1.5 -i "file://./input.txt" --weight-path /path/to/model
 
 # MiniCPM4 text generation (single input)
-aha run -m minicpm4-0.5b -i "你好" --weight-path /path/to/model
+aha run -m OpenBMB/MiniCPM4-0.5B -i "你好" --weight-path /path/to/model
 
 # DeepSeek OCR image recognition (single input)
-aha run -m deepseek-ocr -i "image.jpg" --weight-path /path/to/model
+aha run -m deepseek-ai/DeepSeek-OCR -i "image.jpg" --weight-path /path/to/model
 
 # RMBG2.0 background removal (single input)
-aha run -m RMBG2.0 -i "photo.png" -o "no_bg.png" --weight-path /path/to/model
+aha run -m AI-ModelScope/RMBG-2.0 -i "photo.png" -o "no_bg.png" --weight-path /path/to/model
 
 # GLM-ASR speech recognition (two inputs: prompt text + audio file)
-aha run -m glm-asr-nano-2512 -i "请转写这段音频" -i "audio.wav" --weight-path /path/to/model
+aha run -m ZhipuAI/GLM-ASR-Nano-2512 -i "请转写这段音频" -i "audio.wav" --weight-path /path/to/model
 
 # Fun-ASR speech recognition (two inputs: prompt text + audio file)
-aha run -m fun-asr-nano-2512 -i "语音转写：" -i "audio.wav" --weight-path /path/to/model
+aha run -m FunAudioLLM/Fun-ASR-Nano-2512 -i "语音转写：" -i "audio.wav" --weight-path /path/to/model
 
 # qwen3 text generation (single input)
-aha run -m qwen3-0.6b -i "你好" --weight-path /path/to/model
+aha run -m Qwen/Qwen3-0.6B -i "你好" --weight-path /path/to/model
 
 # qwen2.5vl image understanding (two inputs: prompt text + image file)
-aha run -m qwen2.5vl-3b -i "请分析图片并提取所有可见文本内容，按从左到右、从上到下的布局，返回纯文本" -i "image.jpg" --weight-path /path/to/model
+aha run -m Qwen/Qwen2.5-VL-3B-Instruct -i "请分析图片并提取所有可见文本内容，按从左到右、从上到下的布局，返回纯文本" -i "image.jpg" --weight-path /path/to/model
 
 # Qwen3-ASR speech recognition (single input: audio file)
-aha run -m qwen3asr-0.6b -i "audio.wav" --weight-path /path/to/model
+aha run -m Qwen/Qwen3-ASR-0.6B -i "audio.wav" --weight-path /path/to/model
 
 # Qwen3.5-GGUF without mmproj (single input: prompt text)
 aha run -m qwen3.5-gguf -i 你如何看待AI --gguf-path /path/to/xxx.gguf
@@ -152,19 +152,19 @@ aha serv [OPTIONS] --model <MODEL> [--weight-path <WEIGHT_PATH>] [--gguf-path <G
 
 ```bash
 # Start service with default model path (~/.aha/{model_id})
-aha serv -m qwen3vl-2b
+aha serv -m Qwen/Qwen3-VL-2B-Instruct
 
 # Start service with local model
-aha serv -m qwen3vl-2b --weight-path /path/to/model
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 
 # Start with specified port
-aha serv -m qwen3vl-2b -p 8080
+aha serv -m Qwen/Qwen3-VL-2B-Instruct -p 8080
 
 # Specify listen address
-aha serv -m qwen3vl-2b -a 0.0.0.0
+aha serv -m Qwen/Qwen3-VL-2B-Instruct -a 0.0.0.0
 
 # Enable remote shutdown (not recommended for production)
-aha serv -m qwen3vl-2b --allow-remote-shutdown
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --allow-remote-shutdown
 ```
 
 ### ps - List running services
@@ -229,16 +229,16 @@ aha download [OPTIONS] --model <MODEL>
 
 ```bash
 # Download model to default directory
-aha download -m qwen3vl-2b
+aha download -m Qwen/Qwen3-VL-2B-Instruct
 
 # Specify save directory
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 
 # Specify download retry count
-aha download -m qwen3vl-2b --download-retries 5
+aha download -m Qwen/Qwen3-VL-2B-Instruct --download-retries 5
 
 # Download MiniCPM4-0.5B model
-aha download -m minicpm4-0.5b -s models
+aha download -m OpenBMB/MiniCPM4-0.5B -s models
 ```
 
 ### delete - Delete downloaded model
@@ -260,10 +260,10 @@ aha delete [OPTIONS] --model <MODEL>
 
 ```bash
 # Delete RMBG2.0 model from default location
-aha delete -m rmbg2.0
+aha delete -m AI-ModelScope/RMBG-2.0
 
 # Delete Qwen3-VL-2B model
-aha delete --model qwen3vl-2b
+aha delete --model Qwen/Qwen3-VL-2B-Instruct
 ```
 
 **Behavior:**
@@ -311,12 +311,12 @@ Example:
 ```json
 [
   {
-    "name": "qwen3vl-2b",
+    "name": "Qwen/Qwen3-VL-2B-Instruct",
     "model_id": "Qwen/Qwen3-VL-2B-Instruct",
     "type": "llm"
   },
   {
-    "name": "deepseek-ocr",
+    "name": "deepseek-ai/DeepSeek-OCR",
     "model_id": "deepseek-ai/DeepSeek-OCR",
     "type": "ocr"
   }
@@ -328,27 +328,7 @@ Example:
 - `ocr`: Optical Character Recognition models
 - `asr`: Automatic Speech Recognition models
 - `image`: Image processing models
-
-## Supported Models
-
-| Model ID | Model Name | Description |
-|----------|------------|-------------|
-| `minicpm4-0.5b` | OpenBMB/MiniCPM4-0.5B | OpenBMB MiniCPM4 0.5B model |
-| `qwen2.5vl-3b` | Qwen/Qwen2.5-VL-3B-Instruct | Qwen 2.5 VL 3B model |
-| `qwen2.5vl-7b` | Qwen/Qwen2.5-VL-7B-Instruct | Qwen 2.5 VL 7B model |
-| `qwen3-0.6b` | Qwen/Qwen3-0.6B | Qwen 3 0.6B model |
-| `qwen3vl-2b` | Qwen/Qwen3-VL-2B-Instruct | Qwen 3 VL 2B model |
-| `qwen3vl-4b` | Qwen/Qwen3-VL-4B-Instruct | Qwen 3 VL 4B model |
-| `qwen3vl-8b` | Qwen/Qwen3-VL-8B-Instruct | Qwen 3 VL 8B model |
-| `qwen3vl-32b` | Qwen/Qwen3-VL-32B-Instruct | Qwen 3 VL 32B model |
-| `deepseek-ocr` | deepseek-ai/DeepSeek-OCR | DeepSeek OCR model |
-| `hunyuan-ocr` | Tencent-Hunyuan/HunyuanOCR | Tencent Hunyuan OCR model |
-| `paddleocr-vl` | PaddlePaddle/PaddleOCR-VL | Baidu PaddleOCR VL model |
-| `RMBG2.0` | AI-ModelScope/RMBG-2.0 | RMBG 2.0 background removal model |
-| `voxcpm` | OpenBMB/VoxCPM-0.5B | OpenBMB VoxCPM 0.5B speech synthesis model |
-| `voxcpm1.5` | OpenBMB/VoxCPM1.5 | OpenBMB VoxCPM 1.5 speech synthesis model |
-| `glm-asr-nano-2512` | ZhipuAI/GLM-ASR-Nano-2512 | Zhipu AI ASR Nano 2512 speech recognition model |
-| `fun-asr-nano-2512` | FunAudioLLM/Fun-ASR-Nano-2512 | FunAudioLLM ASR Nano 2512 speech recognition model |
+- `tts`： Text to speech
 
 ## Common Use Cases
 
@@ -356,31 +336,31 @@ Example:
 
 ```bash
 # One command to download and start service
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### Scenario 2: Start service with existing model
 
 ```bash
 # Assuming model is downloaded to /data/models/Qwen/Qwen3-VL-2B-Instruct
-aha serv -m qwen3vl-2b --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### Scenario 3: Pre-download model
 
 ```bash
 # Download model to specified directory for later use
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 
 # Later start with local model
-aha serv -m qwen3vl-2b --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path /data/models/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### Scenario 4: Custom service port and address
 
 ```bash
 # Start service on 0.0.0.0:8080, allow external access
-aha -m qwen3vl-2b -a 0.0.0.0 -p 8080
+aha -m Qwen/Qwen3-VL-2B-Instruct -a 0.0.0.0 -p 8080
 ```
 
 ## API Endpoints
@@ -421,10 +401,10 @@ To maintain compatibility with older versions, the following two usage methods a
 
 ```bash
 # New way (recommended)
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # Old way (backward compatible)
-aha -m qwen3vl-2b
+aha -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ## Notes

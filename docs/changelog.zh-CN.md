@@ -6,7 +6,10 @@
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
 ### 2026-03-31
-- 删除 aha_openai_dive,chrono 依赖
+- aha模型名称使用 modelscope id 替换
+- 更新 WhichModel 枚举
+- Usage 增加时间信息
+- 删除 aha_openai_dive, chrono 依赖
 
 ### v0.2.5 (2026-03-30)
 - 新增 LFM2.5VL-1.6B

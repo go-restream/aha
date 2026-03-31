@@ -27,7 +27,7 @@ impl ExecModel for GlmOcrExec {
 
         let message = format!(
             r#"{{
-                "model": "glm-ocr",
+                "model": "ZhipuAI/GLM-OCR",
                 "messages": [
                     {{
                         "role": "user",

@@ -14,14 +14,14 @@ aha list
 
 ```bash
 # 从下载一个小型文本模型开始
-aha download -m qwen3-0.6b
+aha download -m Qwen/Qwen3-0.6B
 ```
 
 ### 3. 启动服务
 
 ```bash
 # 启动 HTTP API 服务器
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 ```
 
 服务将在 `http://127.0.0.1:10100` 上启动
@@ -34,7 +34,7 @@ aha cli -m qwen3-0.6b
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "你好，AHA！"}
     ],
@@ -79,13 +79,13 @@ AHA 是一个本地 AI 推理引擎，具有以下特点：
 
 ```bash
 # 启动服务
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 
 # 在另一个终端中，发起请求
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "system", "content": "你是一个有用的助手。"},
       {"role": "user", "content": "用简单的术语解释量子计算。"}
@@ -99,13 +99,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # 启动视觉模型
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # 分析图像
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3vl-2b",
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
     "messages": [
       {
         "role": "user",
@@ -123,13 +123,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # 启动 OCR 模型
-aha cli -m deepseek-ocr
+aha cli -m deepseek-ai/DeepSeek-OCR
 
 # 从图像中提取文本
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "deepseek-ocr",
+    "model": "deepseek-ai/DeepSeek-OCR",
     "messages": [
       {
         "role": "user",
@@ -146,13 +146,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # 启动 ASR 模型
-aha cli -m glm-asr-nano-2512
+aha cli -m ZhipuAI/GLM-ASR-Nano-2512
 
 # 转写音频
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "glm-asr-nano-2512",
+    "model": "ZhipuAI/GLM-ASR-Nano-2512",
     "messages": [
       {
         "role": "user",
@@ -169,13 +169,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # 启动 TTS 模型
-aha cli -m voxcpm1.5
+aha cli -m OpenBMB/VoxCPM1.5
 
 # 生成语音
 curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "voxcpm1.5",
+    "model": "OpenBMB/VoxCPM1.5",
     "messages": [
       {
         "role": "user",
@@ -192,13 +192,13 @@ curl http://127.0.0.1:10100/audio/speech \
 
 ```bash
 # 启动 RMBG2.0 模型
-aha cli -m rmbg2.0
+aha cli -m AI-ModelScope/RMBG-2.0
 
 # 移除图像背景
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -214,7 +214,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 ```bash
 # 直接运行推理，无需启动 HTTP 服务器
-aha run -m qwen3-0.6b \
+aha run -m Qwen/Qwen3-0.6B \
   -i "写一首关于AI的俳句" \
   --weight-path ~/.aha/Qwen/Qwen3-0.6B
 ```
@@ -225,21 +225,21 @@ aha run -m qwen3-0.6b \
 
 ```bash
 # 使用端口 8080 而不是默认的 10100
-aha cli -m qwen3-0.6b -p 8080
+aha cli -m Qwen/Qwen3-0.6B -p 8080
 ```
 
 ### 绑定到所有接口
 
 ```bash
 # 允许外部访问（请谨慎使用）
-aha cli -m qwen3-0.6b -a 0.0.0.0 -p 8080
+aha cli -m Qwen/Qwen3-0.6B -a 0.0.0.0 -p 8080
 ```
 
 ### 使用本地模型
 
 ```bash
 # 跳过下载，使用现有模型
-aha serv -m qwen3-0.6b \
+aha serv -m Qwen/Qwen3-0.6B \
   --weight-path /path/to/model \
   -p 8080
 ```
@@ -248,7 +248,7 @@ aha serv -m qwen3-0.6b \
 
 ```bash
 # 将模型下载到特定目录
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 ```
 
 ## 流式响应
@@ -259,7 +259,7 @@ aha download -m qwen3vl-2b -s /data/models
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "给我讲个故事"}
     ],
@@ -270,28 +270,28 @@ curl http://127.0.0.1:10100/chat/completions \
 ## 模型选择指南
 
 ### 文本生成
-- **qwen3-0.6b**：快速、轻量级（~1.2 GB）
-- **minicpm4-0.5b**：小型、高效（~1 GB）
+- **Qwen/Qwen3-0.6B**：快速、轻量级（~1.2 GB）
+- **OpenBMB/MiniCPM4-0.5B**：小型、高效（~1 GB）
 
 ### 视觉任务
-- **qwen3vl-2b**：平衡性能（~4 GB）
-- **qwen3vl-8b**：更高质量（~16 GB）
+- **Qwen/Qwen3-VL-2B-Instruct**：平衡性能（~4 GB）
+- **Qwen/Qwen3-VL-8B-Instruct**：更高质量（~16 GB）
 
 ### OCR
-- **deepseek-ocr**：通用
-- **hunyuan-ocr**：适合中文文本
-- **paddleocr-vl**：轻量级选项
+- **deepseek-ai/DeepSeek-OCR**：通用
+- **Tencent-Hunyuan/HunyuanOCR**：适合中文文本
+- **PaddlePaddle/PaddleOCR-VL**：轻量级选项
 
 ### 语音识别
-- **glm-asr-nano-2512**：快速、准确
-- **fun-asr-nano-2512**：适合中文
-- **qwen3asr-0.6b**：轻量级
+- **ZhipuAI/GLM-ASR-Nano-2512**：快速、准确
+- **FunAudioLLM/Fun-ASR-Nano-2512**：适合中文
+- **Qwen/Qwen3-ASR-0.6B**：轻量级
 
 ### 文本转语音
-- **voxcpm1.5**：高质量中文
+- **OpenBMB/VoxCPM1.5**：高质量中文
 
 ### 背景移除
-- **rmbg2.0**：最先进的结果
+- **AI-ModelScope/RMBG-2.0**：最先进的结果
 
 ## 提示与最佳实践
 
@@ -299,7 +299,7 @@ curl http://127.0.0.1:10100/chat/completions \
 
 从小型模型开始了解工作流程：
 ```bash
-aha download -m qwen3-0.6b
+aha download -m Qwen/Qwen3-0.6B
 ```
 
 ### 2. 使用 GPU 加速
@@ -317,12 +317,12 @@ cargo build --release --features metal
 
 在网络良好时下载模型：
 ```bash
-aha download -m qwen3vl-2b
+aha download -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 稍后在没有网络的情况下使用：
 ```bash
-aha serv -m qwen3vl-2b --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 4. 管理磁盘空间
@@ -354,21 +354,21 @@ nvidia-smi  # 对于 NVIDIA GPU
 
 ```bash
 # 使用不同的端口
-aha cli -m qwen3-0.6b -p 8080
+aha cli -m Qwen/Qwen3-0.6B -p 8080
 ```
 
 ### 模型下载失败
 
 ```bash
 # 重试更多次数
-aha download -m qwen3vl-2b --download-retries 5
+aha download -m Qwen/Qwen3-VL-2B-Instruct --download-retries 5
 ```
 
 ### 内存不足
 
 ```bash
 # 使用更小的模型
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 ```
 
 ## 后续步骤

@@ -31,7 +31,7 @@ impl ExecModel for VoxCPMExec {
             Some("啥子小师叔，打狗还要看主人，你再要继续，我就是你的对手".to_string()), // todo args
             Some("file://./assets/audio/voice_01.wav".to_string()),                     // todo args
             2,
-            100, // max_len (voxcpm uses 100 vs voxcpm1.5's 4096)
+            100, // max_len (voxcpm uses 100 vs OpenBMB/VoxCPM1.5's 4096)
             10,
             2.0,
             6.0,

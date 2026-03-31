@@ -43,7 +43,7 @@ cargo build --features ffmpeg
 
 ```bash
 # 运行 CLI
-cargo run -- -m qwen3-0.6b
+cargo run -- -m Qwen/Qwen3-0.6B
 
 # 运行测试
 cargo test
@@ -52,7 +52,7 @@ cargo test
 cargo test test_qwen3vl_generate
 
 # 启用日志运行
-RUST_LOG=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=debug cargo run -- -m Qwen/Qwen3-0.6B
 
 # 检查代码而不构建
 cargo check
@@ -481,7 +481,7 @@ pub fn generate(&mut self, prompt: &str) -> Result<String> {
 feat: 添加 NewModel 支持
 fix: 修正 Qwen3VL 中的张量维度
 docs: 更新安装指南
-test: 添加 VoxCPM 集成测试
+test: 添加 NewModel 集成测试
 refactor: 简化模型加载逻辑
 perf: 将推理速度提高 20%
 ```
@@ -535,13 +535,13 @@ cargo publish
 启用调试日志：
 
 ```bash
-RUST_LOG=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=debug cargo run -- -m Qwen/Qwen3-0.6B
 ```
 
 设置特定模块日志：
 
 ```bash
-RUST_LOG=aha::models::qwen3vl=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=aha::models::qwen3vl=debug cargo run -- -m Qwen/Qwen3-0.6B
 ```
 
 ### 调试测试

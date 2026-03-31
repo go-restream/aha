@@ -43,7 +43,7 @@ cargo build --features ffmpeg
 
 ```bash
 # Run the CLI
-cargo run -- -m qwen3-0.6b
+cargo run -- -m Qwen/Qwen3-0.6B
 
 # Run tests
 cargo test
@@ -52,7 +52,7 @@ cargo test
 cargo test test_qwen3vl_generate
 
 # Run with logging
-RUST_LOG=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=debug cargo run -- -m Qwen/Qwen3-0.6B
 
 # Check code without building
 cargo check
@@ -481,7 +481,7 @@ Follow conventional commits:
 feat: add NewModel support
 fix: correct tensor dimensions in Qwen3VL
 docs: update installation guide
-test: add integration test for VoxCPM
+test: add integration test for NewModel
 refactor: simplify model loading logic
 perf: improve inference speed by 20%
 ```
@@ -535,13 +535,13 @@ cargo publish
 Enable debug logging:
 
 ```bash
-RUST_LOG=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=debug cargo run -- -m Qwen/Qwen3-0.6B
 ```
 
 Set specific module logging:
 
 ```bash
-RUST_LOG=aha::models::qwen3vl=debug cargo run -- -m qwen3-0.6b
+RUST_LOG=aha::models::qwen3vl=debug cargo run -- -m Qwen/Qwen3-0.6B
 ```
 
 ### Debugging Tests

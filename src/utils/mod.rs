@@ -494,25 +494,8 @@ pub fn build_audio_completion_response(
     response
 }
 
-pub fn build_completion_response(
-    res: String,
-    model_name: &str,
-    completion_tokens: Option<u32>,
-    prompt_tokens: Option<u32>,
-) -> ChatCompletionResponse {
+fn build_response(res: String, model_name: &str, usage: Option<Usage>) -> ChatCompletionResponse {
     let id = uuid::Uuid::new_v4().to_string();
-    let usage = if prompt_tokens.is_none() && completion_tokens.is_none() {
-        None
-    } else {
-        Some(Usage {
-            prompt_tokens,
-            completion_tokens,
-            total_tokens: prompt_tokens.unwrap_or(0) + completion_tokens.unwrap_or(0),
-            prompt_tokens_details: None,
-            completion_tokens_details: None,
-        })
-    };
-
     let mut response = ChatCompletionResponse {
         id: Some(id),
         choices: vec![],
@@ -586,6 +569,67 @@ pub fn build_completion_response(
     };
     response.choices.push(choice);
     response
+}
+
+pub fn build_completion_response(
+    res: String,
+    model_name: &str,
+    completion_tokens: Option<u32>,
+    prompt_tokens: Option<u32>,
+) -> ChatCompletionResponse {
+    let usage = if prompt_tokens.is_none() && completion_tokens.is_none() {
+        None
+    } else {
+        Some(Usage {
+            prompt_tokens,
+            prompt_ms: None,
+            completion_tokens,
+            completion_ms: None,
+            completion_per_token_ms: None,
+            completion_tps: None,
+            total_tokens: prompt_tokens.unwrap_or(0) + completion_tokens.unwrap_or(0),
+            prompt_tokens_details: None,
+            completion_tokens_details: None,
+        })
+    };
+
+    build_response(res, model_name, usage)
+}
+
+pub fn build_completion_response_with_time(
+    res: String,
+    model_name: &str,
+    completion_tokens: Option<u32>,
+    completion_ms: Option<f64>,
+    prompt_tokens: Option<u32>,
+    prompt_ms: Option<f64>,
+) -> ChatCompletionResponse {
+    let usage = if prompt_tokens.is_none() && completion_tokens.is_none() {
+        None
+    } else {
+        let (completion_per_token_ms, completion_tps) = if let Some(prompt_tokens) = prompt_tokens
+            && let Some(prompt_ms) = prompt_ms
+        {
+            let per_token_ms = prompt_ms / prompt_tokens as f64;
+            let tps = prompt_tokens as f64 / (prompt_ms / 1000.0);
+            (Some(per_token_ms), Some(tps))
+        } else {
+            (None, None)
+        };
+        Some(Usage {
+            prompt_tokens,
+            prompt_ms,
+            completion_tokens,
+            completion_ms,
+            completion_per_token_ms,
+            completion_tps,
+            total_tokens: prompt_tokens.unwrap_or(0) + completion_tokens.unwrap_or(0),
+            prompt_tokens_details: None,
+            completion_tokens_details: None,
+        })
+    };
+
+    build_response(res, model_name, usage)
 }
 
 pub fn build_completion_chunk_response(

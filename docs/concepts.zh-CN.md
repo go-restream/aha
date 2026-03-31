@@ -191,15 +191,15 @@ let result = model.generate(prompt, params)?;
 
 ```rust
 pub fn load_model(
-    model_type: &str,
+    model_type: WhichModel,
     model_path: &str,
     device: &Device,
 ) -> Result<Box<dyn GenerateModel>> {
     match model_type {
-        "qwen3vl-2b" => Ok(Box::new(qwen3vl::generate::Qwen3VLGenerate::init(...)?)),
-        "voxcpm1.5" => Ok(Box::new(voxcpm::generate::VoxCPMGenerate::init(...)?)),
-        // ... 其他模型
-        _ => Err(anyhow!("不支持的模型: {}", model_type)),
+        WhichModel::Qwen3VL2B => Ok(Box::new(qwen3vl::generate::Qwen3VLGenerate::init(...)?)),
+        WhichModel::VoxCPM1_5 => Ok(Box::new(voxcpm::generate::VoxCPMGenerate::init(...)?)),
+        // ... other models
+        _ => Err(anyhow!("Unsupported model: {}", model_type)),
     }
 }
 ```

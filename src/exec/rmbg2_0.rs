@@ -29,7 +29,7 @@ impl ExecModel for RMBG2_0Exec {
         // Create ChatCompletionParameters for image background removal
         let message = format!(
             r#"{{
-            "model": "rmbg2.0",
+            "model": "AI-ModelScope/RMBG-2.0",
             "messages": [
                 {{
                     "role": "user",

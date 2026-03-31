@@ -10,7 +10,7 @@ fn deepseek_ocr2_generate() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test test_deepseek_ocr deepseek_ocr2_generate -r -- --nocapture
     let message = r#"
     {
-        "model": "deepseek-ocr2",
+        "model": "deepseek-ai/DeepSeek-OCR2",
         "messages": [
             {
                 "role": "user",
@@ -59,7 +59,7 @@ fn deepseek_ocr_generate() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test test_deepseek_ocr deepseek_ocr_generate -r -- --nocapture
     let message = r#"
     {
-        "model": "deepseek-ocr",
+        "model": "deepseek-ai/DeepSeek-OCR",
         "messages": [
             {
                 "role": "user",
@@ -109,7 +109,7 @@ async fn deepseek_ocr_stream() -> Result<()> {
 
     let message = r#"
     {
-        "model": "deepseek-ocr",
+        "model": "deepseek-ai/DeepSeek-OCR",
         "messages": [
             {
                 "role": "user",

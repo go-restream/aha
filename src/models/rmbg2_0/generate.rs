@@ -44,7 +44,7 @@ impl RMBG2_0Model {
         let model_name = std::path::Path::new(path)
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or("rmbg2.0")
+            .unwrap_or("AI-ModelScope/RMBG-2.0")
             .to_string();
         Ok(Self {
             model,

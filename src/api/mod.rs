@@ -2,7 +2,7 @@ use std::pin::pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 
-use aha::models::{GenerateModel, ModelInstance, WhichModel, load_model};
+use aha::models::{GenerateModel, ModelInstance, common::model_mapping::WhichModel, load_model};
 use aha::params::chat::ChatCompletionParameters;
 use aha::process::cleanup_pid_file;
 use aha::utils::string_to_static_str;
@@ -243,70 +243,34 @@ struct ErrorResponse {
     error: String,
 }
 
-/// Convert WhichModel to a display-friendly model ID (kebab-case)
-fn which_model_to_id(which_model: WhichModel) -> &'static str {
-    match which_model {
-        WhichModel::MiniCPM4_0_5B => "minicpm4-0.5b",
-        WhichModel::LFM2_1_2B => "lfm2-1.2b",
-        WhichModel::LFM2_5_1_2BInstruct => "lfm2.5-1.2b-instruct",
-        WhichModel::LFM2_5VL1_6B => "lfm2.5-vl-1.6b",
-        WhichModel::LFM2VL1_6B => "lfm2-vl-1.6b",
-        WhichModel::Qwen2_5VL3B => "qwen2.5vl-3b",
-        WhichModel::Qwen2_5VL7B => "qwen2.5vl-7b",
-        WhichModel::Qwen3_0_6B => "qwen3-0.6b",
-        WhichModel::Qwen3_5_0_8B => "qwen3.5-0.8b",
-        WhichModel::Qwen3_5_2B => "qwen3.5-2b",
-        WhichModel::Qwen3_5_4B => "qwen3.5-4b",
-        WhichModel::Qwen3_5_9B => "qwen3.5-9b",
-        WhichModel::Qwen3_5Gguf => "qwen3.5-gguf",
-        WhichModel::Qwen3ASR0_6B => "qwen3asr-0.6b",
-        WhichModel::Qwen3ASR1_7B => "qwen3asr-1.7b",
-        WhichModel::Qwen3VL2B => "qwen3vl-2b",
-        WhichModel::Qwen3VL4B => "qwen3vl-4b",
-        WhichModel::Qwen3VL8B => "qwen3vl-8b",
-        WhichModel::Qwen3VL32B => "qwen3vl-32b",
-        WhichModel::DeepSeekOCR => "deepseek-ocr",
-        WhichModel::DeepSeekOCR2 => "deepseek-ocr2",
-        WhichModel::HunyuanOCR => "hunyuan-ocr",
-        WhichModel::PaddleOCRVL => "paddleocr-vl",
-        WhichModel::PaddleOCRVL1_5 => "paddleocr-vl1.5",
-        WhichModel::RMBG2_0 => "rmbg2.0",
-        WhichModel::VoxCPM => "voxcpm",
-        WhichModel::VoxCPM1_5 => "voxcpm1.5",
-        WhichModel::GlmASRNano2512 => "glm-asr-nano-2512",
-        WhichModel::FunASRNano2512 => "fun-asr-nano-2512",
-        WhichModel::GlmOCR => "glm-ocr",
-    }
-}
-
-/// Get the owner/organization name for a model
-fn which_model_to_owner(which_model: WhichModel) -> &'static str {
-    match which_model {
-        WhichModel::MiniCPM4_0_5B => "OpenBMB",
-        WhichModel::Qwen2_5VL3B | WhichModel::Qwen2_5VL7B => "Qwen",
-        WhichModel::Qwen3_0_6B | WhichModel::Qwen3ASR0_6B | WhichModel::Qwen3ASR1_7B => "Qwen",
-        WhichModel::Qwen3VL2B
-        | WhichModel::Qwen3VL4B
-        | WhichModel::Qwen3VL8B
-        | WhichModel::Qwen3VL32B
-        | WhichModel::Qwen3_5Gguf => "Qwen",
-        WhichModel::Qwen3_5_0_8B
-        | WhichModel::Qwen3_5_2B
-        | WhichModel::Qwen3_5_4B
-        | WhichModel::Qwen3_5_9B => "Qwen",
-        WhichModel::DeepSeekOCR | WhichModel::DeepSeekOCR2 => "deepseek-ai",
-        WhichModel::HunyuanOCR => "Tencent-Hunyuan",
-        WhichModel::PaddleOCRVL | WhichModel::PaddleOCRVL1_5 => "PaddlePaddle",
-        WhichModel::RMBG2_0 => "AI-ModelScope",
-        WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "OpenBMB",
-        WhichModel::GlmASRNano2512 | WhichModel::GlmOCR => "ZhipuAI",
-        WhichModel::FunASRNano2512 => "FunAudioLLM",
-        WhichModel::LFM2_1_2B
-        | WhichModel::LFM2_5_1_2BInstruct
-        | WhichModel::LFM2_5VL1_6B
-        | WhichModel::LFM2VL1_6B => "LiquidAI",
-    }
-}
+// /// Get the owner/organization name for a model
+// fn which_model_to_owner(which_model: WhichModel) -> &'static str {
+//     match which_model {
+//         WhichModel::MiniCPM4_0_5B => "OpenBMB",
+//         WhichModel::Qwen2_5VL3B | WhichModel::Qwen2_5VL7B => "Qwen",
+//         WhichModel::Qwen3_0_6B | WhichModel::Qwen3ASR0_6B | WhichModel::Qwen3ASR1_7B => "Qwen",
+//         WhichModel::Qwen3VL2B
+//         | WhichModel::Qwen3VL4B
+//         | WhichModel::Qwen3VL8B
+//         | WhichModel::Qwen3VL32B
+//         | WhichModel::Qwen3_5Gguf => "Qwen",
+//         WhichModel::Qwen3_5_0_8B
+//         | WhichModel::Qwen3_5_2B
+//         | WhichModel::Qwen3_5_4B
+//         | WhichModel::Qwen3_5_9B => "Qwen",
+//         WhichModel::DeepSeekOCR | WhichModel::DeepSeekOCR2 => "deepseek-ai",
+//         WhichModel::HunyuanOCR => "Tencent-Hunyuan",
+//         WhichModel::PaddleOCRVL | WhichModel::PaddleOCRVL1_5 => "PaddlePaddle",
+//         WhichModel::RMBG2_0 => "AI-ModelScope",
+//         WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "OpenBMB",
+//         WhichModel::GlmASRNano2512 | WhichModel::GlmOCR => "ZhipuAI",
+//         WhichModel::FunASRNano2512 => "FunAudioLLM",
+//         WhichModel::LFM2_1_2B
+//         | WhichModel::LFM2_5_1_2BInstruct
+//         | WhichModel::LFM2_5VL1_6B
+//         | WhichModel::LFM2VL1_6B => "LiquidAI",
+//     }
+// }
 
 #[get("/models")]
 pub(crate) async fn models() -> (Status, (ContentType, Json<serde_json::Value>)) {
@@ -315,10 +279,10 @@ pub(crate) async fn models() -> (Status, (ContentType, Json<serde_json::Value>))
         let which_model = guard.which_model;
 
         let model_obj = ModelObject {
-            id: which_model_to_id(which_model).to_string(),
+            id: which_model.as_string(),
             object: "model".to_string(),
             created: None, // We don't track creation time
-            owned_by: which_model_to_owner(which_model).to_string(),
+            owned_by: which_model.model_owner(),
         };
         drop(guard);
 
@@ -418,41 +382,6 @@ mod tests {
     fn test_get_model_type_tts() {
         assert_eq!(WhichModel::VoxCPM.model_type(), "image");
         assert_eq!(WhichModel::VoxCPM1_5.model_type(), "image");
-    }
-
-    // Test model_id retrieval
-    #[test]
-    fn test_get_model_id() {
-        assert_eq!(WhichModel::Qwen3_0_6B.model_id(), "Qwen/Qwen3-0.6B");
-        assert_eq!(
-            WhichModel::DeepSeekOCR.model_id(),
-            "deepseek-ai/DeepSeek-OCR"
-        );
-        assert_eq!(WhichModel::VoxCPM1_5.model_id(), "OpenBMB/VoxCPM1.5");
-    }
-
-    // Test OpenAI-compatible model ID conversion
-    #[test]
-    fn test_which_model_to_id() {
-        assert_eq!(which_model_to_id(WhichModel::Qwen3_0_6B), "qwen3-0.6b");
-        assert_eq!(which_model_to_id(WhichModel::DeepSeekOCR), "deepseek-ocr");
-        assert_eq!(which_model_to_id(WhichModel::VoxCPM1_5), "voxcpm1.5");
-        assert_eq!(
-            which_model_to_id(WhichModel::MiniCPM4_0_5B),
-            "minicpm4-0.5b"
-        );
-    }
-
-    // Test owner/organization mapping
-    #[test]
-    fn test_which_model_to_owner() {
-        assert_eq!(which_model_to_owner(WhichModel::Qwen3_0_6B), "Qwen");
-        assert_eq!(which_model_to_owner(WhichModel::DeepSeekOCR), "deepseek-ai");
-        assert_eq!(which_model_to_owner(WhichModel::VoxCPM1_5), "OpenBMB");
-        assert_eq!(
-            which_model_to_owner(WhichModel::HunyuanOCR),
-            "Tencent-Hunyuan"
-        );
     }
 }
 

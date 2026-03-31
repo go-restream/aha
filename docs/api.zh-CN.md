@@ -15,7 +15,7 @@ http://127.0.0.1:10100
 
 您可以在启动服务时自定义：
 ```bash
-aha cli -m qwen3-0.6b -a 0.0.0.0 -p 8080
+aha cli -m Qwen/Qwen3-0.6B -a 0.0.0.0 -p 8080
 ```
 
 ### 身份验证
@@ -109,7 +109,7 @@ GET /models
   "object": "list",
   "data": [
     {
-      "id": "qwen3-0.6b",
+      "id": "Qwen/Qwen3-0.6B",
       "object": "model",
       "created": null,
       "owned_by": "Qwen"
@@ -132,7 +132,7 @@ GET /models
 |------|------|------|
 | `object` | string | 固定值："list" |
 | `data` | array | 模型对象数组（当前仅包含一个已加载的模型） |
-| `id` | string | 模型标识符（kebab-case，如 "qwen3-0.6b"） |
+| `id` | string | 模型标识符（kebab-case，如 "Qwen/Qwen3-0.6B"） |
 | `object` | string | 固定值："model" |
 | `created` | integer\|null | Unix 时间戳（当前为 null） |
 | `owned_by` | string | 模型所有者/组织名称 |
@@ -156,7 +156,7 @@ POST /chat/completions
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
-| `model` | string | 是 | 模型标识符（如 "qwen3-0.6b"） |
+| `model` | string | 是 | 模型标识符（如 "Qwen/Qwen3-0.6B"） |
 | `messages` | array | 是 | 消息对象数组 |
 | `temperature` | number | 否 | 采样温度（0-2，默认：1） |
 | `top_p` | number | 否 | 核采样（0-1，默认：1） |
@@ -197,7 +197,7 @@ POST /chat/completions
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "你好！"}
     ]
@@ -210,7 +210,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "system", "content": "你是一个有用的助手。"},
       {"role": "user", "content": "用一句话解释 Rust。"}
@@ -226,7 +226,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3vl-2b",
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
     "messages": [
       {
         "role": "user",
@@ -245,7 +245,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "deepseek-ocr",
+    "model": "deepseek-ai/DeepSeek-OCR",
     "messages": [
       {
         "role": "user",
@@ -264,7 +264,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "glm-asr-nano-2512",
+    "model": "ZhipuAI/GLM-ASR-Nano-2512",
     "messages": [
       {
         "role": "user",
@@ -286,7 +286,7 @@ curl http://127.0.0.1:10100/chat/completions \
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "给我讲个故事"}
     ],
@@ -312,7 +312,7 @@ data: [DONE]
   "id": "chatcmpl-123",
   "object": "chat.completion",
   "created": 1677652288,
-  "model": "qwen3-0.6b",
+  "model": "Qwen/Qwen3-0.6B",
   "choices": [
     {
       "index": 0,
@@ -329,12 +329,6 @@ data: [DONE]
 }
 ```
 
-#### 支持的模型
-
-- 文本：`qwen3-0.6b`、`minicpm4-0.5b`
-- 视觉：`qwen2.5vl-3b`、`qwen2.5vl-7b`、`qwen3vl-2b`、`qwen3vl-4b`、`qwen3vl-8b`、`qwen3vl-32b`
-- OCR：`deepseek-ocr`、`hunyuan-ocr`、`paddleocr-vl`
-- ASR：`glm-asr-nano-2512`、`fun-asr-nano-2512`、`qwen3asr-0.6b`、`qwen3asr-1.7b`
 
 ### 语音生成
 
@@ -349,7 +343,7 @@ POST /audio/speech
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
-| `model` | string | 是 | 模型标识符（如 "voxcpm1.5"） |
+| `model` | string | 是 | 模型标识符（如 "OpenBMB/VoxCPM-0.5B1.5"） |
 | `messages` | array | 是 | 消息对象数组 |
 
 #### 示例
@@ -358,7 +352,7 @@ POST /audio/speech
 curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "voxcpm1.5",
+    "model": "OpenBMB/VoxCPM-0.5B1.5",
     "messages": [
       {
         "role": "user",
@@ -375,9 +369,6 @@ curl http://127.0.0.1:10100/audio/speech \
 
 以 base64 WAV 格式返回音频数据。
 
-#### 支持的模型
-
-- `voxcpm`、`voxcpm1.5`
 
 ### 语音转写
 
@@ -433,7 +424,7 @@ POST /v1/audio/transcriptions
 curl -X POST http://127.0.0.1:10100/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./audio.wav" \
-  -F model="qwen3asr-0.6b"
+  -F model="Qwen/Qwen3-ASR-0.6B"
 ```
 
 **指定语言：**
@@ -442,7 +433,7 @@ curl -X POST http://127.0.0.1:10100/audio/transcriptions \
 curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./chinese_audio.wav" \
-  -F model="qwen3asr-0.6b" \
+  -F model="Qwen/Qwen3-ASR-0.6B" \
   -F language="zh"
 ```
 
@@ -452,7 +443,7 @@ curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
 curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
   -H "Authorization: Bearer NO_NEED" \
   -F file="@./audio.wav" \
-  -F model="qwen3asr-0.6b" \
+  -F model="Qwen/Qwen3-ASR-0.6B" \
   -F temperature="0.0"
 ```
 
@@ -490,12 +481,6 @@ curl -X POST http://127.0.0.1:10100/v1/audio/transcriptions \
 }
 ```
 
-#### 支持的模型
-
-- `qwen3asr-0.6b`
-- `qwen3asr-1.7b`
-- `glm-asr-nano-2512`
-- `fun-asr-nano-2512`
 
 #### 文件上传限制
 
@@ -514,7 +499,7 @@ POST /images/remove_background
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
-| `model` | string | 是 | 模型标识符（如 "rmbg2.0"） |
+| `model` | string | 是 | 模型标识符（如 "AI-ModelScope/RMBG-2.0"） |
 | `messages` | array | 是 | 消息对象数组 |
 
 #### 示例
@@ -525,7 +510,7 @@ POST /images/remove_background
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -543,7 +528,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -559,9 +544,6 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 以base64 PNG 格式返回处理后的图像。
 
-#### 支持的模型
-
-- `rmbg2.0`
 
 ### 优雅关机
 
@@ -605,7 +587,7 @@ POST /shutdown
 默认情况下，关机端点仅允许来自 localhost (127.0.0.1) 的请求。要启用远程关闭，请使用 `--allow-remote-shutdown` 标志启动服务器：
 
 ```bash
-aha serv -m qwen3-0.6b --allow-remote-shutdown
+aha serv -m Qwen/Qwen3-0.6B --allow-remote-shutdown
 ```
 
 **警告：** 除非有适当的安全措施，否则不建议在生产环境中启用远程关闭。
@@ -671,7 +653,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="qwen3-0.6b",
+    model="Qwen/Qwen3-0.6B",
     messages=[
         {"role": "user", "content": "你好！"}
     ]
@@ -691,7 +673,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: 'qwen3-0.6b',
+  model: 'Qwen/Qwen3-0.6B',
   messages: [{ role: 'user', content: '你好！' }]
 });
 

@@ -14,14 +14,14 @@ aha list
 
 ```bash
 # Download a small text model to start
-aha download -m qwen3-0.6b
+aha download -m Qwen/Qwen3-0.6B
 ```
 
 ### 3. Start the Service
 
 ```bash
 # Start the HTTP API server
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 ```
 
 The service will start on `http://127.0.0.1:10100`
@@ -34,7 +34,7 @@ In a new terminal:
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "Hello, AHA!"}
     ]
@@ -78,13 +78,13 @@ AHA is a local AI inference engine that:
 
 ```bash
 # Start the service
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 
 # In another terminal, make a request
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Explain quantum computing in simple terms."}
@@ -98,13 +98,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # Start a vision model
-aha cli -m qwen3vl-2b
+aha cli -m Qwen/Qwen3-VL-2B-Instruct
 
 # Analyze an image
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3vl-2b",
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
     "messages": [
       {
         "role": "user",
@@ -122,13 +122,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # Start an OCR model
-aha cli -m deepseek-ocr
+aha cli -m deepseek-ai/DeepSeek-OCR
 
 # Extract text from an image
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "deepseek-ocr",
+    "model": "deepseek-ai/DeepSeek-OCR",
     "messages": [
       {
         "role": "user",
@@ -145,13 +145,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # Start an ASR model
-aha cli -m glm-asr-nano-2512
+aha cli -m ZhipuAI/GLM-ASR-Nano-2512
 
 # Transcribe audio
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "glm-asr-nano-2512",
+    "model": "ZhipuAI/GLM-ASR-Nano-2512",
     "messages": [
       {
         "role": "user",
@@ -168,13 +168,13 @@ curl http://127.0.0.1:10100/chat/completions \
 
 ```bash
 # Start a TTS model
-aha cli -m voxcpm1.5
+aha cli -m OpenBMB/VoxCPM1.5
 
 # Generate speech
 curl http://127.0.0.1:10100/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "voxcpm1.5",
+    "model": "OpenBMB/VoxCPM1.5",
     "messages": [
       {
         "role": "user",
@@ -191,13 +191,13 @@ curl http://127.0.0.1:10100/audio/speech \
 
 ```bash
 # Start RMBG2.0 model
-aha cli -m rmbg2.0
+aha cli -m AI-ModelScope/RMBG-2.0
 
 # Remove background from image
 curl http://127.0.0.1:10100/images/remove_background \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "rmbg2.0",
+    "model": "AI-ModelScope/RMBG-2.0",
     "messages": [
       {
         "role": "user",
@@ -213,7 +213,7 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 ```bash
 # Run inference directly without starting HTTP server
-aha run -m qwen3-0.6b \
+aha run -m Qwen/Qwen3-0.6B \
   -i "Write a haiku about AI" \
   --weight-path ~/.aha/Qwen/Qwen3-0.6B
 ```
@@ -224,21 +224,21 @@ aha run -m qwen3-0.6b \
 
 ```bash
 # Use port 8080 instead of default 10100
-aha cli -m qwen3-0.6b -p 8080
+aha cli -m Qwen/Qwen3-0.6B -p 8080
 ```
 
 ### Bind to All Interfaces
 
 ```bash
 # Allow external access (use with caution)
-aha cli -m qwen3-0.6b -a 0.0.0.0 -p 8080
+aha cli -m Qwen/Qwen3-0.6B -a 0.0.0.0 -p 8080
 ```
 
 ### Use Local Model
 
 ```bash
 # Skip download, use existing model
-aha serv -m qwen3-0.6b \
+aha serv -m Qwen/Qwen3-0.6B \
   --weight-path /path/to/model \
   -p 8080
 ```
@@ -247,7 +247,7 @@ aha serv -m qwen3-0.6b \
 
 ```bash
 # Download model to specific directory
-aha download -m qwen3vl-2b -s /data/models
+aha download -m Qwen/Qwen3-VL-2B-Instruct -s /data/models
 ```
 
 ## Streaming Responses
@@ -258,7 +258,7 @@ For chat/completions, using no "stream" field or "stream": true enables streamin
 curl http://127.0.0.1:10100/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3-0.6b",
+    "model": "Qwen/Qwen3-0.6B",
     "messages": [
       {"role": "user", "content": "Tell me a story"}
     ],
@@ -269,28 +269,28 @@ curl http://127.0.0.1:10100/chat/completions \
 ## Model Selection Guide
 
 ### For Text Generation
-- **qwen3-0.6b**: Fast, lightweight (~1.2 GB)
-- **minicpm4-0.5b**: Small, efficient (~1 GB)
+- **Qwen/Qwen3-0.6B**: Fast, lightweight (~1.2 GB)
+- **OpenBMB/MiniCPM4-0.5B**: Small, efficient (~1 GB)
 
 ### For Vision Tasks
-- **qwen3vl-2b**: Balanced performance (~4 GB)
-- **qwen3vl-8b**: Better quality (~16 GB)
+- **Qwen/Qwen3-VL-2B-Instruct**: Balanced performance (~4 GB)
+- **Qwen/Qwen3-VL-8B-Instruct**: Better quality (~16 GB)
 
 ### For OCR
-- **deepseek-ocr**: General purpose
-- **hunyuan-ocr**: Good for Chinese text
-- **paddleocr-vl**: Lightweight option
+- **deepseek-ai/DeepSeek-OCR**: General purpose
+- **Tencent-Hunyuan/HunyuanOCR**: Good for Chinese text
+- **PaddlePaddle/PaddleOCR-VL**: Lightweight option
 
 ### For Speech Recognition
-- **glm-asr-nano-2512**: Fast, accurate
-- **fun-asr-nano-2512**: Good for Chinese
-- **qwen3asr-0.6b**: Lightweight
+- **ZhipuAI/GLM-ASR-Nano-2512**: Fast, accurate
+- **FunAudioLLM/Fun-ASR-Nano-2512**: Good for Chinese
+- **Qwen/Qwen3-ASR-0.6B**: Lightweight
 
 ### For Text-to-Speech
-- **voxcpm1.5**: High quality Chinese
+- **OpenBMB/VoxCPM1.5**: High quality Chinese
 
 ### For Background Removal
-- **rmbg2.0**: State-of-the-art results
+- **AI-ModelScope/RMBG-2.0**: State-of-the-art results
 
 ## Tips & Best Practices
 
@@ -298,7 +298,7 @@ curl http://127.0.0.1:10100/chat/completions \
 
 Begin with smaller models to understand the workflow:
 ```bash
-aha download -m qwen3-0.6b
+aha download -m Qwen/Qwen3-0.6B
 ```
 
 ### 2. Use GPU Acceleration
@@ -316,12 +316,12 @@ cargo build --release --features metal
 
 Download models when you have good internet:
 ```bash
-aha download -m qwen3vl-2b
+aha download -m Qwen/Qwen3-VL-2B-Instruct
 ```
 
 Then use them later without internet:
 ```bash
-aha serv -m qwen3vl-2b --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
+aha serv -m Qwen/Qwen3-VL-2B-Instruct --weight-path ~/.aha/Qwen/Qwen3-VL-2B-Instruct
 ```
 
 ### 4. Manage Disk Space
@@ -353,21 +353,21 @@ Activity Monitor
 
 ```bash
 # Use a different port
-aha cli -m qwen3-0.6b -p 8080
+aha cli -m Qwen/Qwen3-0.6B -p 8080
 ```
 
 ### Model Download Failed
 
 ```bash
 # Retry with more attempts
-aha download -m qwen3vl-2b --download-retries 5
+aha download -m Qwen/Qwen3-VL-2B-Instruct --download-retries 5
 ```
 
 ### Out of Memory
 
 ```bash
 # Use a smaller model
-aha cli -m qwen3-0.6b
+aha cli -m Qwen/Qwen3-0.6B
 ```
 
 ## Next Steps

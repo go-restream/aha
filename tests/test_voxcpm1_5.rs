@@ -18,7 +18,7 @@ fn voxcpm1_5_use_message_generate() -> Result<()> {
     let model_path = format!("{}/OpenBMB/VoxCPM1.5/", save_dir);
     let message = r#"
     {
-        "model": "voxcpm1.5",
+        "model": "OpenBMB/VoxCPM1.5",
         "messages": [
             {
                 "role": "user",

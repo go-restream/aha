@@ -60,7 +60,7 @@ impl GlmOcrGenerateModel {
         let model_name = std::path::Path::new(path)
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or("glm-ocr")
+            .unwrap_or("ZhipuAI/GLM-OCR")
             .to_string();
         Ok(Self {
             // chat_template,

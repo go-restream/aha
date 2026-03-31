@@ -2,12 +2,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::{net::IpAddr, str::FromStr, sync::Arc};
 
 use aha::{
-    models::WhichModel,
+    models::common::model_mapping::WhichModel,
     process::{cleanup_pid_file, create_pid_file},
     utils::{download_model, get_default_save_dir},
 };
 use anyhow::anyhow;
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 use rocket::{
     Config,
     data::{ByteUnit, Limits},
@@ -213,7 +213,7 @@ struct ListArgs {
 /// Get the default weight path for a given model
 /// Returns ~/.aha/{model_id} e.g., ~/.aha/OpenBMB/VoxCPM1.5
 fn get_default_weight_path(model: WhichModel) -> String {
-    let model_id = model.model_id();
+    let model_id = model.as_string();
     let save_dir = get_default_save_dir().expect("Failed to get home directory");
     format!("{}/{}", save_dir, model_id)
 }
@@ -221,7 +221,7 @@ fn get_default_weight_path(model: WhichModel) -> String {
 /// Check if a model is downloaded by verifying the model directory exists
 /// Returns true if ~/.aha/{model_id} directory exists, false otherwise
 fn is_model_downloaded(model: WhichModel) -> bool {
-    let model_id = model.model_id();
+    let model_id = model.as_string();
     let save_dir = match get_default_save_dir() {
         Some(dir) => dir,
         None => return false,
@@ -233,8 +233,8 @@ fn is_model_downloaded(model: WhichModel) -> bool {
 /// Model information for JSON output
 #[derive(Serialize)]
 struct ModelInfo {
-    name: String,
     model_id: String,
+    owner: String,
     #[serde(rename = "type")]
     model_type: String,
     downloaded: bool,
@@ -242,48 +242,17 @@ struct ModelInfo {
 
 /// List all supported models
 fn run_list(args: ListArgs) -> anyhow::Result<()> {
-    let models = [
-        WhichModel::MiniCPM4_0_5B,
-        WhichModel::LFM2_1_2B,
-        WhichModel::LFM2_5_1_2BInstruct,
-        WhichModel::Qwen2_5VL3B,
-        WhichModel::Qwen2_5VL7B,
-        WhichModel::Qwen3_0_6B,
-        WhichModel::Qwen3_5_0_8B,
-        WhichModel::Qwen3_5_2B,
-        WhichModel::Qwen3_5_4B,
-        WhichModel::Qwen3_5_9B,
-        WhichModel::Qwen3ASR0_6B,
-        WhichModel::Qwen3ASR1_7B,
-        WhichModel::Qwen3VL2B,
-        WhichModel::Qwen3VL4B,
-        WhichModel::Qwen3VL8B,
-        WhichModel::Qwen3VL32B,
-        WhichModel::DeepSeekOCR,
-        WhichModel::DeepSeekOCR2,
-        WhichModel::HunyuanOCR,
-        WhichModel::PaddleOCRVL,
-        WhichModel::PaddleOCRVL1_5,
-        WhichModel::RMBG2_0,
-        WhichModel::VoxCPM,
-        WhichModel::VoxCPM1_5,
-        WhichModel::GlmASRNano2512,
-        WhichModel::FunASRNano2512,
-        WhichModel::GlmOCR,
-    ];
+    let models = WhichModel::model_list();
 
     if args.json {
         // JSON output
         let model_infos: Vec<ModelInfo> = models
             .iter()
-            .map(|model| {
-                let possible_value = model.to_possible_value().unwrap();
-                ModelInfo {
-                    name: possible_value.get_name().to_string(),
-                    model_id: model.model_id().to_string(),
-                    model_type: model.model_type().to_string(),
-                    downloaded: is_model_downloaded(*model),
-                }
+            .map(|model| ModelInfo {
+                model_id: model.as_string(),
+                owner: model.model_owner(),
+                model_type: model.model_type().to_string(),
+                downloaded: is_model_downloaded(*model),
             })
             .collect();
         println!("{}", serde_json::to_string_pretty(&model_infos)?);
@@ -292,20 +261,23 @@ fn run_list(args: ListArgs) -> anyhow::Result<()> {
         println!("Available models:");
         println!();
         println!(
-            "{:<30} {:<40} {:<10}",
-            "Model Name", "ModelScope ID", "Download"
+            "{:<40} {:<20} {:<10} {:<10}",
+            "Model ID", "Owner", "type", "Download"
         );
         println!("{}", "-".repeat(80));
         for model in models {
-            let possible_value = model.to_possible_value().unwrap();
-            let name = possible_value.get_name();
-            let id = model.model_id();
+            let model_id = model.as_string();
+            let owner = model.model_owner();
+            let model_type = model.model_type();
             let download_status = if is_model_downloaded(model) {
                 "  ✔"
             } else {
                 ""
             };
-            println!("{:<30} {:<40} {:<10}", name, id, download_status);
+            println!(
+                "{:<40} {:<20} {:<10} {:<10}",
+                model_id, owner, model_type, download_status
+            );
         }
     }
 
@@ -322,9 +294,9 @@ async fn run_cli(args: CliArgs) -> anyhow::Result<()> {
         gguf_path,
         mmproj_path,
     } = args;
-    let model_id = common.model.model_id();
+    let model_id = common.model.as_string();
 
-    let (model_path, gguf, mmproj) = if model_id.eq("GGUF") {
+    let (model_path, gguf, mmproj) = if model_id.contains("gguf") {
         if gguf_path.is_none() {
             return Err(anyhow!("gguf model path is required"));
         }
@@ -338,8 +310,8 @@ async fn run_cli(args: CliArgs) -> anyhow::Result<()> {
                     None => get_default_save_dir().expect("Failed to get home directory"),
                 };
                 let max_retries = download_retries.unwrap_or(3);
-                download_model(model_id, &save_dir, max_retries).await?;
-                save_dir + "/" + model_id
+                download_model(&model_id, &save_dir, max_retries).await?;
+                save_dir + "/" + &model_id
             }
         };
         (model_path, None, None)
@@ -359,8 +331,8 @@ async fn run_serv(args: ServArgs) -> anyhow::Result<()> {
         gguf_path,
         mmproj_path,
     } = args;
-    let model_id = common.model.model_id();
-    let (model_path, gguf, mmproj) = if model_id.eq("GGUF") {
+    let model_id = common.model.as_string();
+    let (model_path, gguf, mmproj) = if model_id.contains("gguf") {
         if gguf_path.is_none() {
             return Err(anyhow!("gguf model path is required"));
         }
@@ -427,7 +399,7 @@ async fn run_download(args: DownloadArgs) -> anyhow::Result<()> {
         save_dir,
         download_retries,
     } = args;
-    let model_id = model.model_id();
+    let model_id = model.as_string();
 
     let save_dir = match save_dir {
         Some(dir) => dir,
@@ -435,7 +407,7 @@ async fn run_download(args: DownloadArgs) -> anyhow::Result<()> {
     };
     let max_retries = download_retries.unwrap_or(3);
 
-    download_model(model_id, &save_dir, max_retries).await?;
+    download_model(&model_id, &save_dir, max_retries).await?;
 
     Ok(())
 }
@@ -587,7 +559,7 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
 /// Run the 'delete' subcommand: delete model from default location
 fn run_delete(args: DeleteArgs) -> anyhow::Result<()> {
     let DeleteArgs { model } = args;
-    let model_id = model.model_id();
+    let model_id = model.as_string();
     let save_dir = get_default_save_dir().expect("Failed to get home directory");
     let model_path = format!("{}/{}", save_dir, model_id);
 

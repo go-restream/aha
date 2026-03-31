@@ -5,9 +5,18 @@ pub struct Usage {
     /// Number of tokens in the prompt.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt_tokens: Option<u32>,
+    /// Number of tokens in the prompt.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_ms: Option<f64>,
     /// Number of tokens in the completion.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub completion_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completion_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completion_per_token_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completion_tps: Option<f64>,
     /// Number of tokens in the entire response.
     pub total_tokens: u32,
     /// Breakdown of tokens used in the prompt.

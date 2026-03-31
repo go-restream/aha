@@ -86,7 +86,7 @@ impl VoxCPMGenerate {
         let m_dtype = get_dtype(dtype, cfg_dtype);
 
         let model_list = find_type_files(path, "bin")?;
-        // voxcpm0.5B模型文件是.bin类型， voxcpm1.5模型文件是.safetensors类型
+        // voxcpm0.5B模型文件是.bin类型， OpenBMB/VoxCPM1.5模型文件是.safetensors类型
         let vb_voxcpm = if model_list.is_empty() {
             let model_list = find_type_files(path, "safetensors")?;
             unsafe { VarBuilder::from_mmaped_safetensors(&model_list, m_dtype, device)? }
