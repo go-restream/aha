@@ -30,8 +30,6 @@ pub struct FunAsrNanoGenerateModel {
     fun_asr_nano: FunAsrNanoModel,
     device: Device,
     dtype: DType,
-    // eos_token_id1: u32,
-    // eos_token_id2: u32,
     generation_config: Qwen3GenerationConfig,
     model_name: String,
 }
@@ -90,8 +88,6 @@ impl FunAsrNanoGenerateModel {
             fun_asr_nano,
             device,
             dtype,
-            // eos_token_id1: generation_config.eos_token_id[0] as u32,
-            // eos_token_id2: generation_config.eos_token_id[1] as u32,
             generation_config,
             model_name,
         })
@@ -165,58 +161,10 @@ impl GenerateModel for FunAsrNanoGenerateModel {
             top_k.into(),
             seed,
             max_tokens,
+            false,
             &self.device,
             &self.model_name,
         )?;
-        // let mut seq_len = input_ids.dim(1)?;
-        // let mut seqlen_offset = 0;
-        // let sample_len = mes.max_tokens.unwrap_or(1024);
-        // let stream = stream! {
-        //     let mut error_tokens = Vec::new();
-        //     let mut speech = Some(speech.to_dtype(self.dtype)?);
-        //     let mut fbank_mask = Some(&fbank_mask);
-        //     let mut input_ids = input_ids;
-        //     for _ in 0..sample_len {
-        //         let logits = self.fun_asr_nano.forward(
-        //             &input_ids,
-        //             speech.as_ref(),
-        //             fbank_mask,
-        //             seqlen_offset,
-        //         )?;
-        //         let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-        //         let next_token = logit_processor.sample(&logits)?;
-        //         let mut decode_ids = Vec::new();
-        //         if !error_tokens.is_empty() {
-        //             decode_ids.extend_from_slice(&error_tokens);
-        //         }
-        //         decode_ids.push(next_token);
-        //         let decoded_token = self.tokenizer.token_decode(decode_ids).map_err(|e| anyhow!(format!("stream decode error{e}")))?;
-        //         if decoded_token.contains("�") {
-        //             error_tokens.push(next_token);
-        //             if error_tokens.len() > 3 {
-        //                 error_tokens.clear();
-        //             }
-        //             seqlen_offset += seq_len;
-        //             seq_len = 1;
-        //             input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //             speech = None;
-        //             fbank_mask = None;
-        //             continue;
-        //         }
-        //         error_tokens.clear();
-        //         let chunk = build_completion_chunk_response(decoded_token, &self.model_name, None, None);
-        //         yield Ok(chunk);
-        //         if next_token == self.eos_token_id1 || next_token == self.eos_token_id2 {
-        //             break;
-        //         }
-        //         seqlen_offset += seq_len;
-        //         seq_len = 1;
-        //         input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //         speech = None;
-        //         fbank_mask = None;
-        //     }
-        //     self.fun_asr_nano.clear_kv_cache();
-        // };
         Ok(Box::new(Box::pin(stream)))
     }
 }

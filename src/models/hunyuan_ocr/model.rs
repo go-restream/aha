@@ -7,14 +7,19 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::modules::{
-            GateUpDownMLP, NaiveAttnTwoLinearMLPBlock, eager_attention_forward, get_conv2d,
+        common::{
+            InferenceModel,
+            modules::{
+                GateUpDownMLP, NaiveAttnTwoLinearMLPBlock, eager_attention_forward, get_conv2d,
+            },
         },
         hunyuan_ocr::config::{HunYuanVLConfig, HunYuanVLVisionConfig},
     },
     position_embed::rope::{RoPE, apply_rotary_pos_emb, get_xd_cos_sin},
-    utils::interpolate::interpolate_bilinear,
-    utils::tensor_utils::{masked_scatter_dim0, prepare_causal_attention_mask, split_tensor},
+    utils::{
+        interpolate::interpolate_bilinear,
+        tensor_utils::{masked_scatter_dim0, prepare_causal_attention_mask, split_tensor},
+    },
 };
 
 pub struct HunYuanVisionPatchEmbed {
@@ -538,10 +543,11 @@ pub struct HunyuanVLModel {
     vit: HunYuanVisionTransformer,
     model: HunYuanVLTextModel,
     lm_head: Linear,
+    stop_token_ids: Vec<u32>,
 }
 
 impl HunyuanVLModel {
-    pub fn new(vb: VarBuilder, config: HunYuanVLConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: HunYuanVLConfig, eos_ids: Vec<u32>) -> Result<Self> {
         let vit = HunYuanVisionTransformer::new(vb.pp("vit"), &config.vision_config)?;
         let model = HunYuanVLTextModel::new(vb.pp("model"), &config)?;
         let lm_head = Linear::new(model.embed_tokens.embeddings().clone(), None);
@@ -550,6 +556,7 @@ impl HunyuanVLModel {
             vit,
             model,
             lm_head,
+            stop_token_ids: eos_ids,
         })
     }
     pub fn forward(
@@ -580,5 +587,44 @@ impl HunyuanVLModel {
 
     pub fn clear_kv_cache(&mut self) {
         self.model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for HunyuanVLModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 4 {
+            return Err(anyhow::anyhow!(
+                "HunyuanVL process data error, must have pixel_values, image_grid_thw, image_mask, position_ids"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let image_grid_thw = &data.data_vec[1];
+        let image_mask = &data.data_vec[2];
+        let position_ids = &data.data_vec[3];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            image_grid_thw.as_ref(),
+            image_mask.as_ref(),
+            position_ids.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

@@ -611,7 +611,7 @@ impl FunAsrNanoModel {
             config.audio_adaptor_conf.n_layer,
             8,
         )?;
-        let llm = Qwen3Model::new(llm_cfg, vb.pp("llm"))?;
+        let llm = Qwen3Model::new(llm_cfg, vb.pp("llm"), vec![])?;
         Ok(Self {
             audio_encoder,
             audio_adaptor,

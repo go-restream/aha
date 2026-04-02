@@ -10,6 +10,7 @@ use candle_nn::{
 use crate::{
     models::{
         common::{
+            InferenceModel,
             gguf::{Gguf, ProjKind, TwoLinearMLPGguf},
             modules::{eager_attention_forward, get_layer_norm},
         },
@@ -839,10 +840,11 @@ pub struct Qwen3VLModel {
     language_model: Qwen3VLTextModel,
     lm_head: Linear,
     rope_deltas: Option<Tensor>,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Qwen3VLModel {
-    pub fn new(config: Qwen3VLConfig, vb: VarBuilder) -> Result<Self> {
+    pub fn new(config: Qwen3VLConfig, vb: VarBuilder, eos_ids: Vec<u32>) -> Result<Self> {
         let vb_m = vb.pp("model");
         let config = config.clone();
         let visual = Qwen3VLVisionModel::new(config.vision_config.clone(), vb_m.pp("visual"))?;
@@ -863,6 +865,7 @@ impl Qwen3VLModel {
             language_model,
             lm_head,
             rope_deltas: None,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -1240,6 +1243,15 @@ impl Qwen3VLModel {
                     .broadcast_add(rope_deltas)?
                     .contiguous()?
                     .to_dtype(candle_core::DType::U32)?
+            } else if let Some(rope_deltas) = &self.rope_deltas {
+                let cache_position =
+                    Tensor::from_vec(vec![seqlen_offset as u32], 1, inputs_embeds.device())?;
+                cache_position
+                    .i(0)?
+                    .to_dtype(rope_deltas.dtype())?
+                    .broadcast_add(rope_deltas)?
+                    .contiguous()?
+                    .to_dtype(candle_core::DType::U32)?
             } else {
                 Tensor::zeros(1, inputs_embeds.dtype(), inputs_embeds.device())?
             };
@@ -1265,6 +1277,48 @@ impl Qwen3VLModel {
     }
 
     pub fn clear_kv_cache(&mut self) {
+        self.rope_deltas = None;
         self.language_model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for Qwen3VLModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 5 {
+            return Err(anyhow::anyhow!(
+                "Qwen3VL process data error, must have pixel_values, image_grid_thw, pixel_values_video, video_grid_thw, cache_position"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let image_grid_thw = &data.data_vec[1];
+        let pixel_values_video = &data.data_vec[2];
+        let video_grid_thw = &data.data_vec[3];
+        let cache_position = &data.data_vec[4];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            image_grid_thw.as_ref(),
+            pixel_values_video.as_ref(),
+            video_grid_thw.as_ref(),
+            cache_position.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

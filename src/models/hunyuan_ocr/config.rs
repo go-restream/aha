@@ -85,7 +85,7 @@ pub struct HunyuanOCRGenerationConfig {
     pub bos_token_id: usize,
     pub pad_token_id: usize,
     pub do_sample: bool,
-    pub eos_token_id: Vec<usize>,
+    pub eos_token_id: Vec<u32>,
     pub top_p: f32,
     pub top_k: usize,
     pub temperature: f32,

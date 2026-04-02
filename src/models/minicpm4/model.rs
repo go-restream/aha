@@ -4,7 +4,10 @@ use candle_nn::{Embedding, Linear, Module, RmsNorm, VarBuilder, embedding, rms_n
 
 use crate::{
     models::{
-        common::modules::{GateUpDownMLP, NaiveAttention},
+        common::{
+            InferenceModel,
+            modules::{GateUpDownMLP, NaiveAttention},
+        },
         minicpm4::config::MiniCPM4Config,
     },
     position_embed::rope::compute_default_rope_parameters,
@@ -207,10 +210,11 @@ pub struct MiniCPMModel {
     norm: RmsNorm,
     rope_emb: MiniCPMLongRoPE,
     lm_head: Linear,
+    stop_token_ids: Vec<u32>,
 }
 
 impl MiniCPMModel {
-    pub fn new(vb: VarBuilder, cfg: MiniCPM4Config) -> Result<Self> {
+    pub fn new(vb: VarBuilder, cfg: MiniCPM4Config, eos_ids: Vec<u32>) -> Result<Self> {
         let vb = vb.pp("model");
         let embed_tokens = embedding(cfg.vocab_size, cfg.hidden_size, vb.pp("embed_tokens"))?;
         let mut layers = Vec::with_capacity(cfg.num_hidden_layers);
@@ -229,10 +233,11 @@ impl MiniCPMModel {
             norm,
             rope_emb,
             lm_head,
+            stop_token_ids: eos_ids,
         })
     }
 
-    pub fn forward(&mut self, input_ids: &Tensor, position_id: usize) -> Result<Tensor> {
+    pub fn forward(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
         let (bs, seq_len) = input_ids.dims2()?;
         let input_embeds = self
             .embed_tokens
@@ -251,7 +256,7 @@ impl MiniCPMModel {
             }
         };
 
-        let (cos, sin) = self.rope_emb.forward(position_id, seq_len)?;
+        let (cos, sin) = self.rope_emb.forward(seqlen_offset, seq_len)?;
         let mut hidden_states = input_embeds;
         for decode_layer in &self.layers {
             hidden_states =
@@ -267,7 +272,11 @@ impl MiniCPMModel {
         Ok(logits)
     }
 
-    pub fn forward_with_cache(&mut self, input_ids: &Tensor, position_id: usize) -> Result<Tensor> {
+    pub fn forward_with_cache(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+    ) -> Result<Tensor> {
         let (bs, seq_len) = input_ids.dims2()?;
         let input_embeds = self
             .embed_tokens
@@ -285,7 +294,7 @@ impl MiniCPMModel {
                 )?)
             }
         };
-        let (cos, sin) = self.rope_emb.forward(position_id, seq_len)?;
+        let (cos, sin) = self.rope_emb.forward(seqlen_offset, seq_len)?;
         let mut hidden_states = input_embeds;
         for decode_layer in &mut self.layers {
             hidden_states = decode_layer.forward_with_cache(
@@ -309,5 +318,19 @@ impl MiniCPMModel {
         for layer in self.layers.iter_mut() {
             layer.clear_kv_cache()
         }
+    }
+}
+
+impl InferenceModel for MiniCPMModel {
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward_with_cache(input_ids, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

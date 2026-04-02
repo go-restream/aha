@@ -133,6 +133,9 @@ impl<'a> ChatTemplate<'a> {
 
     pub fn apply_chat_template(&self, messages: &ChatCompletionParameters) -> Result<String> {
         let enable_thinking = extract_metadata_value::<bool>(&messages.metadata, "enable_thinking");
+        let mes_thinking_param = messages.enable_thinking;
+        let enable_thinking =
+            Some(enable_thinking.unwrap_or(false) || mes_thinking_param.unwrap_or(false));
         let context = context! {
             messages => &messages.messages,
             tools => &messages.tools.as_ref(),

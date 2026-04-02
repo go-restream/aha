@@ -5,6 +5,11 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+### 2026-04-02
+- 重构生成代码 
+- \<think\>...\</think\> 思维链内容使用reasoning_content字段返回。
+- 对话返回添加耗时信息
+
 ### 2026-04-01
 - 重构 deepseek_ocr/fun_asr_nano 生成代码
 

@@ -70,6 +70,8 @@ pub struct ChatCompletionParameters {
     /// Developer-defined tags and values used for filtering completions in the dashboard.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_thinking: Option<bool>,
     /// Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far,
     /// decreasing the model's likelihood to repeat the same line verbatim.
     #[serde(skip_serializing_if = "Option::is_none")]

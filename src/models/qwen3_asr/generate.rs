@@ -1,6 +1,9 @@
+use std::time::Instant;
+
 use crate::{
     models::common::generate::get_logit_processor,
     params::chat::{ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse},
+    utils::response_utils::{build_chunk_response_with_usage, build_completion_response_with_time},
 };
 use anyhow::{Result, anyhow};
 use candle_core::{DType, Device, Tensor};
@@ -21,8 +24,7 @@ use crate::{
     },
     tokenizer::TokenizerModel,
     utils::{
-        build_completion_chunk_response, build_completion_response, find_type_files, get_device,
-        get_dtype,
+        find_type_files, get_device, get_dtype, response_utils::build_completion_chunk_response,
     },
 };
 
@@ -92,6 +94,8 @@ impl<'a> GenerateModel for Qwen3AsrGenerateModel<'a> {
         let sample_len = mes.max_tokens.unwrap_or(1024);
         let mut generate = Vec::new();
         let mut prompt_tokens = 0u32;
+        let mut prompt_secs = 0.0f64;
+        let mut completion_secs = 0.0f64;
         for data in audio_datas.iter() {
             let mut input_ids = data.input_ids.clone();
             let mut input_features = Some(data.input_features.clone().to_dtype(self.dtype)?);
@@ -99,11 +103,18 @@ impl<'a> GenerateModel for Qwen3AsrGenerateModel<'a> {
             prompt_tokens += seq_len as u32;
             let mut seqlen_offset = 0;
             for _ in 0..sample_len {
+                let i_start = Instant::now();
                 let logits =
                     self.qwen3_asr
                         .forward(&input_ids, seqlen_offset, input_features.as_ref())?;
                 let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
                 let next_token = logit_processor.sample(&logits)?;
+                let i_duration = i_start.elapsed();
+                if seqlen_offset == 0 {
+                    prompt_secs += i_duration.as_secs_f64();
+                } else {
+                    completion_secs += i_duration.as_secs_f64();
+                };
                 generate.push(next_token);
                 if next_token == self.eos_token_id1 || next_token == self.eos_token_id2 {
                     break;
@@ -117,8 +128,14 @@ impl<'a> GenerateModel for Qwen3AsrGenerateModel<'a> {
         }
         let num_token = generate.len() as u32;
         let res = self.tokenizer.token_decode(generate)?;
-        let response =
-            build_completion_response(res, &self.model_name, Some(num_token), Some(prompt_tokens));
+        let response = build_completion_response_with_time(
+            res,
+            &self.model_name,
+            num_token.into(),
+            completion_secs.into(),
+            prompt_tokens.into(),
+            prompt_secs.into(),
+        );
         Ok(response)
     }
 
@@ -145,17 +162,30 @@ impl<'a> GenerateModel for Qwen3AsrGenerateModel<'a> {
         let sample_len = mes.max_tokens.unwrap_or(1024);
         let stream = stream! {
             let mut error_tokens = Vec::new();
+            let mut prompt_tokens = 0u32;
+            let mut completion_tokens = 0u32;
+            let mut prompt_secs = 0.0f64;
+            let mut completion_secs = 0.0f64;
             for data in audio_datas.iter() {
                 let mut input_ids = data.input_ids.clone();
                 let mut input_features = Some(data.input_features.clone().to_dtype(self.dtype)?);
                 let mut seq_len = input_ids.dim(1)?;
+                prompt_tokens += seq_len as u32;
                 let mut seqlen_offset = 0;
                 for _ in 0..sample_len {
+                    let i_start = Instant::now();
                     let logits =
                         self.qwen3_asr
                             .forward(&input_ids, seqlen_offset, input_features.as_ref())?;
                     let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
                     let next_token = logit_processor.sample(&logits)?;
+                    completion_tokens += 1;
+                    let i_duration = i_start.elapsed();
+                    if seqlen_offset == 0 {
+                        prompt_secs += i_duration.as_secs_f64();
+                    } else {
+                        completion_secs += i_duration.as_secs_f64();
+                    };
                     let mut decode_ids = Vec::new();
                     if !error_tokens.is_empty() {
                         decode_ids.extend_from_slice(&error_tokens);
@@ -177,6 +207,7 @@ impl<'a> GenerateModel for Qwen3AsrGenerateModel<'a> {
                     let chunk = build_completion_chunk_response(decoded_token, &self.model_name, None, None);
                     yield Ok(chunk);
                     if next_token == self.eos_token_id1 || next_token == self.eos_token_id2 {
+                        yield Ok(build_chunk_response_with_usage(&self.model_name, completion_tokens.into(), completion_secs.into(), prompt_tokens.into(), prompt_secs.into()));
                         break;
                     }
                     seqlen_offset += seq_len;

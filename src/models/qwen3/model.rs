@@ -6,7 +6,10 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::modules::{GateUpDownMLP, QKNormAttention},
+        common::{
+            InferenceModel,
+            modules::{GateUpDownMLP, QKNormAttention},
+        },
         qwen3::config::Qwen3Config,
     },
     position_embed::rope::RoPE,
@@ -94,10 +97,11 @@ pub struct Qwen3Model {
     norm: RmsNorm,
     rotary_emb: RoPE,
     lm_head: Linear,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Qwen3Model {
-    pub fn new(config: &Qwen3Config, vb: VarBuilder) -> Result<Self> {
+    pub fn new(config: &Qwen3Config, vb: VarBuilder, eos_ids: Vec<u32>) -> Result<Self> {
         let vb = vb.pp("model");
         let vocab_size = config.vocab_size;
         let embed_tokens = embedding(vocab_size, config.hidden_size, vb.pp("embed_tokens"))?;
@@ -121,6 +125,7 @@ impl Qwen3Model {
             norm,
             rotary_emb,
             lm_head,
+            stop_token_ids: eos_ids,
         })
     }
     pub fn forward(
@@ -176,5 +181,19 @@ impl Qwen3Model {
         for layer in self.layers.iter_mut() {
             layer.clear_kv_cache()
         }
+    }
+}
+
+impl InferenceModel for Qwen3Model {
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids.into(), None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

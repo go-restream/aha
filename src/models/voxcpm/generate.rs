@@ -21,8 +21,8 @@ use crate::{
     },
     utils::{
         audio_utils::{extract_audio_url, get_audio_wav_u8},
-        build_audio_completion_response, extract_metadata_value, extract_user_text,
-        find_type_files, get_device, get_dtype,
+        extract_metadata_value, extract_user_text, find_type_files, get_device, get_dtype,
+        response_utils::build_audio_completion_response,
     },
 };
 

@@ -1,6 +1,9 @@
 use crate::{
     models::{
-        common::modules::{NaiveAttnTwoLinearMLPBlock, get_layer_norm},
+        common::{
+            InferenceModel,
+            modules::{NaiveAttnTwoLinearMLPBlock, get_layer_norm},
+        },
         lfm2::model::Lfm2Decoder,
         lfm2vl::config::{Lfm2VLConfig, Lfm2VLVisionConfig},
     },
@@ -15,11 +18,7 @@ use candle_nn::{Activation, LayerNorm, Linear, Module, VarBuilder, embedding, li
 use num::integer::Roots;
 
 pub struct Siglip2VisionEmbeddings {
-    // embed_dim: usize,
-    // patch_size: usize,
     patch_embedding: Linear,
-    // position_embedding_size: usize,
-    // position_embedding: Embedding,
     postitional_embeddings: Tensor,
 }
 
@@ -44,11 +43,7 @@ impl Siglip2VisionEmbeddings {
             .permute((2, 0, 1))?
             .unsqueeze(0)?;
         Ok(Self {
-            // embed_dim,
-            // patch_size,
             patch_embedding,
-            // position_embedding_size,
-            // position_embedding,
             postitional_embeddings,
         })
     }
@@ -254,10 +249,11 @@ pub struct Lfm2VLModel {
     language_model: Lfm2Decoder,
     lm_head: Linear,
     img_id: u32,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Lfm2VLModel {
-    pub fn new(vb: VarBuilder, cfg: &Lfm2VLConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, cfg: &Lfm2VLConfig, eos_ids: Vec<u32>) -> Result<Self> {
         let vb = vb.pp("model");
         let vision_tower = Siglip2VisionModel::new(vb.pp("vision_tower"), &cfg.vision_config)?;
         let multi_modal_projector =
@@ -270,6 +266,7 @@ impl Lfm2VLModel {
             language_model,
             lm_head,
             img_id: cfg.image_token_id,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -319,5 +316,42 @@ impl Lfm2VLModel {
 
     pub fn clear_cache(&mut self) {
         self.language_model.clear_cache();
+    }
+}
+
+impl InferenceModel for Lfm2VLModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 3 {
+            return Err(anyhow::anyhow!(
+                "Lfm2VL process data error, must have pixel_values, pixel_attention_mask, spatial_shapes"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let pixel_attention_mask = &data.data_vec[1];
+        let spatial_shapes = &data.data_vec[2];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            pixel_attention_mask.as_ref(),
+            spatial_shapes.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

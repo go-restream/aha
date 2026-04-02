@@ -202,7 +202,7 @@ pub struct Qwen3ASRRopeScaling {
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Qwen3ASRGenerationConfig {
     pub do_sample: bool,
-    pub eos_token_id: Vec<usize>,
+    pub eos_token_id: Vec<u32>,
     pub pad_token_id: usize,
     pub temperature: f32,
 }

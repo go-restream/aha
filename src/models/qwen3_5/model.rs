@@ -10,6 +10,7 @@ use candle_nn::{
 use crate::{
     models::{
         common::{
+            InferenceModel,
             gguf::{GateUpDownMLPGguf, Gguf, ProjKind, QuantizedLinear},
             modules::{conv1d_depthwise, eager_attention_forward, get_conv1d, softplus},
         },
@@ -1043,10 +1044,11 @@ pub struct Qwen3_5Model {
     language_model: Qwen3_5TextModel,
     lm_head: ProjKind,
     rope_deltas: Option<Tensor>,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Qwen3_5Model {
-    pub fn new_from_vb(vb: VarBuilder, config: Qwen3_5Config) -> Result<Self> {
+    pub fn new_from_vb(vb: VarBuilder, config: Qwen3_5Config, eos_ids: Vec<u32>) -> Result<Self> {
         let vb_m = vb.pp("model");
         let visual = Qwen3VLVisionModel::new(config.vision_config.clone(), vb_m.pp("visual"))?;
         let language_model =
@@ -1069,6 +1071,7 @@ impl Qwen3_5Model {
             language_model,
             lm_head: ProjKind::LinearProj(lm_head),
             rope_deltas: None,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -1076,6 +1079,7 @@ impl Qwen3_5Model {
         gguf: &mut Gguf<R>,
         mmproj_gguf: Option<&mut Gguf<R>>,
         device: &Device,
+        eos_ids: Vec<u32>,
     ) -> Result<Self> {
         let spatial_merge_size = 2usize;
         let image_token_id = 248056u32;
@@ -1102,6 +1106,7 @@ impl Qwen3_5Model {
             language_model,
             lm_head: ProjKind::QuantizedProj(QuantizedLinear::new(lm_head, None)),
             rope_deltas: None,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -1434,6 +1439,46 @@ impl Qwen3_5Model {
     }
 
     pub fn clear_cache(&mut self) {
+        self.rope_deltas = None;
         self.language_model.clear_cache();
+    }
+}
+
+impl InferenceModel for Qwen3_5Model {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 4 {
+            return Err(anyhow::anyhow!(
+                "Lfm2VL process data error, must have pixel_values, image_grid_thw, pixel_values_video, video_grid_thw"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let image_grid_thw = &data.data_vec[1];
+        let pixel_values_video = &data.data_vec[2];
+        let video_grid_thw = &data.data_vec[3];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            image_grid_thw.as_ref(),
+            pixel_values_video.as_ref(),
+            video_grid_thw.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

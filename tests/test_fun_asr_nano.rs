@@ -38,17 +38,11 @@ fn fun_asr_nano_generate() -> Result<()> {
     let mut fun_asr_model = FunAsrNanoGenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
-    let i_start = Instant::now();
     let res = fun_asr_model.generate(mes)?;
-    let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
     if let Some(usage) = &res.usage {
-        let num_token = usage.total_tokens;
-        let duration_secs = i_duration.as_secs_f64();
-        let tps = num_token as f64 / duration_secs;
-        println!("Tokens per second (TPS): {:.2}", tps);
+        println!("usage: \n {:?}", usage);
     }
-    println!("Time elapsed in generate is: {:?}", i_duration);
     Ok(())
 }
 

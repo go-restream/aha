@@ -29,11 +29,11 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 
 | Category | Models |
 |----------|--------|
-| **Text** | Qwen3, MiniCPM4, <br> LFM2, LFM2.5 |
+| **Text** | Qwen3, MiniCPM4, LFM2, LFM2.5 |
 | **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5, <br> LFM2.5-VL, LFM2-VL |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , PaddleOCR-VL <br> PaddleOCR-VL1.5, Hunyuan-OCR, GLM-OCR |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
-| **Audio** | VoxCPM, VoxCPM1.5 |
+| **TTS** | VoxCPM, VoxCPM1.5 |
 | **Image** | RMBG-2.0 (background removal) |
 
 ## Why aha?
@@ -46,6 +46,11 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 2026-04-02
+- refactor generate code 
+- \<think\>...\</think\> The content of the thought chain is returned using the reasoning_content field.
+- chat response add time info 
+
 ### 2026-04-01
 - refactor deepseek_ocr/fun_asr_nano generate code 
 
@@ -63,9 +68,6 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 ### v0.2.4 (2026-03-23)
 - add LFM2.5-1.2B-Instruct
 - add LFM2-1.2B
-
-### v0.2.3 (2026-03-18)
-- add DeepSeek-OCR-2
 
 **[View full changelog](docs/changelog.md)** →
 

@@ -1,6 +1,9 @@
 use crate::{
     models::{
-        common::modules::{GateUpDownMLP, QKNormAttention, conv1d_depthwise, get_conv1d},
+        common::{
+            InferenceModel,
+            modules::{GateUpDownMLP, QKNormAttention, conv1d_depthwise, get_conv1d},
+        },
         lfm2::config::Lfm2Config,
     },
     position_embed::rope::RoPE,
@@ -279,10 +282,11 @@ impl Lfm2Decoder {
 pub struct Lfm2Model {
     model: Lfm2Decoder,
     lm_head: Linear,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Lfm2Model {
-    pub fn new(vb: VarBuilder, config: &Lfm2Config) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: &Lfm2Config, eos_ids: Vec<u32>) -> Result<Self> {
         let model = Lfm2Decoder::new(vb.pp("model"), config)?;
         let lm_head = if let Some(flag) = config.tie_embedding
             && flag
@@ -300,7 +304,11 @@ impl Lfm2Model {
                 Err(_) => Linear::new(model.embed_tokens.embeddings().clone(), None),
             }
         };
-        Ok(Self { model, lm_head })
+        Ok(Self {
+            model,
+            lm_head,
+            stop_token_ids: eos_ids,
+        })
     }
 
     pub fn forward(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
@@ -313,5 +321,19 @@ impl Lfm2Model {
 
     pub fn clear_cache(&mut self) {
         self.model.clear_cache();
+    }
+}
+
+impl InferenceModel for Lfm2Model {
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

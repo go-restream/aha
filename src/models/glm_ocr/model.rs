@@ -9,7 +9,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::modules::GateUpDownMLP,
+        common::{InferenceModel, modules::GateUpDownMLP},
         glm_ocr::config::{GlmOcrConfig, GlmOcrTextConfig, GlmOcrVisionConfig},
     },
     position_embed::rope::{apply_rotary_pos_emb_vision, glm_ocr_apply_rotary_pos_emb},
@@ -1256,7 +1256,8 @@ impl GlmOcrTextModel {
         }
 
         hidden_states = self.norm.forward(&hidden_states)?;
-        let logits = self.lm_head.forward(&hidden_states)?;
+        let last = hidden_states.narrow(1, seq_len - 1, 1)?;
+        let logits = self.lm_head.forward(&last)?;
 
         Ok(logits)
     }
@@ -1271,10 +1272,11 @@ impl GlmOcrTextModel {
 pub struct GlmOcrModel {
     vision_encoder: GlmOcrVisionModel,
     language_model: GlmOcrTextModel,
+    stop_token_ids: Vec<u32>,
 }
 
 impl GlmOcrModel {
-    pub fn new(vb: VarBuilder, config: GlmOcrConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: GlmOcrConfig, eos_ids: Vec<u32>) -> Result<Self> {
         let vision_encoder =
             GlmOcrVisionModel::new(vb.pp("model").pp("visual"), &config.vision_config)?;
         let language_model = GlmOcrTextModel::new(
@@ -1286,6 +1288,7 @@ impl GlmOcrModel {
         Ok(Self {
             vision_encoder,
             language_model,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -1329,5 +1332,42 @@ impl GlmOcrModel {
 
     pub fn clear_kv_cache(&mut self) {
         self.language_model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for GlmOcrModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 3 {
+            return Err(anyhow::anyhow!(
+                "GlmOcr process data error, must have pixel_values, image_grid_thw, image_mask"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let image_grid_thw = &data.data_vec[1];
+        let image_mask = &data.data_vec[2];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            image_grid_thw.as_ref(),
+            image_mask.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

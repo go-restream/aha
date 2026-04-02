@@ -206,6 +206,9 @@ impl GlmAsrNanoProcessor {
         render_text: &str,
     ) -> Result<(Tensor, Vec<u32>, String)> {
         let audio_tensors = extract_audios(mes, &self.device, Some(self.sampling_rate))?;
+        if audio_tensors.is_empty() {
+            return Err(anyhow::anyhow!("GlmASRNano need audio input"));
+        }
         let (input_features, input_features_mask, per_sample_windows) =
             self.process_audio(audio_tensors)?;
         let audio_lengths = input_features_mask.sum(D::Minus1)?;

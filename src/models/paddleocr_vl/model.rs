@@ -8,18 +8,23 @@ use num::integer::Roots;
 
 use crate::{
     models::{
-        common::modules::{
-            NaiveAttnGateUpDownMLPBlock, NaiveAttnTwoLinearMLPBlock, get_conv2d, get_layer_norm,
+        common::{
+            InferenceModel,
+            modules::{
+                NaiveAttnGateUpDownMLPBlock, NaiveAttnTwoLinearMLPBlock, get_conv2d, get_layer_norm,
+            },
         },
         paddleocr_vl::config::{
             PaddleOCRVLConfig, PaddleOCRVLRopeScalingConfig, PaddleOCRVLVisionConfig,
         },
     },
     position_embed::rope::{Qwen2_5VLTextRotaryEmbedding, Qwen2_5VisionRotaryEmbedding},
-    utils::interpolate::interpolate_bilinear,
-    utils::tensor_utils::{
-        get_vision_next_indices, masked_scatter_dim0, nonzero_index, prepare_causal_attention_mask,
-        zero_index,
+    utils::{
+        interpolate::interpolate_bilinear,
+        tensor_utils::{
+            get_vision_next_indices, masked_scatter_dim0, nonzero_index,
+            prepare_causal_attention_mask, zero_index,
+        },
     },
 };
 
@@ -412,10 +417,11 @@ pub struct PaddleOCRVLModel {
     pub cfg: PaddleOCRVLConfig,
     lm_head: Linear,
     rope_deltas: Option<Tensor>,
+    stop_token_ids: Vec<u32>,
 }
 
 impl PaddleOCRVLModel {
-    pub fn new(cfg: PaddleOCRVLConfig, vb: VarBuilder) -> Result<Self> {
+    pub fn new(cfg: PaddleOCRVLConfig, vb: VarBuilder, eos_ids: Vec<u32>) -> Result<Self> {
         let mlp_ar = Projector::new(vb.pp("mlp_AR"), &cfg)?;
         let visual = SiglipVisionModel::new(vb.pp("visual"), &cfg.vision_config)?;
         let model = Ernie4_5Model::new(vb.pp("model"), &cfg)?;
@@ -433,6 +439,7 @@ impl PaddleOCRVLModel {
             cfg,
             lm_head,
             rope_deltas: None,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -662,13 +669,14 @@ impl PaddleOCRVLModel {
         input_ids: &Tensor,
         pixel_values: Option<&Tensor>,
         image_grid_thw: Option<&Tensor>,
-        image_mask: &Tensor,
+        image_mask: Option<&Tensor>,
         cache_position: Option<&Tensor>,
         seqlen_offset: usize,
     ) -> Result<Tensor> {
         let mut inputs_embeds = self.model.embed_tokens.forward(input_ids)?;
         if let Some(pixel_values) = pixel_values
             && let Some(image_grid_thw) = image_grid_thw
+            && let Some(image_mask) = image_mask
         {
             let pixel_values = pixel_values.unsqueeze(0)?;
             let mut siglip_position_ids = vec![];
@@ -716,6 +724,15 @@ impl PaddleOCRVLModel {
                     .broadcast_add(rope_deltas)?
                     .contiguous()?
                     .to_dtype(candle_core::DType::U32)?
+            } else if let Some(rope_deltas) = &self.rope_deltas {
+                let cache_position =
+                    Tensor::from_vec(vec![seqlen_offset as u32], 1, inputs_embeds.device())?;
+                cache_position
+                    .i(0)?
+                    .to_dtype(rope_deltas.dtype())?
+                    .broadcast_add(rope_deltas)?
+                    .contiguous()?
+                    .to_dtype(candle_core::DType::U32)?
             } else {
                 Tensor::zeros(1, inputs_embeds.dtype(), inputs_embeds.device())?
             };
@@ -738,5 +755,44 @@ impl PaddleOCRVLModel {
 
     pub fn clear_kv_cache(&mut self) {
         self.model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for PaddleOCRVLModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 4 {
+            return Err(anyhow::anyhow!(
+                "Lfm2VL process data error, must have pixel_values, image_grid_thw, image_mask, cache_position"
+            ));
+        }
+        let pixel_values = &data.data_vec[0];
+        let image_grid_thw = &data.data_vec[1];
+        let image_mask = &data.data_vec[2];
+        let cache_position = &data.data_vec[3];
+        self.forward(
+            input_ids,
+            pixel_values.as_ref(),
+            image_grid_thw.as_ref(),
+            image_mask.as_ref(),
+            cache_position.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

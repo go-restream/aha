@@ -33,26 +33,22 @@ fn qwen3_5_generate() -> Result<()> {
                     }
                 ]
             }
-        ]
+        ],
+        "enable_thinking": true
     }
     "#;
+    // "metadata": {"enable_thinking": "true"}
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
     let i_start = Instant::now();
     let mut qwen3_5 = Qwen3_5GenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
 
-    let i_start = Instant::now();
     let res = qwen3_5.generate(mes)?;
-    let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
     if let Some(usage) = &res.usage {
-        let num_token = usage.total_tokens;
-        let duration_secs = i_duration.as_secs_f64();
-        let tps = num_token as f64 / duration_secs;
-        println!("Tokens per second (TPS): {:.2}", tps);
+        println!("usage: \n {:?}", usage);
     }
-    println!("Time elapsed in generate is: {:?}", i_duration);
     Ok(())
 }
 
@@ -75,16 +71,17 @@ async fn qwen3_5_stream() -> Result<()> {
                         "type": "image",
                         "image_url": 
                         {
-                            "url": "file:///home/jhq/Downloads/gougou1.jpg"
+                            "url": "file://./assets/img/ocr_test3.png"
                         }
                     },             
                     {
                         "type": "text", 
-                        "text": "描述这张图片."
+                        "text": "OCR"
                     }
                 ]
             }
-        ]
+        ],
+        "enable_thinking": true
     }
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;

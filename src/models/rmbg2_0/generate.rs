@@ -14,8 +14,9 @@ use rocket::futures::{Stream, stream};
 use crate::{
     models::{GenerateModel, rmbg2_0::model::BiRefNet},
     utils::{
-        build_img_completion_response, find_type_files, get_device, get_dtype,
+        find_type_files, get_device, get_dtype,
         img_utils::{extract_images, float_tensor_to_dynamic_image, img_transform_with_resize},
+        response_utils::build_img_completion_response,
     },
 };
 

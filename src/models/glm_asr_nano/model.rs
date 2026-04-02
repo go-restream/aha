@@ -4,8 +4,11 @@ use candle_nn::{Conv1d, LayerNorm, Linear, Module, VarBuilder, linear, linear_no
 
 use crate::{
     models::{
-        common::modules::{
-            LlamaForCausalLM, TwoLinearMLP, eager_attention_forward, get_conv1d, get_layer_norm,
+        common::{
+            InferenceModel,
+            modules::{
+                LlamaForCausalLM, TwoLinearMLP, eager_attention_forward, get_conv1d, get_layer_norm,
+            },
         },
         glm_asr_nano::config::{GlmAsrAudioConfig, GlmAsrNanoConfig},
     },
@@ -233,10 +236,11 @@ pub struct GlmAsrNanoModel {
     audio_tower: GlmAsrEncoder,
     multi_modal_projector: TwoLinearMLP,
     language_model: LlamaForCausalLM,
+    stop_token_ids: Vec<u32>,
 }
 
 impl GlmAsrNanoModel {
-    pub fn new(vb: VarBuilder, config: GlmAsrNanoConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: GlmAsrNanoConfig, eos_ids: Vec<u32>) -> Result<Self> {
         let audio_tower = GlmAsrEncoder::new(vb.pp("audio_tower"), &config.audio_config)?;
         let multi_modal_projector = TwoLinearMLP::new(
             vb.pp("multi_modal_projector"),
@@ -273,6 +277,7 @@ impl GlmAsrNanoModel {
             audio_tower,
             multi_modal_projector,
             language_model,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -300,7 +305,7 @@ impl GlmAsrNanoModel {
     pub fn forward(
         &mut self,
         input_features: Option<&Tensor>,
-        audio_token_lengths: Option<&Vec<u32>>,
+        audio_token_lengths: Option<&Tensor>,
         input_ids: &Tensor,
         seqlen_offset: usize,
     ) -> Result<Tensor> {
@@ -308,8 +313,9 @@ impl GlmAsrNanoModel {
         if let Some(input_features) = input_features
             && let Some(audio_token_len) = audio_token_lengths
         {
+            let audio_token_len = audio_token_len.to_vec1::<u32>()?;
             let audio_token_mask = get_equal_mask(input_ids, self.config.audio_token_id)?;
-            let audio_embeds = self.get_audio_features(input_features, audio_token_len)?;
+            let audio_embeds = self.get_audio_features(input_features, &audio_token_len)?;
             inputs_embeds = masked_scatter_dim0(&inputs_embeds, &audio_embeds, &audio_token_mask)?;
         }
         let logits = self.language_model.forward(&inputs_embeds, seqlen_offset)?;
@@ -317,5 +323,40 @@ impl GlmAsrNanoModel {
     }
     pub fn clear_kv_cache(&mut self) {
         self.language_model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for GlmAsrNanoModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 2 {
+            return Err(anyhow::anyhow!(
+                "GlmAsrNano process data error, must have input_features, audio_token_lengths"
+            ));
+        }
+        let input_features = &data.data_vec[0];
+        let audio_token_lengths = &data.data_vec[1];
+        self.forward(
+            input_features.as_ref(),
+            audio_token_lengths.as_ref(),
+            input_ids,
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(None, None, input_ids, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

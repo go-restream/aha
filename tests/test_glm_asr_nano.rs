@@ -39,23 +39,17 @@ fn glm_asr_nano_generate() -> Result<()> {
     let mut glm_asr_model = GlmAsrNanoGenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
-    let i_start = Instant::now();
     let res = glm_asr_model.generate(mes)?;
-    let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
     if let Some(usage) = &res.usage {
-        let num_token = usage.total_tokens;
-        let duration_secs = i_duration.as_secs_f64();
-        let tps = num_token as f64 / duration_secs;
-        println!("Tokens per second (TPS): {:.2}", tps);
+        println!("usage: \n {:?}", usage);
     }
-    println!("Time elapsed in generate is: {:?}", i_duration);
     Ok(())
 }
 
 #[tokio::test]
 async fn glm_asr_nano_stream() -> Result<()> {
-    // RUST_BACKTRACE=1 cargo test -F cuda glm_asr_nano_stream -r -- --nocapture
+    // RUST_BACKTRACE=1 cargo test -F cuda --test test_glm_asr_nano glm_asr_nano_stream -r -- --nocapture
     let save_dir =
         aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
     let model_path = format!("{}/ZhipuAI/GLM-ASR-Nano-2512/", save_dir);

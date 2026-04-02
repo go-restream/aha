@@ -171,6 +171,7 @@ impl GenerateModel for DeepseekOCRGenerateModel {
             None,
             seed,
             max_tokens,
+            false,
             &self.device,
             &self.model_name,
         )?;

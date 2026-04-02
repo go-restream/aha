@@ -1,6 +1,11 @@
+use std::time::Instant;
+
 use crate::models::common::generate::get_logit_processor;
 use crate::params::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
+};
+use crate::utils::response_utils::{
+    build_chunk_response_with_usage, build_completion_response_with_time,
 };
 use anyhow::{Result, anyhow};
 use candle_core::{D, DType, Device, IndexOp, Tensor};
@@ -10,8 +15,7 @@ use rocket::futures::Stream;
 
 use crate::models::qwen2_5vl::config::Qwen2_5VLConfig;
 use crate::utils::{
-    build_completion_chunk_response, build_completion_response, find_type_files, get_device,
-    get_dtype,
+    find_type_files, get_device, get_dtype, response_utils::build_completion_chunk_response,
 };
 use crate::{
     chat_template::ChatTemplate,
@@ -94,7 +98,10 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
 
         let mut generate = Vec::new();
         let sample_len = mes.max_tokens.unwrap_or(1024);
+        let mut prompt_secs = 0.0f64;
+        let mut completion_secs = 0.0f64;
         for _ in 0..sample_len {
+            let i_start = Instant::now();
             let logits = self.qwen2_5_vl.forward(
                 &input_ids,
                 pixel_values,
@@ -108,6 +115,12 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
             )?;
             let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
             let next_token = logit_processor.sample(&logits)?;
+            let i_duration = i_start.elapsed();
+            if seqlen_offset == 0 {
+                prompt_secs += i_duration.as_secs_f64();
+            } else {
+                completion_secs += i_duration.as_secs_f64();
+            };
             generate.push(next_token);
             if next_token == self.endoftext_id || next_token == self.im_end_id {
                 break;
@@ -124,8 +137,14 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
         let num_token = generate.len() as u32;
         let res = self.tokenizer.token_decode(generate)?;
         self.qwen2_5_vl.clear_kv_cache();
-        let response =
-            build_completion_response(res, &self.model_name, Some(num_token), Some(prompt_tokens));
+        let response = build_completion_response_with_time(
+            res,
+            &self.model_name,
+            num_token.into(),
+            completion_secs.into(),
+            prompt_tokens.into(),
+            prompt_secs.into(),
+        );
         Ok(response)
     }
 
@@ -148,6 +167,10 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
             .tokenizer
             .text_encode(input.replace_text.clone(), &self.device)?;
         let mut seq_len = input_ids.dim(1)?;
+        let prompt_tokens = seq_len as u32;
+        let mut prompt_secs = 0.0f64;
+        let mut completion_tokens = 0u32;
+        let mut completion_secs = 0.0f64;
         let mut seqlen_offset = 0;
         let mut mask = Tensor::ones_like(&input_ids)?;
         let mut cache_position = Tensor::ones_like(&input_ids.i(0)?)?
@@ -166,6 +189,7 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
             let mut tool_call_id = None;
             let mut tool_call_content = String::new();
             for _ in 0..sample_len {
+                let i_start = Instant::now();
                 let logits = self.qwen2_5_vl.forward(
                     &input_ids,
                     pixel_values,
@@ -179,6 +203,13 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
                 )?;
                 let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
                 let next_token = logit_processor.sample(&logits)?;
+                completion_tokens += 1;
+                let i_duration = i_start.elapsed();
+                if seqlen_offset == 0 {
+                    prompt_secs += i_duration.as_secs_f64();
+                } else {
+                    completion_secs += i_duration.as_secs_f64();
+                };
                 let mut decode_ids = Vec::new();
                 if !error_tokens.is_empty() {
                     decode_ids.extend_from_slice(&error_tokens);
@@ -249,9 +280,8 @@ impl<'a> GenerateModel for Qwen2_5VLGenerateModel<'a> {
                         }
                     }
                 }
-                // let chunk = build_completion_chunk_response(decoded_token, &self.model_name, None, None);
-                // yield Ok(chunk);
                 if next_token == self.endoftext_id || next_token == self.im_end_id {
+                    yield Ok(build_chunk_response_with_usage(&self.model_name, completion_tokens.into(), completion_secs.into(), prompt_tokens.into(), prompt_secs.into()));
                     break;
                 }
                 seqlen_offset += seq_len;

@@ -1,5 +1,5 @@
 use crate::params::chat::ChatCompletionParameters;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use candle_core::{D, Device, Tensor};
 
 use crate::{
@@ -92,6 +92,9 @@ impl FunAsrNanoProcessor {
         source_ids.extend_from_slice(&sub_token);
         fbank_mask.extend_from_slice(&vec![0u32; sub_token.len()]);
         let audio_tensors = extract_audios(mes, &self.device, Some(self.fronted_conf.fs))?;
+        if audio_tensors.is_empty() {
+            return Err(anyhow!("FunASRNano need audio input"));
+        }
         let audio = &audio_tensors[0];
         let (speech, speech_lengths) = self.extract_fbank(audio)?;
         let olens = 1 + (speech_lengths - 3 + 2) / 2;
