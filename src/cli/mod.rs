@@ -240,6 +240,9 @@ pub(crate) fn run_run(args: RunArgs) -> anyhow::Result<()> {
         WhichModel::Qwen3_0_6B => {
             qwen3::Qwen3Exec::run(&input, output.as_deref(), &weight_path)?;
         }
+        WhichModel::Qwen3_1_7B => {
+            qwen3::Qwen3Exec::run(&input, output.as_deref(), &weight_path)?;
+        }
         WhichModel::Qwen3_5_0_8B => {
             qwen3_5::Qwen3_5Exec::run(&input, output.as_deref(), &weight_path)?;
         }

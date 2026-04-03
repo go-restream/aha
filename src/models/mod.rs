@@ -168,6 +168,10 @@ pub fn load_model<'a>(
             let model = Qwen3GenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3(model)
         }
+        WhichModel::Qwen3_1_7B => {
+            let model = Qwen3GenerateModel::init(path, None, None)?;
+            ModelInstance::Qwen3(model)
+        }
         WhichModel::Qwen3_5_0_8B => {
             let model = Qwen3_5GenerateModel::init(path, None, None)?;
             ModelInstance::Qwen3_5(model)

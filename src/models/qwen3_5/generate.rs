@@ -29,8 +29,8 @@ pub struct Qwen3_5GenerateModel<'a> {
     qwen3_5: Qwen3_5Model,
     device: Device,
     model_name: String,
-    // repeat_penalty: f32, // TODO
-    // repeat_last_n: usize,
+    repeat_penalty: f32,
+    repeat_last_n: usize,
 }
 
 impl<'a> Qwen3_5GenerateModel<'a> {
@@ -59,8 +59,8 @@ impl<'a> Qwen3_5GenerateModel<'a> {
             qwen3_5,
             device,
             model_name: model_name.to_string(),
-            // repeat_penalty: 1.01,
-            // repeat_last_n: 64,
+            repeat_penalty: 1.01,
+            repeat_last_n: 64,
         })
     }
 
@@ -116,8 +116,8 @@ impl<'a> Qwen3_5GenerateModel<'a> {
             qwen3_5,
             device,
             model_name: stem.to_string(),
-            // repeat_penalty: 1.1,
-            // repeat_last_n: 64,
+            repeat_penalty: 1.1,
+            repeat_last_n: 64,
         })
     }
 }
@@ -147,6 +147,8 @@ impl<'a> GenerateModel for Qwen3_5GenerateModel<'a> {
             temperature.into(),
             top_p.into(),
             Some(20),
+            self.repeat_penalty.into(),
+            self.repeat_last_n.into(),
             seed,
             input_ids.dim(1)?,
             sample_len,
@@ -213,6 +215,8 @@ impl<'a> GenerateModel for Qwen3_5GenerateModel<'a> {
             mes.temperature,
             mes.top_p,
             None,
+            self.repeat_penalty.into(),
+            self.repeat_last_n.into(),
             seed,
             sample_len,
             in_reasoning,

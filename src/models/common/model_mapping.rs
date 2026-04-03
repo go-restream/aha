@@ -18,6 +18,8 @@ pub enum WhichModel {
     Qwen2_5VL7B,
     #[value(name = "Qwen/Qwen3-0.6B")]
     Qwen3_0_6B,
+    #[value(name = "Qwen/Qwen3-1.7B")]
+    Qwen3_1_7B,
     #[value(name = "Qwen/Qwen3.5-0.8B")]
     Qwen3_5_0_8B,
     #[value(name = "Qwen/Qwen3.5-2B")]
@@ -93,6 +95,7 @@ impl WhichModel {
             // LLM models
             WhichModel::MiniCPM4_0_5B
             | WhichModel::Qwen3_0_6B
+            | WhichModel::Qwen3_1_7B
             | WhichModel::LFM2_1_2B
             | WhichModel::LFM2_5_1_2BInstruct => "llm",
             // VLM models

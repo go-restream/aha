@@ -84,6 +84,8 @@ impl<'a> GenerateModel for Qwen3VLGenerateModel<'a> {
             temperature.into(),
             top_p.into(),
             top_k.into(),
+            mes.repeat_penalty,
+            mes.repeat_last_n,
             seed,
             input_ids.dim(1)?,
             sample_len,
@@ -150,6 +152,8 @@ impl<'a> GenerateModel for Qwen3VLGenerateModel<'a> {
             temperature.into(),
             top_p.into(),
             top_k.into(),
+            mes.repeat_penalty,
+            mes.repeat_last_n,
             seed,
             sample_len,
             in_reasoning,
@@ -157,108 +161,5 @@ impl<'a> GenerateModel for Qwen3VLGenerateModel<'a> {
             &self.model_name,
         )?;
         Ok(Box::new(Box::pin(stream)))
-        // let sample_len = mes.max_tokens.unwrap_or(1024);
-        // let stream = stream! {
-        //     let mut error_tokens = Vec::new();
-        //     let mut pixel_values = input.pixel_values.as_ref();
-        //     let image_grid_thw = input.image_grid_thw.as_ref();
-        //     let mut pixel_values_video = input.pixel_values_video.as_ref();
-        //     let video_grid_thw = input.video_grid_thw.as_ref();
-        //     let mut tool_call_id = None;
-        //     let mut tool_call_content = String::new();
-        //     for _ in 0..sample_len {
-        //         let logits = self.qwen3_vl.forward(
-        //             &input_ids,
-        //             pixel_values,
-        //             image_grid_thw,
-        //             pixel_values_video,
-        //             video_grid_thw,
-        //             Some(&cache_position),
-        //             seqlen_offset,
-        //         )?;
-        //         let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-        //         let next_token = logit_processor.sample(&logits)?;
-        //         let mut decode_ids = Vec::new();
-        //         if !error_tokens.is_empty() {
-        //             decode_ids.extend_from_slice(&error_tokens);
-        //         }
-        //         decode_ids.push(next_token);
-        //         let decoded_token = self.tokenizer.token_decode(decode_ids).map_err(|e| anyhow!(format!("stream decode error{e}")))?;
-        //         if decoded_token.contains("�") {
-        //             error_tokens.push(next_token);
-        //             if error_tokens.len() > 3 {
-        //                 error_tokens.clear();
-        //             }
-        //             seqlen_offset += seq_len;
-        //             seq_len = 1;
-        //             input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //             cache_position = Tensor::from_vec(vec![seqlen_offset as u32], 1, &self.device)?;
-        //             pixel_values = None;
-        //             pixel_values_video = None;
-        //             continue;
-        //         }
-        //         error_tokens.clear();
-
-        //         // 处理特殊标记和工具调用
-        //         match decoded_token.as_str() {
-        //             "<tool_call>" => {
-        //                 // 开始工具调用
-        //                 tool_call_id = Some(uuid::Uuid::new_v4().to_string());
-        //                 seqlen_offset += seq_len;
-        //                 seq_len = 1;
-        //                 input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //                 cache_position = Tensor::from_vec(vec![seqlen_offset as u32], 1, &self.device)?;
-        //                 pixel_values = None;
-        //                 pixel_values_video = None;
-        //                 continue;
-        //             }
-        //             "</tool_call>" => {
-        //                 // 结束工具调用
-        //                 let chunk = build_completion_chunk_response(
-        //                     decoded_token,
-        //                     &self.model_name,
-        //                     tool_call_id.clone(),
-        //                     Some(tool_call_content.clone())
-        //                 );
-        //                 tool_call_id = None;
-        //                 tool_call_content = String::new();
-        //                 yield Ok(chunk);
-        //             }
-        //             _ => {
-        //                 if tool_call_id.is_some() {
-        //                     // 在工具调用过程中，收集工具调用内容
-        //                     tool_call_content.push_str(&decoded_token);
-        //                     seqlen_offset += seq_len;
-        //                     seq_len = 1;
-        //                     input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //                     cache_position = Tensor::from_vec(vec![seqlen_offset as u32], 1, &self.device)?;
-        //                     pixel_values = None;
-        //                     pixel_values_video = None;
-        //                     continue;
-        //                 } else {
-        //                     // 正常文本输出
-        //                     let chunk = build_completion_chunk_response(
-        //                         decoded_token,
-        //                         &self.model_name,
-        //                         None,
-        //                         None
-        //                     );
-        //                     yield Ok(chunk);
-        //                 }
-        //             }
-        //         }
-        //         if next_token == self.eos_token_id1 || next_token == self.eos_token_id2 {
-        //             break;
-        //         }
-        //         seqlen_offset += seq_len;
-        //         seq_len = 1;
-        //         input_ids = Tensor::from_vec(vec![next_token], (1, 1), &self.device)?;
-        //         cache_position = Tensor::from_vec(vec![seqlen_offset as u32], 1, &self.device)?;
-        //         pixel_values = None;
-        //         pixel_values_video = None;
-        //     }
-        //     self.qwen3_vl.clear_kv_cache();
-        // };
-        // Ok(Box::new(Box::pin(stream)))
     }
 }

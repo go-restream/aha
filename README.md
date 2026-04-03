@@ -46,6 +46,10 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 2026-04-03
+- ChatCompletionParameters add repeat_penalty and repeat_last_n
+- generate add penalty repeat code
+
 ### 2026-04-02
 - refactor generate code 
 - \<think\>...\</think\> The content of the thought chain is returned using the reasoning_content field.
@@ -55,7 +59,7 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - refactor deepseek_ocr/fun_asr_nano generate code 
 
 ### 2026-03-31
-- add server adn cli mod
+- add server and cli mod
 - aha model name use modelscope id replace 
 - update WhichModel 
 - Usage add time info

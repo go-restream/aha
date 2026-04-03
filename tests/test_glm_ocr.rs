@@ -28,7 +28,9 @@ fn glm_ocr_generate() -> Result<()> {
                     }
                 ]
             }
-        ]
+        ],
+        "repeat_penalty": 1.2,
+        "repeat_last_n": 64
     }
     "#;
     let save_dir =

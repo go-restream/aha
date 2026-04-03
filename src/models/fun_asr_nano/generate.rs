@@ -109,6 +109,8 @@ impl GenerateModel for FunAsrNanoGenerateModel {
             temperature.into(),
             top_p.into(),
             top_k.into(),
+            mes.repeat_penalty,
+            mes.repeat_last_n,
             seed,
             input_ids.dim(1)?,
             max_tokens,
@@ -145,8 +147,6 @@ impl GenerateModel for FunAsrNanoGenerateModel {
         let top_k = self.generation_config.top_k;
         let seed = mes.seed.unwrap_or(34562) as u64;
         let max_tokens = mes.max_tokens.unwrap_or(1024);
-        // let mut logit_processor =
-        //     get_logit_processor(Some(temperature), Some(top_p), Some(top_k), seed);
         let (speech, fbank_mask, input_ids) = self.processor.process_info(&mes, &self.tokenizer)?;
         let speech = speech.to_dtype(self.dtype)?;
         let data_vec = vec![speech.into(), fbank_mask.into()];
@@ -159,6 +159,8 @@ impl GenerateModel for FunAsrNanoGenerateModel {
             temperature.into(),
             top_p.into(),
             top_k.into(),
+            mes.repeat_penalty,
+            mes.repeat_last_n,
             seed,
             max_tokens,
             false,

@@ -142,6 +142,16 @@ pub struct ChatCompletionParameters {
     pub top_p: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_k: Option<usize>,
+    /// Penalize repetition of token sequences, helping to prevent the model from getting stuck in loops.
+    /// Values > 1.0 penalize repetitions, values < 1.0 encourage them.
+    /// For example, a value of 1.2 means that tokens that have already appeared will be less likely to appear again.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repeat_penalty: Option<f32>,
+    /// The number of previous tokens to consider when applying repeat penalty.
+    /// Only the last N tokens in the conversation history will be used to calculate the penalty.
+    /// A larger value considers more history for penalizing repetitions, while 0 applies no penalty.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repeat_last_n: Option<usize>,
     /// A list of tools the model may call. Currently, only functions are supported as a tool.
     /// Use this to provide a list of functions the model may generate JSON inputs for.
     #[serde(skip_serializing_if = "Option::is_none")]

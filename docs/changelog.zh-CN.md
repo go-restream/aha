@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+### 2026-04-03
+- ChatCompletionParameters 新增 repeat_penalty 和 repeat_last_n 参数
+- 生成添加重复惩罚代码
+
 ### 2026-04-02
 - 重构生成代码 
 - \<think\>...\</think\> 思维链内容使用reasoning_content字段返回。
