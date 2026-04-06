@@ -236,7 +236,7 @@ Apache-2.0 &mdash; 详见 [LICENSE](LICENSE)
 - 所有模型作者和贡献者
 
 ## Wechat
-![260405 expired](./assets/img/aha_weixinqun.png)
+![260413 expired](./assets/img/aha_weixinqun.png)
 
 ---
 

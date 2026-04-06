@@ -1,3 +1,4 @@
+# OCR
 ## PaddleOCR-VL
 #### 可选提示词: 
 "OCR:" | "Table Recognition:" | "Formula Recognition:" | "Chart Recognition:"
@@ -65,7 +66,7 @@ extract structured information from documents. Prompts must follow a strict JSON
 ```
 
 ## HunyuanOCR
-场景化提示词
+#### 场景化提示词
 
 | 任务 | 英文 | 中文 |
 |------|---------|---------|

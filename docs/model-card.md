@@ -1,3 +1,4 @@
+# OCR
 ## PaddleOCR-VL
 #### Options prompt: 
 "OCR:" | "Table Recognition:" | "Formula Recognition:" | "Chart Recognition:"
@@ -66,7 +67,7 @@ Please output the information in the image in the following JSON format:
 ```
 
 ## HunyuanOCR
-Application-oriented Prompts
+#### Application-oriented Prompts
 
 | Task | English | Chinese |
 |------|---------|---------|
