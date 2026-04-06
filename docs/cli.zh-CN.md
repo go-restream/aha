@@ -67,10 +67,6 @@ aha cli -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 # 指定gguf-path和mmproj-path
 aha cli -m qwen3.5-gguf --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
 
-# 使用 ONNX 模型启动服务
-aha cli -m qwen3-embedding-0.6b --artifact-format onnx \
-  --onnx-path /path/to/Qwen3-Embedding-0.6B-ONNX \
-  --tokenizer-dir /path/to/Qwen3-Embedding-0.6B-ONNX
 ```
 
 ### run - 直接模型推理
@@ -138,10 +134,6 @@ aha run -m qwen3.5-gguf -i 你如何看待AI --gguf-path /path/to/xxx.gguf
 aha run -m qwen3.5-gguf -i 提取图片中的文本 -i https://ai.bdstatic.com/file/C56CC9B274CF460CA33
 63E59ECD94423 --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
 
-# Qwen3.5 ONNX 文本生成（text-only）
-aha run -m qwen3.5-0.8b -i "你好" --artifact-format onnx \
-  --onnx-path /path/to/Qwen3.5-0.8B-ONNX \
-  --tokenizer-dir /path/to/Qwen3.5-0.8B-ONNX
 ```
 
 ### serv - 启动服务
@@ -431,22 +423,6 @@ aha cli -m Qwen/Qwen3-VL-2B-Instruct -a 0.0.0.0 -p 8080
 - **安全性**: 默认仅允许本地访问，使用 `--allow-remote-shutdown` 标志启用远程访问（不推荐）
 - **格式**: JSON 响应
 
-
-## 注意事项
-
-1. **GGUF/ONNX 仅支持本地路径**：请使用 `--gguf-path` 或 `--onnx-path`。自动下载管理仅适用于 safetensors 模型。
-
-2. **制品格式选择**：`--artifact-format auto` 使用模型默认格式，也可显式指定 `safetensors|gguf|onnx`。
-
-3. **tokenizer 目录**：GGUF/ONNX 若未与 tokenizer/config 同目录，请额外指定 `--tokenizer-dir`。
-
-4. **下载重试机制**：默认重试 3 次，每次失败后等待 2 秒再重试。可通过 `--download-retries` 调整重试次数。
-
-5. **默认保存目录**：模型默认保存到 `~/.aha/` 目录下，可通过 `--save-dir` 或 `-s` 参数自定义。
-
-6. **端口占用**：启动服务前确保指定的端口未被占用，默认端口为 10100。
-
-7. **权限问题**：如果保存到系统目录（如 `/data/models`），确保有相应的写入权限。
 
 ## 获取帮助
 

@@ -35,6 +35,9 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
 | **TTS** | VoxCPM, VoxCPM1.5 |
 | **Image** | RMBG-2.0 (background removal) |
+| **Embedding** | Qwen3-Embedding, all-MiniLM-L6-v2 |
+| **Reranker** | Qwen3-Reranker |
+
 
 ## Why aha?
 - **🚀 High-Performance Inference** - Powered by Candle framework for efficient tensor computation and model inference
@@ -46,6 +49,9 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 0.2.5 (2026-04-06)
+- add qwen3-embedding/qwen3-reranker/all-minilm-l6-v2
+
 ### 2026-04-03
 - CLI update: subcommand must be specified
 - ChatCompletionParameters add repeat_penalty and repeat_last_n

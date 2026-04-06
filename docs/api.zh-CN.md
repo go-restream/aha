@@ -149,8 +149,10 @@ curl http://127.0.0.1:10100/models
 
 #### 端点
 ```
-POST /chat/completions
+POST /chat/completions 
+POST /v1/chat/completions
 ```
+两个端点使用相同的处理函数并返回相同的响应。`/v1/chat/completions` 路径遵循 OpenAI 的标准 API 约定。
 
 #### 请求体
 
@@ -544,6 +546,147 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 以base64 PNG 格式返回处理后的图像。
 
+### 嵌入
+生成文本嵌入向量。
+
+#### 端点
+```
+POST /embeddings
+POST /v1/embeddings
+```
+
+#### 请求体
+| 参数 | 类型 | 必需 | 描述 |
+|------|------|------|------|
+| `model` | string | 否 | 模型标识符 |
+| `input` | string 或 array | 是 | 要嵌入的文本或文本数组 |
+
+#### 示例
+单个文本：
+```bash
+curl http://127.0.0.1:10100/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "Hello world"
+  }'
+```
+
+多个文本：
+```bash
+curl http://127.0.0.1:10100/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": ["Hello world", "How are you?", "Goodbye"]
+  }'
+```
+
+#### 响应
+**成功 (HTTP 200):**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [0.1, 0.2, 0.3, ...]
+    }
+  ],
+  "model": "model-name"
+}
+```
+
+**错误 (HTTP 400):**
+```json
+{
+  "error": "embedding input must be a string or an array of strings"
+}
+```
+
+### 重排
+对文档列表根据查询进行重新排序。
+
+#### 端点
+```
+POST /rerank
+POST /v1/rerank
+```
+
+#### 请求体
+| 参数 | 类型 | 必需 | 描述 |
+|------|------|------|------|
+| `model` | string | 否 | 模型标识符 |
+| `query` | string | 是 | 查询文本 |
+| `documents` | array | 是 | 要重排序的文档文本数组 |
+| `top_n` | int | 否 | 返回前N个结果（可选） |
+
+#### 示例
+基础重排序：
+```bash
+curl http://127.0.0.1:10100/rerank \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "人工智能",
+    "documents": [
+      "机器学习是一种人工智能技术",
+      "苹果是一种水果",
+      "深度学习属于人工智能领域"
+    ]
+  }'
+```
+
+限制返回数量：
+```bash
+curl http://127.0.0.1:10100/rerank \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "人工智能",
+    "documents": [
+      "机器学习是一种人工智能技术",
+      "苹果是一种水果", 
+      "深度学习属于人工智能领域"
+    ],
+    "top_n": 2
+  }'
+```
+
+#### 响应
+**成功 (HTTP 200):**
+```json
+{
+  "object": "list",
+  "model": "model-name",
+  "results": [
+    {
+      "index": 0,
+      "relevance_score": 0.95,
+      "document": "机器学习是一种人工智能技术"
+    },
+    {
+      "index": 2,
+      "relevance_score": 0.87,
+      "document": "深度学习属于人工智能领域"
+    }
+  ]
+}
+```
+
+**错误 (HTTP 400):**
+```json
+{
+  "error": "rerank query cannot be empty"
+}
+```
+
+#### 字段说明
+| 字段 | 类型 | 描述 |
+|------|------|-----|
+| `model` | string | 模型标识符 |
+| `object` | string | 固定值："list" |
+| `results` | array | 重排序结果数组 |
+| `index` | int | 原始文档索引 |
+| `relevance_score` | f32 | 相关性分数（越高越相关） |
+| `document` | string | 原始文档文本 |
 
 ### 优雅关机
 

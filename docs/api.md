@@ -541,6 +541,148 @@ curl http://127.0.0.1:10100/images/remove_background \
 
 Returns the processed image in base64 PNG format.
 
+### Embeddings
+Generate text embeddings.
+
+#### Endpoints
+```
+POST /embeddings
+POST /v1/embeddings
+```
+
+#### Request Body
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| `model` | string | No | Model identifier (optional, ignored - uses loaded model)  |
+| `input` | string or array | Yes | Text or array of texts to embed |
+
+#### Examples
+Single text：
+```bash
+curl http://127.0.0.1:10100/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "Hello world"
+  }'
+```
+
+Multiple texts：
+```bash
+curl http://127.0.0.1:10100/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": ["Hello world", "How are you?", "Goodbye"]
+  }'
+```
+
+#### Response
+**Success (HTTP 200):**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [0.1, 0.2, 0.3, ...]
+    }
+  ],
+  "model": "model-name"
+}
+```
+
+**Error (HTTP 400):**
+```json
+{
+  "error": "embedding input must be a string or an array of strings"
+}
+```
+
+### Rerank
+Re-rank a list of documents according to a query.
+
+#### Endpoint
+```
+POST /rerank
+POST /v1/rerank
+```
+
+#### Request Body
+| Parameter | Type | Required | Description |
+|------|------|------|------|
+| `model` | string | No | 模型标识符 |
+| `query` | string | Yes | Query text |
+| `documents` | array | Yes | Array of document texts to re-rank |
+| `top_n` | int | No | Return top N results (optional) |
+
+#### Example
+Basic re-ranking：
+```bash
+curl http://127.0.0.1:10100/rerank \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "artificial intelligence",
+    "documents": [
+      "Machine learning is a form of artificial intelligence",
+      "Apple is a fruit",
+      "Deep learning belongs to the field of artificial intelligence"
+    ]
+  }'
+```
+
+Limit return count：
+```bash
+curl http://127.0.0.1:10100/rerank \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "artificial intelligence",
+    "documents": [
+      "Machine learning is a form of artificial intelligence",
+      "Apple is a fruit", 
+      "Deep learning belongs to the field of artificial intelligence"
+    ],
+    "top_n": 2
+  }'
+```
+
+#### Response
+**Success (HTTP 200):**
+```json
+{
+  "object": "list",
+  "model": "model-name",
+  "results": [
+    {
+      "index": 0,
+      "relevance_score": 0.95,
+      "document": "Machine learning is a form of artificial intelligence"
+    },
+    {
+      "index": 2,
+      "relevance_score": 0.87,
+      "document": "Deep learning belongs to the field of artificial intelligence"
+    }
+  ]
+}
+```
+
+**Error (HTTP 400):**
+```json
+{
+  "error": "rerank query cannot be empty"
+}
+```
+
+#### Parameter Description
+| Parameter | Type | Description |
+|------|------|-----|
+| `model` | string | Model identifier |
+| `object` | string | Fixed value: "list" |
+| `results` | array | Re-ranked results array |
+| `index` | int | Original document index |
+| `relevance_score` | f32 | Relevance score (higher is more relevant) |
+| `document` | string | Original document text |
+
 ### Graceful Shutdown
 
 Gracefully shut down the AHA server. This endpoint initiates a graceful shutdown process that:

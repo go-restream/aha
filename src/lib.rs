@@ -5,3 +5,5 @@ pub mod params;
 pub mod position_embed;
 pub mod tokenizer;
 pub mod utils;
+
+pub use candle_core::Device;

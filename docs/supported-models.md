@@ -7,6 +7,7 @@ Available models:
 
 Model ID                                 Owner                type       Download  
 --------------------------------------------------------------------------------
+sentence-transformers/all-MiniLM-L6-v2   sentence-transformers embedding    ✔       
 LiquidAI/LFM2-1.2B                       LiquidAI             llm          ✔       
 LiquidAI/LFM2.5-1.2B-Instruct            LiquidAI             llm          ✔       
 LiquidAI/LFM2.5-VL-1.6B                  LiquidAI             vlm          ✔       
@@ -14,9 +15,9 @@ LiquidAI/LFM2-VL-1.6B                    LiquidAI             vlm          ✔
 OpenBMB/MiniCPM4-0.5B                    OpenBMB              llm          ✔       
 Qwen/Qwen2.5-VL-3B-Instruct              Qwen                 vlm          ✔       
 Qwen/Qwen2.5-VL-7B-Instruct              Qwen                 vlm                  
-Qwen/Qwen3-0.6B                          Qwen                 llm          ✔
-Qwen/Qwen3-1.7B                          Qwen                 llm          
-Qwen/Qwen3-4B                            Qwen                 llm                 
+Qwen/Qwen3-0.6B                          Qwen                 llm          ✔       
+Qwen/Qwen3-1.7B                          Qwen                 llm          ✔       
+Qwen/Qwen3-4B                            Qwen                 llm          ✔       
 Qwen/Qwen3.5-0.8B                        Qwen                 vlm          ✔       
 Qwen/Qwen3.5-2B                          Qwen                 vlm                  
 Qwen/Qwen3.5-4B                          Qwen                 vlm                  
@@ -24,6 +25,12 @@ Qwen/Qwen3.5-9B                          Qwen                 vlm
 qwen3.5-gguf                             none                 vlm                  
 Qwen/Qwen3-ASR-0.6B                      Qwen                 asr          ✔       
 Qwen/Qwen3-ASR-1.7B                      Qwen                 asr                  
+Qwen/Qwen3-Embedding-0.6B                Qwen                 embedding    ✔       
+Qwen/Qwen3-Embedding-4B                  Qwen                 embedding            
+Qwen/Qwen3-Embedding-8B                  Qwen                 embedding            
+Qwen/Qwen3-Reranker-0.6B                 Qwen                 reranker     ✔       
+Qwen/Qwen3-Reranker-4B                   Qwen                 reranker             
+Qwen/Qwen3-Reranker-8B                   Qwen                 reranker             
 Qwen/Qwen3-VL-2B-Instruct                Qwen                 vlm          ✔       
 Qwen/Qwen3-VL-4B-Instruct                Qwen                 vlm                  
 Qwen/Qwen3-VL-8B-Instruct                Qwen                 vlm                  
@@ -53,20 +60,16 @@ ZhipuAI/GLM-OCR                          ZhipuAI              ocr          ✔
 
 ## Embedding
 
-| Model | Parameters | Description | License |
+| Model | Parameters | Model Id | License |
 |-------|-----------|-------------|---------|
-| **Qwen3-Embedding-0.6B** | 0.6B | Text embedding (safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-Embedding-4B** | 4B | Text embedding (safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-Embedding-8B** | 8B | Text embedding (safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **all-MiniLM-L6-v2** | 22M | Sentence-transformers embedding (safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/main/LICENSE) |
+| **Qwen3-Embedding** | 0.6B <br> 4B <br> 8B| Qwen/Qwen3-Embedding-0.6B <br> Qwen/Qwen3-Embedding-4B <br> Qwen/Qwen3-Embedding-8B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **all-MiniLM-L6-v2** | 91M | sentence-transformers/all-MiniLM-L6-v2 | [Apache 2.0](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/main/LICENSE) |
 
 ## Reranker
 
-| Model | Parameters | Description | License |
+| Model | Parameters | Model Id | License |
 |-------|-----------|-------------|---------|
-| **Qwen3-Reranker-0.6B** | 0.6B | Text reranking (embedding-similarity baseline, safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-Reranker-4B** | 4B | Text reranking (embedding-similarity baseline, safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
-| **Qwen3-Reranker-8B** | 8B | Text reranking (embedding-similarity baseline, safetensors / gguf / onnx) | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
+| **Qwen3-Reranker** | 0.6B <br> 4B <br> 8B| Qwen/Qwen3-Reranker-0.6B <br> Qwen/Qwen3-Reranker-4B <br> Qwen/Qwen3-Reranker-8B | [Apache 2.0](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/apache-2.0.md) |
 
 ## Vision & Multimodal
 
@@ -87,8 +90,6 @@ ZhipuAI/GLM-OCR                          ZhipuAI              ocr          ✔
 | **DeepSeek-OCR** | Multi | deepseek-ai/DeepSeek-OCR <br> deepseek-ai/DeepSeek-OCR-2 | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 | **GLM-OCR** | 8 | ZhipuAI/GLM-OCR | [MIT](https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md) |
 
-
-GLM-OCR local artifacts: `safetensors`, `gguf`, `onnx`
 
 ## Speech Recognition (ASR)
 
@@ -116,57 +117,6 @@ Models are sourced from:
 
 - [Hugging Face](https://huggingface.co) - Primary model hub
 - [ModelScope](https://modelscope.cn) - Chinese model hub
-
-## Registered Repositories (Not Runtime-Integrated Yet)
-
-The following repositories are now cataloged for future integration, but are **not** directly runnable in current `aha` runtime yet:
-
-### MLX / Format-Specific Variants
-- Jackrong/MLX-Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-v2-4bit
-- Jackrong/MLX-Qwen3.5-9B-Claude-4.6-Opus-Reasoning-Distilled-v2-4bit
-- Jackrong/MLX-Qwen3.5-9B-Claude-4.6-Opus-Reasoning-Distilled-v2-6bit
-- Jackrong/MLX-Qwen3.5-9B-Claude-4.6-Opus-Reasoning-Distilled-v2-8bit
-- Jackrong/MLX-Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-v2-4bit
-- Jackrong/MLX-Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-v2-6bit
-- Jackrong/MLX-Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-v2-8bit
-
-### Embedding Models
-- google/embeddinggemma-300m
-- ggml-org/embeddinggemma-300M-GGUF
-- onnx-community/embeddinggemma-300m-ONNX
-- unsloth/embeddinggemma-300m-GGUF
-- onnx-community/Qwen3-Embedding-0.6B-ONNX
-- Qwen/Qwen3-Embedding-0.6B-GGUF
-- onnx-community/Qwen3-Embedding-4B-ONNX
-- Qwen/Qwen3-Embedding-4B-GGUF
-- Qwen/Qwen3-Embedding-8B-GGUF
-- onnx-community/Qwen3-Embedding-8B-ONNX
-- perplexity-ai/pplx-embed-v1-0.6b
-- nomic-ai/nomic-embed-text-v2-moe
-- nomic-ai/nomic-embed-text-v2-moe-GGUF
-- jinaai/jina-embeddings-v5-text-small
-- jinaai/jina-embeddings-v5-text-nano
-- jinaai/jina-embeddings-v5-text-small-text-matching
-- jinaai/jina-embeddings-v5-text-small-text-matching-GGUF
-- sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-
-### Reranker Models
-- BAAI/bge-reranker-v2-m3
-- ggml-org/Qwen3-Reranker-0.6B-Q8_0-GGUF
-
-### ONNX Repositories
-- onnx-community/GLM-OCR-ONNX
-- onnx-community/Qwen3-Reranker-0.6B-ONNX
-- onnx-community/Qwen3.5-2B-ONNX
-- onnx-community/Qwen3.5-4B-ONNX
-- onnx-community/Qwen3.5-0.8B-ONNX
-- onnx-community/Qwen3-VL-2B-Instruct-ONNX
-- onnx-community/ONNX_Qwen3-Embedding-0.6B
-- onnx-community/Nanbeige4.1-3B-ONNX
-- onnx-community/Qwen3-Embedding-8B-ONNX
-- onnx-community/Qwen3-Embedding-4B-ONNX
-- onnx-community/bge-reranker-v2-m3-ONNX
-- onnx-community/all-MiniLM-L6-v2-ONNX
 
 ## Adding New Models
 

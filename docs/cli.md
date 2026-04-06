@@ -67,10 +67,6 @@ aha cli -m Qwen/Qwen3-VL-2B-Instruct --weight-path /path/to/model
 # use gguf-path and mmproj-path
 aha cli -m qwen3.5-gguf --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
 
-# run service with ONNX artifact
-aha cli -m qwen3-embedding-0.6b --artifact-format onnx \
-  --onnx-path /path/to/Qwen3-Embedding-0.6B-ONNX \
-  --tokenizer-dir /path/to/Qwen3-Embedding-0.6B-ONNX
 ```
 
 ### run - Direct model inference
@@ -138,10 +134,6 @@ aha run -m qwen3.5-gguf -i 你如何看待AI --gguf-path /path/to/xxx.gguf
 aha run -m qwen3.5-gguf -i 提取图片中的文本 -i https://ai.bdstatic.com/file/C56CC9B274CF460CA33
 63E59ECD94423 --gguf-path /path/to/xxx.gguf --mmproj-path /path/to/mmproj-xxx.gguf
 
-# Qwen3.5 ONNX text-only generation
-aha run -m qwen3.5-0.8b -i "hello" --artifact-format onnx \
-  --onnx-path /path/to/Qwen3.5-0.8B-ONNX \
-  --tokenizer-dir /path/to/Qwen3.5-0.8B-ONNX
 
 ```
 
@@ -168,8 +160,7 @@ aha serv [OPTIONS] --model <MODEL> [--weight-path <WEIGHT_PATH>] [--gguf-path <G
 | `--gguf-path <GGUF_PATH>` | Local GGUF model weight path（required when using GGUF models） | - |
 | `--mmproj-path <MMPROJ_PATH>` | Local mmproj GGUF weight path（optional，If not specified, the module will not be loaded） | - |
 | `--onnx-path <ONNX_PATH>` | Local ONNX model directory/file path（required when using ONNX models） | - |
-| `--tokenizer-dir <TOKENIZER_DIR>` | Tokenizer/config directory for GGUF/ONNX | - |
-| `--artifact-format <ARTIFACT_FORMAT>` | Artifact format (`auto|safetensors|gguf|onnx`) | auto |
+| `--config-path <ONNX_PATH>` | extra config path for gguf/onnx | - |
 
 **Examples:**
 
@@ -431,22 +422,6 @@ After the service starts, the following API endpoints are available:
 - **Security**: Localhost only by default, use `--allow-remote-shutdown` flag to enable remote access (not recommended)
 - **Format**: JSON response
 
-
-## Notes
-
-1. **Local-path rule for GGUF/ONNX**: GGUF and ONNX artifacts are local-path only; use `--gguf-path` or `--onnx-path`. Remote download management is only for safetensors models.
-
-2. **Artifact selection**: `--artifact-format auto` uses model default; you can force `safetensors|gguf|onnx` explicitly.
-
-3. **Tokenizer directory**: For GGUF/ONNX, if tokenizer files are not colocated with model files, set `--tokenizer-dir`.
-
-4. **Download retry mechanism**: By default, retries 3 times, waiting 2 seconds after each failure before retrying. You can adjust the retry count with `--download-retries`.
-
-5. **Default save directory**: Models are saved to `~/.aha/` directory by default, which can be customized via `--save-dir` or `-s` parameter.
-
-6. **Port occupation**: Ensure the specified port is not occupied before starting the service. The default port is 10100.
-
-7. **Permission issues**: If saving to a system directory (such as `/data/models`), ensure you have the corresponding write permissions.
 
 ## Getting Help
 

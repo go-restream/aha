@@ -5,6 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+### 0.2.5 (2026-04-06)
+- 添加 qwen3-embedding/qwen3-reranker/all-minilm-l6-v2
+
 ### 2026-04-03
 - CLI 更新: 必须指定子命令
 - ChatCompletionParameters 新增 repeat_penalty 和 repeat_last_n 参数
