@@ -236,8 +236,15 @@ Apache-2.0 &mdash; See [LICENSE](LICENSE) for details.
 - [Candle](https://github.com/huggingface/candle) - Excellent Rust ML framework
 - All model authors and contributors
 
-## Wechat
-![260413 expired](./assets/img/aha_weixinqun.png)
+## Wechat & Donate
+<div align="center">
+
+| Wechat Group | Donate |
+|--------------|--------|
+| ![Wechat Group](./assets/img/aha_weixinqun.png) | ![Donate](./assets/img/donate.png) |
+
+</div>
+
 ---
 
 <p align="center">

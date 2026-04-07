@@ -235,8 +235,14 @@ Apache-2.0 &mdash; 详见 [LICENSE](LICENSE)
 - [Candle](https://github.com/huggingface/candle) - 优秀的 Rust 机器学习框架
 - 所有模型作者和贡献者
 
-## Wechat
-![260413 expired](./assets/img/aha_weixinqun.png)
+## Wechat & Donate
+<div align="center">
+
+| Wechat Group | Donate |
+|--------------|--------|
+| ![Wechat Group](./assets/img/aha_weixinqun.png) | ![Donate](./assets/img/donate.png) |
+
+</div>
 
 ---
 
